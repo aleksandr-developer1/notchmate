@@ -14,7 +14,7 @@ final class ClaudeCodeCLI: ObservableObject {
     private var process: Process?
     private var loginPoll: Timer?
 
-    static let models: [(id: String, title: String)] = [("opus", "Opus (последний)"), ("sonnet", "Sonnet (последний)"), ("haiku", "Haiku")]
+    static let models: [(id: String, title: String)] = [("opus", String(localized: "Opus (последний)")), ("sonnet", String(localized: "Sonnet (последний)")), ("haiku", "Haiku")]
 
     func refreshStatus() async {
         guard let exe = CLITools.find("claude") else { isInstalled = false; isLoggedIn = false; return }
@@ -57,7 +57,7 @@ final class ClaudeCodeCLI: ObservableObject {
     /// a 13k-character prompt answers in ~2 s instead of a minute.
     func send(_ text: String, model: String, instructions: String = AIChatService.systemPrompt, allowTools: Bool = true,
               quick: Bool = false, onDelta: @escaping (String) -> Void) async throws {
-        guard let exe = CLITools.find("claude") else { throw AIError.message("Claude Code не найден. Установите: brew install claude-code") }
+        guard let exe = CLITools.find("claude") else { throw AIError.message(String(localized: "Claude Code не найден. Установите: brew install claude-code")) }
         var args = ["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
                     "--tools", "", "--model", model, quick ? "--system-prompt" : "--append-system-prompt", instructions]
         if let sessionID { args += ["--resume", sessionID] }
@@ -120,7 +120,7 @@ final class ClaudeCodeCLI: ObservableObject {
                             case "result":
                                 if let s = obj["session_id"] as? String { self.sessionID = s }
                                 if obj["is_error"] as? Bool == true {
-                                    let msg = obj["result"] as? String ?? "Ошибка Claude"
+                                    let msg = obj["result"] as? String ?? String(localized: "Ошибка Claude")
                                     if msg.lowercased().contains("login") { self.isLoggedIn = false }
                                     finish(AIError.message(msg))
                                 } else {
@@ -143,7 +143,7 @@ final class ClaudeCodeCLI: ObservableObject {
                     MainActor.assumeIsolated {
                         outPipe.fileHandleForReading.readabilityHandler = nil
                         if proc.terminationReason == .uncaughtSignal { finish(AIError.cancelled) }
-                        else if proc.terminationStatus != 0 { finish(AIError.message(errText.isEmpty ? "Claude Code завершился с ошибкой" : errText)) }
+                        else if proc.terminationStatus != 0 { finish(AIError.message(errText.isEmpty ? String(localized: "Claude Code завершился с ошибкой") : errText)) }
                         else { finish(nil) }
                     }
                 }

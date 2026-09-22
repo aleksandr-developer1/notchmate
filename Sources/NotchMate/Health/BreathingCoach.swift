@@ -7,19 +7,19 @@ enum BreathPattern: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .calm: return "Спокойствие"
-        case .coherent: return "Резонанс"
-        case .box: return "Квадрат"
+        case .calm: return String(localized: "Спокойствие")
+        case .coherent: return String(localized: "Резонанс")
+        case .box: return String(localized: "Квадрат")
         case .relax478: return "4-7-8"
         }
     }
 
     var subtitle: String {
         switch self {
-        case .calm: return "вдох 4 · выдох 6 — снять напряжение"
-        case .coherent: return "5,5 · 5,5 — выровнять пульс"
-        case .box: return "4 · 4 · 4 · 4 — собраться перед задачей"
-        case .relax478: return "4 · 7 · 8 — перед сном"
+        case .calm: return String(localized: "вдох 4 · выдох 6 — снять напряжение")
+        case .coherent: return String(localized: "5,5 · 5,5 — выровнять пульс")
+        case .box: return String(localized: "4 · 4 · 4 · 4 — собраться перед задачей")
+        case .relax478: return String(localized: "4 · 7 · 8 — перед сном")
         }
     }
 
@@ -41,9 +41,9 @@ enum BreathPhase: Equatable {
 
     var title: String {
         switch self {
-        case .inhale: return "Вдох"
-        case .holdIn, .holdOut: return "Пауза"
-        case .exhale: return "Выдох"
+        case .inhale: return String(localized: "Вдох")
+        case .holdIn, .holdOut: return String(localized: "Пауза")
+        case .exhale: return String(localized: "Выдох")
         }
     }
 }

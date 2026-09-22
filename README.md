@@ -8,6 +8,7 @@
   <img src="https://img.shields.io/badge/macOS-14%2B-000?logo=apple&logoColor=white" alt="macOS 14+">
   <img src="https://img.shields.io/badge/Swift-5.10-F05138?logo=swift&logoColor=white" alt="Swift 5.10">
   <img src="https://img.shields.io/badge/Apple%20Silicon-arm64-555" alt="Apple Silicon">
+  <img src="https://img.shields.io/badge/languages-8-7b5cff" alt="8 languages">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3DA639" alt="MIT"></a>
   <a href="https://github.com/aleksandr-developer1/notchmate/stargazers"><img src="https://img.shields.io/github/stars/aleksandr-developer1/notchmate?style=social" alt="Stars"></a>
 </p>
@@ -25,8 +26,7 @@
   <a href="https://github.com/aleksandr-developer1/notchmate/releases/latest"><img src="https://img.shields.io/badge/Download_for_macOS-arm64-000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS"></a>
 </p>
 
-> [!NOTE]
-> The app's interface is in **Russian** for now. English localization is planned — help with it is very welcome.
+🌍 **Speaks your language:** English, Русский, Deutsch, Español, Français, Português (Brasil), 简体中文 and 日本語. NotchMate follows the system language; you can pick another one in **Settings → General → Language**.
 
 ## Meet your companion
 
@@ -43,15 +43,15 @@ Hover the notch and the panel slides down. Tabs: Companion, Music, Health, Work,
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/images/assistant.png" alt="Companion tab: day timeline, the companion's note, what needs attention and a question field"><br><b>Companion</b>: a timeline of meetings and reminders, what needs your attention, ask the companion about your day</td>
-    <td width="50%"><img src="docs/images/music.png" alt="Music tab: artwork, seeking, volume, focus timer and daily note"><br><b>Music</b>: player with seeking and volume, plus a focus timer and today's note</td>
+    <td width="50%"><img src="docs/images/assistant-en.png" alt="Companion tab: day timeline, the companion's note, what needs attention and a question field"><br><b>Companion</b>: a timeline of meetings and reminders, what needs your attention, ask the companion about your day</td>
+    <td width="50%"><img src="docs/images/music-en.png" alt="Music tab: artwork, seeking, volume, focus timer and daily note"><br><b>Music</b>: player with seeking and volume, plus a focus timer and today's note</td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/images/notes.png" alt="Notes tab: quick capture, search, pinned notes and a preview"><br><b>Notes</b>: quick capture, search, pinned notes and a preview with checkboxes</td>
-    <td width="50%"><img src="docs/images/work.png" alt="Work → Jira tab: the issue in progress with a timer and the issue list"><br><b>Work</b>: the issue in progress with a timer and worklogs, your Jira issues</td>
+    <td width="50%"><img src="docs/images/notes-en.png" alt="Notes tab: quick capture, search, pinned notes and a preview"><br><b>Notes</b>: quick capture, search, pinned notes and a preview with checkboxes</td>
+    <td width="50%"><img src="docs/images/work-en.png" alt="Work → Jira tab: the issue in progress with a timer and the issue list"><br><b>Work</b>: the issue in progress with a timer and worklogs, your Jira issues</td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/images/health.png" alt="Health tab: Body Battery, stress, today's chart, sleep and heart rate"><br><b>Health</b>: Body Battery, stress, today's chart and breathing</td>
+    <td width="50%"><img src="docs/images/health-en.png" alt="Health tab: Body Battery, stress, today's chart, sleep and heart rate"><br><b>Health</b>: Body Battery, stress, today's chart and breathing</td>
     <td valign="middle" align="center"><sub>Illustrations follow the app's real layout;<br>the data in them is made up.</sub></td>
   </tr>
 </table>

@@ -15,37 +15,37 @@ enum NotchMateToolCatalog {
 
     static let tools: [NotchMateTool] = [
         NotchMateTool(name: "get_today",
-                    description: "Сводка дня пользователя: дата, фокус-таймер, задача Jira в работе (прошло/осталось), мои задачи Jira, события календаря, музыка, активные ИИ-агенты. Вызывай, когда спрашивают про день, задачи или планы.",
+                    description: String(localized: "Сводка дня пользователя: дата, фокус-таймер, задача Jira в работе (прошло/осталось), мои задачи Jira, события календаря, музыка, активные ИИ-агенты. Вызывай, когда спрашивают про день, задачи или планы."),
                     schema: obj([:])),
         NotchMateTool(name: "add_note",
-                    description: "Записать мысль строкой в ежедневную заметку Obsidian.",
+                    description: String(localized: "Записать мысль строкой в ежедневную заметку Obsidian."),
                     schema: obj(["text": ["type": "string"]], required: ["text"])),
         NotchMateTool(name: "search_notes",
-                    description: "Поиск по заметкам Obsidian (заголовки и текст). Возвращает до 6 результатов со сниппетами.",
+                    description: String(localized: "Поиск по заметкам Obsidian (заголовки и текст). Возвращает до 6 результатов со сниппетами."),
                     schema: obj(["query": ["type": "string"]], required: ["query"])),
         NotchMateTool(name: "start_focus",
-                    description: "Запустить помидоро-таймер фокуса.",
-                    schema: obj(["minutes": ["type": "number", "description": "Длительность, по умолчанию из настроек"],
-                                 "label": ["type": "string", "description": "На что фокус, например ключ задачи"]])),
-        NotchMateTool(name: "stop_focus", description: "Остановить фокус-таймер.", schema: obj([:])),
+                    description: String(localized: "Запустить помидоро-таймер фокуса."),
+                    schema: obj(["minutes": ["type": "number", "description": String(localized: "Длительность, по умолчанию из настроек")],
+                                 "label": ["type": "string", "description": String(localized: "На что фокус, например ключ задачи")]])),
+        NotchMateTool(name: "stop_focus", description: String(localized: "Остановить фокус-таймер."), schema: obj([:])),
         NotchMateTool(name: "jira_log_time",
-                    description: "Списать время (worklog) в задачу Jira. Используй ТОЛЬКО когда пользователь явно попросил списать время.",
-                    schema: obj(["key": ["type": "string", "description": "Ключ задачи, например PROJ-123; по умолчанию задача в работе"],
-                                 "minutes": ["type": "number", "description": "Сколько минут списать"],
+                    description: String(localized: "Списать время (worklog) в задачу Jira. Используй ТОЛЬКО когда пользователь явно попросил списать время."),
+                    schema: obj(["key": ["type": "string", "description": String(localized: "Ключ задачи, например PROJ-123; по умолчанию задача в работе")],
+                                 "minutes": ["type": "number", "description": String(localized: "Сколько минут списать")],
                                  "comment": ["type": "string"]], required: ["minutes"])),
         NotchMateTool(name: "calendar_events",
-                    description: "События календаря на ближайшие дни.",
-                    schema: obj(["days": ["type": "number", "description": "Сколько дней вперёд, 1–7"]])),
+                    description: String(localized: "События календаря на ближайшие дни."),
+                    schema: obj(["days": ["type": "number", "description": String(localized: "Сколько дней вперёд, 1–7")]])),
         NotchMateTool(name: "media_control",
-                    description: "Управление музыкой: play, pause, toggle, next, previous.",
+                    description: String(localized: "Управление музыкой: play, pause, toggle, next, previous."),
                     schema: obj(["action": ["type": "string", "enum": ["play", "pause", "toggle", "next", "previous"]]], required: ["action"])),
         NotchMateTool(name: "call_recording",
-                    description: "Управление записью созвона: start — начать, stop — остановить и сделать протокол, status — состояние, process_pending — доделать записи, оставшиеся с прошлого запуска.",
+                    description: String(localized: "Управление записью созвона: start — начать, stop — остановить и сделать протокол, status — состояние, process_pending — доделать записи, оставшиеся с прошлого запуска."),
                     schema: obj(["action": ["type": "string", "enum": ["start", "stop", "status", "process_pending"]],
-                                 "folder": ["type": "string", "description": "Имя папки записи, например «2026-09-16 10-55»"]], required: ["action"])),
+                                 "folder": ["type": "string", "description": String(localized: "Имя папки записи, например «2026-09-16 10-55»")]], required: ["action"])),
         NotchMateTool(name: "show_message",
-                    description: "Показать короткое сообщение под вырезом MacBook (например, когда долгая задача агента завершена).",
-                    schema: obj(["text": ["type": "string", "description": "До 60 символов"]], required: ["text"])),
+                    description: String(localized: "Показать короткое сообщение под вырезом MacBook (например, когда долгая задача агента завершена)."),
+                    schema: obj(["text": ["type": "string", "description": String(localized: "До 60 символов")]], required: ["text"])),
     ]
 }
 
@@ -57,92 +57,92 @@ enum NotchMateToolRunner {
         case "get_today":
             return (todaySummary(env: env), false)
         case "add_note":
-            guard let text = args["text"] as? String, env.notes.capture(text) else { return ("Не удалось записать", true) }
-            return ("Записано в заметку дня", false)
+            guard let text = args["text"] as? String, env.notes.capture(text) else { return (String(localized: "Не удалось записать"), true) }
+            return (String(localized: "Записано в заметку дня"), false)
         case "search_notes":
             let hits = await env.notes.search(args["query"] as? String ?? "")
-            if hits.isEmpty { return ("Ничего не найдено", false) }
+            if hits.isEmpty { return (String(localized: "Ничего не найдено"), false) }
             return (hits.prefix(6).map { "• \($0.note.relativePath)\($0.snippet.map { " — \($0)" } ?? "")" }.joined(separator: "\n"), false)
         case "start_focus":
             let minutes = (args["minutes"] as? NSNumber)?.doubleValue
-            let label = args["label"] as? String ?? env.jira.activeIssue.map { "\($0.key) · \($0.summary)" } ?? "Помидор"
+            let label = args["label"] as? String ?? env.jira.activeIssue.map { "\($0.key) · \($0.summary)" } ?? String(localized: "Помидор")
             env.focus.start(minutes: minutes, label: label, task: env.jira.activeIssue?.key)
-            return ("Фокус запущен на \(Int(minutes ?? env.settings.pomoWork)) мин", false)
+            return (String(localized: "Фокус запущен на \(Int(minutes ?? env.settings.pomoWork)) мин"), false)
         case "stop_focus":
             env.focus.reset()
-            return ("Фокус остановлен", false)
+            return (String(localized: "Фокус остановлен"), false)
         case "jira_log_time":
-            guard let minutes = (args["minutes"] as? NSNumber)?.doubleValue, minutes >= 1 else { return ("Укажите минуты", true) }
-            guard let key = (args["key"] as? String) ?? env.jira.activeIssue?.key else { return ("Нет задачи в работе — укажите ключ", true) }
+            guard let minutes = (args["minutes"] as? NSNumber)?.doubleValue, minutes >= 1 else { return (String(localized: "Укажите минуты"), true) }
+            guard let key = (args["key"] as? String) ?? env.jira.activeIssue?.key else { return (String(localized: "Нет задачи в работе — укажите ключ"), true) }
             do {
                 try await env.jira.logWork(key: key, seconds: Int(minutes * 60), comment: args["comment"] as? String ?? "")
-                return ("Списано \(JiraService.format(Int(minutes * 60))) в \(key)", false)
+                return (String(localized: "Списано \(JiraService.format(Int(minutes * 60))) в \(key)"), false)
             } catch { return ("Jira: \(error.localizedDescription)", true) }
         case "calendar_events":
             let days = max(1, min(7, (args["days"] as? NSNumber)?.intValue ?? 1))
             return (env.calendar.describe(days: days) + "\n\n" + env.reminders.describe(), false)
         case "media_control":
             let map: [String: MediaCommand] = ["play": .play, "pause": .pause, "toggle": .toggle, "next": .next, "previous": .previous]
-            guard let cmd = map[args["action"] as? String ?? ""] else { return ("Неизвестное действие", true) }
+            guard let cmd = map[args["action"] as? String ?? ""] else { return (String(localized: "Неизвестное действие"), true) }
             env.nowPlaying.send(cmd)
-            return ("Ок", false)
+            return (String(localized: "Ок"), false)
         case "call_recording":
             let calls = env.calls
             switch args["action"] as? String {
             case "start":
                 await calls.beginRecording()
-                return (calls.stage == .recording ? "Запись началась" : (calls.lastError ?? "Не удалось начать"), calls.stage != .recording)
+                return (calls.stage == .recording ? String(localized: "Запись началась") : (calls.lastError ?? String(localized: "Не удалось начать")), calls.stage != .recording)
             case "stop":
-                guard calls.stage == .recording else { return ("Запись не идёт", true) }
+                guard calls.stage == .recording else { return (String(localized: "Запись не идёт"), true) }
                 Task { await calls.finishRecording() }
-                return ("Останавливаю запись, делаю протокол", false)
+                return (String(localized: "Останавливаю запись, делаю протокол"), false)
             case "process_pending":
                 let pending = CallRecorder.pendingRecordings()
                 let wanted = args["folder"] as? String
                 guard let target = wanted.flatMap({ name in pending.first { $0.lastPathComponent == name } }) ?? pending.first else {
-                    return ("Незавершённых записей нет", false)
+                    return (String(localized: "Незавершённых записей нет"), false)
                 }
                 Task { await calls.processExisting(folder: target) }
-                return ("Обрабатываю запись \(target.lastPathComponent)", false)
+                return (String(localized: "Обрабатываю запись \(target.lastPathComponent)"), false)
             default:
                 let state: String
                 switch calls.stage {
-                case .idle: state = calls.micActive ? "микрофон занят, запись не идёт" : "ожидание"
-                case .recording: state = "идёт запись \(FocusTimer.format(calls.elapsed))"
-                case .transcribing: state = "расшифровка"
-                case .summarizing: state = "готовлю протокол"
+                case .idle: state = calls.micActive ? String(localized: "микрофон занят, запись не идёт") : String(localized: "ожидание")
+                case .recording: state = String(localized: "идёт запись \(FocusTimer.format(calls.elapsed))")
+                case .transcribing: state = String(localized: "расшифровка")
+                case .summarizing: state = String(localized: "готовлю протокол")
                 }
                 let pending = CallRecorder.pendingRecordings().count
-                return ("Созвон: \(state)" + (pending > 0 ? ", незавершённых записей: \(pending)" : "") + (calls.lastNote.map { ", последний протокол: \($0)" } ?? ""), false)
+                return (String(localized: "Созвон: \(state)") + (pending > 0 ? String(localized: ", незавершённых записей: \(pending)") : "") + (calls.lastNote.map { String(localized: ", последний протокол: \($0)") } ?? ""), false)
             }
         case "show_message":
             let text = String((args["text"] as? String ?? "").prefix(80))
             NotificationCenter.default.post(name: .notchMateShowSpeech, object: text)
-            return ("Показано", false)
+            return (String(localized: "Показано"), false)
         default:
-            return ("Неизвестный инструмент \(name)", true)
+            return (String(localized: "Неизвестный инструмент \(name)"), true)
         }
     }
 
     static func todaySummary(env: AppEnvironment) -> String {
         var out: [String] = []
         let df = DateFormatter(); df.locale = Locale(identifier: "ru_RU"); df.dateFormat = "EEEE, d MMMM yyyy, HH:mm"
-        out.append("Сейчас: \(df.string(from: Date()))")
+        out.append(String(localized: "Сейчас: \(df.string(from: Date()))"))
         let f = env.focus
-        if f.isActive { out.append("Фокус-таймер: \(f.kind.title), осталось \(FocusTimer.format(f.remaining)), помидоров в цикле: \(f.completedInCycle)") }
+        if f.isActive { out.append(String(localized: "Фокус-таймер: \(f.kind.title), осталось \(FocusTimer.format(f.remaining)), помидоров в цикле: \(f.completedInCycle)")) }
         if let i = env.jira.activeIssue {
             let spent = i.progressPeriods.isEmpty ? (i.timeSpent ?? 0) : i.timeInWork()
             let left = i.originalEstimate.map { JiraService.format($0 - spent) } ?? JiraService.format(i.remainingEstimate)
-            out.append("Jira в работе: \(i.key) «\(i.summary)» [\(i.status)] прошло \(JiraService.format(spent)), осталось \(left), оценка \(JiraService.format(i.originalEstimate))")
+            out.append(String(localized: "Jira в работе: \(i.key) «\(i.summary)» [\(i.status)] прошло \(JiraService.format(spent)), осталось \(left), оценка \(JiraService.format(i.originalEstimate))"))
         }
         let others = env.jira.issues.filter { $0.key != env.jira.activeIssue?.key }.prefix(8)
-        if !others.isEmpty { out.append("Мои задачи Jira:\n" + others.map { "• \($0.key) \($0.summary) [\($0.status)]" }.joined(separator: "\n")) }
+        if !others.isEmpty { out.append(String(localized: "Мои задачи Jira:\n") + others.map { "• \($0.key) \($0.summary) [\($0.status)]" }.joined(separator: "\n")) }
         let events = env.calendar.describe(days: 1)
         out.append(events)
         out.append(env.reminders.describe())
-        if let t = env.nowPlaying.track, t.isPlaying { out.append("Играет: \(t.artist) — \(t.title)") }
+        if let t = env.nowPlaying.track, t.isPlaying { out.append(String(localized: "Играет: \(t.artist) — \(t.title)")) }
         let agents = env.agents.sessions.values.filter { $0.state == .working }
-        if !agents.isEmpty { out.append("ИИ-агенты работают: " + agents.map { "\($0.agent.title) (\($0.project))" }.joined(separator: ", ")) }
+        if !agents.isEmpty { out.append(String(localized: "ИИ-агенты работают: ") + agents.map { "\($0.agent.title) (\($0.project))" }.joined(separator: ", ")) }
         return out.joined(separator: "\n\n")
     }
 }

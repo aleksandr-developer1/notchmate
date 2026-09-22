@@ -11,17 +11,17 @@ enum AIProvider: String, CaseIterable, Identifiable {
         case .claude: return "Claude"
         case .openaiKey: return "OpenAI API"
         case .anthropicKey: return "Anthropic API"
-        case .customOpenAI: return "Своя ИИ"
+        case .customOpenAI: return String(localized: "Своя ИИ")
         }
     }
 
     var subtitle: String {
         switch self {
-        case .chatgpt: return "аккаунт ChatGPT через Codex"
-        case .claude: return "аккаунт Claude через Claude Code"
-        case .openaiKey: return "ключ API"
-        case .anthropicKey: return "ключ API"
-        case .customOpenAI: return "OpenAI-совместимый сервер"
+        case .chatgpt: return String(localized: "аккаунт ChatGPT через Codex")
+        case .claude: return String(localized: "аккаунт Claude через Claude Code")
+        case .openaiKey: return String(localized: "ключ API")
+        case .anthropicKey: return String(localized: "ключ API")
+        case .customOpenAI: return String(localized: "OpenAI-совместимый сервер")
         }
     }
 
@@ -72,7 +72,7 @@ final class AIChatService: ObservableObject {
 
     // Plain constants: read by the backends off the main actor.
     nonisolated static let systemPrompt = """
-    Ты — встроенный помощник в приложении «NotchMate» на macOS. Отвечай по-русски, кратко и по делу, если не просят иначе. \
+    Ты — встроенный помощник в приложении «NotchMate» на macOS. Отвечай кратко и по делу. \(AppLanguage.replyInstruction) Если пользователь пишет на другом языке, отвечай на его языке. \
     Используй Markdown умеренно: короткие списки и `код`, без больших заголовков — окно небольшое.
     """
 
@@ -99,15 +99,15 @@ final class AIChatService: ObservableObject {
     func accountLabel(_ p: AIProvider) -> String {
         switch p {
         case .chatgpt:
-            guard codex.isLoggedIn else { return "не подключено" }
+            guard codex.isLoggedIn else { return String(localized: "не подключено") }
             return [codex.email, codex.plan?.capitalized].compactMap { $0 }.joined(separator: " · ")
         case .claude:
-            guard claude.isLoggedIn else { return "не подключено" }
-            return claude.email ?? "подключено"
+            guard claude.isLoggedIn else { return String(localized: "не подключено") }
+            return claude.email ?? String(localized: "подключено")
         case .openaiKey, .anthropicKey:
-            return isReady(p) ? "ключ сохранён" : "нет ключа"
+            return isReady(p) ? String(localized: "ключ сохранён") : String(localized: "нет ключа")
         case .customOpenAI:
-            return isReady(p) ? "сервер настроен" : "не настроено"
+            return isReady(p) ? String(localized: "сервер настроен") : String(localized: "не настроено")
         }
     }
 
@@ -171,7 +171,7 @@ final class AIChatService: ObservableObject {
                     try await claude.send(text, model: override ?? self.settings.aiClaudeModel, instructions: instructions,
                                           allowTools: tools, quick: quick) { d in append(d) }
                 case .openaiKey:
-                    guard let key = Keychain.get(OpenAIKeyBackend.account), !key.isEmpty else { throw AIError.message("Добавьте ключ OpenAI в настройках") }
+                    guard let key = Keychain.get(OpenAIKeyBackend.account), !key.isEmpty else { throw AIError.message(String(localized: "Добавьте ключ OpenAI в настройках")) }
                     if tools {
                         try await ToolCalling.openAICompatible(baseURL: "https://api.openai.com/v1", key: key, model: self.settings.aiOpenAIModel,
                                                                system: system, history: history, runTool: runner, onDelta: append)
@@ -180,7 +180,7 @@ final class AIChatService: ObservableObject {
                                                           system: quick ? system : nil, onDelta: append)
                     }
                 case .anthropicKey:
-                    guard let key = Keychain.get(AnthropicKeyBackend.account), !key.isEmpty else { throw AIError.message("Добавьте ключ Anthropic в настройках") }
+                    guard let key = Keychain.get(AnthropicKeyBackend.account), !key.isEmpty else { throw AIError.message(String(localized: "Добавьте ключ Anthropic в настройках")) }
                     if tools {
                         try await ToolCalling.anthropic(key: key, model: self.settings.aiAnthropicModel, system: system,
                                                         history: history, runTool: runner, onDelta: append)
@@ -190,8 +190,8 @@ final class AIChatService: ObservableObject {
                     }
                 case .customOpenAI:
                     let key = Keychain.get(CustomOpenAIBackend.account) ?? ""
-                    guard !self.settings.aiCustomBaseURL.isEmpty else { throw AIError.message("Добавьте Base URL своей ИИ в настройках") }
-                    guard !self.settings.aiCustomModel.isEmpty else { throw AIError.message("Добавьте модель своей ИИ в настройках") }
+                    guard !self.settings.aiCustomBaseURL.isEmpty else { throw AIError.message(String(localized: "Добавьте Base URL своей ИИ в настройках")) }
+                    guard !self.settings.aiCustomModel.isEmpty else { throw AIError.message(String(localized: "Добавьте модель своей ИИ в настройках")) }
                     if tools {
                         do {
                             try await ToolCalling.openAICompatible(baseURL: self.settings.aiCustomBaseURL, key: key, model: self.settings.aiCustomModel,
@@ -217,7 +217,7 @@ final class AIChatService: ObservableObject {
     private var tabyTask: Task<Void, Never>?
 
     static func tabyPersona(name: String) -> String {
-        "Ты — \(name), маленький дружелюбный помощник, живущий под вырезом камеры MacBook. Отвечай по-русски 1–3 короткими предложениями, без Markdown и списков, по-человечески и по делу. Опирайся на контекст дня пользователя."
+        "Ты — \(name), маленький дружелюбный помощник, живущий под вырезом камеры MacBook. \(AppLanguage.replyInstruction) Отвечай 1–3 короткими предложениями, без Markdown и списков, по-человечески и по делу. Опирайся на контекст дня пользователя."
     }
 
     func askTaby(_ raw: String) {
@@ -254,10 +254,10 @@ final class AIChatService: ObservableObject {
                                      tools: tools, runner: runner, codex: self.tabyCodex, claude: self.tabyClaude, onDelta: append)
             } catch is CancellationError {
             } catch {
-                self.tabyAnswer = "Не получилось ответить: \(error.localizedDescription)"
+                self.tabyAnswer = String(localized: "Не получилось ответить: \(error.localizedDescription)")
             }
             self.tabyAnswer = self.tabyAnswer.trimmingCharacters(in: .whitespacesAndNewlines)
-            if self.tabyAnswer.isEmpty { self.tabyAnswer = "Хм, не нашёлся с ответом." }
+            if self.tabyAnswer.isEmpty { self.tabyAnswer = String(localized: "Хм, не нашёлся с ответом.") }
             self.tabyThinking = false
             self.onRespondingChanged?(false)
         }
@@ -325,14 +325,14 @@ final class AIChatService: ObservableObject {
             messages[i].isStreaming = false
             if let error {
                 if case AIError.cancelled = error {
-                    if messages[i].text.isEmpty { messages[i].text = "_Остановлено_" }
+                    if messages[i].text.isEmpty { messages[i].text = String(localized: "_Остановлено_") }
                 } else {
                     messages[i].isError = true
                     messages[i].text = (messages[i].text.isEmpty ? "" : messages[i].text + "\n\n") + error.localizedDescription
                     onAssistantError?(error.localizedDescription)
                 }
             } else if messages[i].text.isEmpty {
-                messages[i].text = "_Пустой ответ_"
+                messages[i].text = String(localized: "_Пустой ответ_")
             }
         }
         setResponding(false)

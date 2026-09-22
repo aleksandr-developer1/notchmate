@@ -138,11 +138,11 @@ final class AppleNotesService: NotesStore {
         }
         switch result {
         case .success:
-            lastCaptureMessage = "Сохранено в «\(title)»"
+            lastCaptureMessage = String(localized: "Сохранено в «\(title)»")
             refresh(force: true)
             return true
         case .failure(let error):
-            lastCaptureMessage = "Не удалось сохранить: \(error.message)"
+            lastCaptureMessage = String(localized: "Не удалось сохранить: \(error.message)")
             return false
         }
     }
@@ -232,7 +232,7 @@ final class AppleNotesService: NotesStore {
         guard p.terminationStatus == 0 else {
             let text = String(decoding: errData, as: UTF8.self)
             if text.contains("-1743") || text.contains("Not authorized") {
-                return .failure(NotesError(message: "Нет доступа к «Заметкам» — разрешите в Автоматизации"))
+                return .failure(NotesError(message: String(localized: "Нет доступа к «Заметкам» — разрешите в Автоматизации")))
             }
             return .failure(NotesError(message: text.trimmingCharacters(in: .whitespacesAndNewlines)))
         }

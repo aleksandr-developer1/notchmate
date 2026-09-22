@@ -33,8 +33,8 @@ struct ContextLoad: Identifiable {
 @MainActor
 enum HealthAnalytics {
     enum Metric { case stress, pulse
-        var unit: String { self == .stress ? "" : " уд/мин" }
-        var title: String { self == .stress ? "стресс" : "пульс" }
+        var unit: String { self == .stress ? "" : String(localized: " уд/мин") }
+        var title: String { self == .stress ? String(localized: "стресс") : String(localized: "пульс") }
     }
 
     static func metric(_ days: [HealthDay]) -> Metric {
@@ -102,7 +102,7 @@ enum HealthAnalytics {
                 return ContextLoad(title: label, icon: label.contains(".") ? "globe" : "app.fill", value: a, delta: a - base, minutes: v.count * step)
             }
         if away.count >= 5, let a = avg(away) {
-            loads.append(ContextLoad(title: "Не за Mac", icon: "figure.walk", value: a, delta: a - base, minutes: away.count * step))
+            loads.append(ContextLoad(title: String(localized: "Не за Mac"), icon: "figure.walk", value: a, delta: a - base, minutes: away.count * step))
         }
         return (m, loads.sorted { $0.delta > $1.delta }, base)
     }
@@ -125,13 +125,13 @@ enum HealthAnalytics {
         let (m, loads, base) = contextLoads(days: service.recent(14), log: service.contextLog)
 
         if let worst = loads.first, worst.delta >= (m == .stress ? 5 : 4) {
-            out.append(.init(icon: worst.icon, title: "Сильнее всего нагружают: \(worst.title.lowercased())",
-                             detail: "\(m.title) в среднем \(Int(worst.value))\(m.unit) — на \(Int(worst.delta)) выше обычного за Mac",
+            out.append(.init(icon: worst.icon, title: String(localized: "Сильнее всего нагружают: \(worst.title.lowercased())"),
+                             detail: String(localized: "\(m.title) в среднем \(Int(worst.value))\(m.unit) — на \(Int(worst.delta)) выше обычного за Mac"),
                              tone: .bad))
         }
         if let best = loads.last, best.delta <= -(m == .stress ? 4 : 3) {
-            out.append(.init(icon: best.icon, title: "Спокойнее всего: \(best.title.lowercased())",
-                             detail: "\(m.title) \(Int(best.value))\(m.unit), на \(Int(-best.delta)) ниже обычного",
+            out.append(.init(icon: best.icon, title: String(localized: "Спокойнее всего: \(best.title.lowercased())"),
+                             detail: String(localized: "\(m.title) \(Int(best.value))\(m.unit), на \(Int(-best.delta)) ниже обычного"),
                              tone: .good))
         }
 
@@ -139,15 +139,15 @@ enum HealthAnalytics {
         let byHour = hourly(days: service.recent(14), m).filter { (9...20).contains($0.key) }
         if byHour.count >= 4, let calm = byHour.min(by: { $0.value < $1.value }), let tense = byHour.max(by: { $0.value < $1.value }),
            tense.value - calm.value >= (m == .stress ? 8 : 5) {
-            out.append(.init(icon: "clock", title: "Лучшее время для сложных задач — \(calm.key):00–\(calm.key + 1):00",
-                             detail: "Пик напряжения обычно в \(tense.key):00 (\(Int(tense.value)) против \(Int(calm.value)))",
+            out.append(.init(icon: "clock", title: String(localized: "Лучшее время для сложных задач — \(calm.key):00–\(calm.key + 1):00"),
+                             detail: String(localized: "Пик напряжения обычно в \(tense.key):00 (\(Int(tense.value)) против \(Int(calm.value)))"),
                              tone: .neutral))
         }
 
         // Body Battery spent during the working day.
         if let t = service.today, let drain = workdayDrain(t, log: service.contextLog), drain >= 15 {
-            out.append(.init(icon: "battery.25percent", title: "За рабочий день ушло \(Int(drain)) Body Battery",
-                             detail: t.bbLatest.map { "Сейчас \(Int($0)) — " + ($0 < 30 ? "лучше закругляться" : "запас ещё есть") } ?? "",
+            out.append(.init(icon: "battery.25percent", title: String(localized: "За рабочий день ушло \(Int(drain)) Body Battery"),
+                             detail: t.bbLatest.map { String(localized: "Сейчас \(Int($0)) — ") + ($0 < 30 ? String(localized: "лучше закругляться") : String(localized: "запас ещё есть")) } ?? "",
                              tone: drain > 45 ? .bad : .neutral))
         }
 
@@ -156,12 +156,12 @@ enum HealthAnalytics {
         let short = month.filter { $0.sleepSeconds! < 6.5 * 3600 }, long = month.filter { $0.sleepSeconds! >= 7 * 3600 }
         if short.count >= 3, long.count >= 3 {
             if let a = avg(short.compactMap(\.stressAvg)), let b = avg(long.compactMap(\.stressAvg)), a - b >= 4 {
-                out.append(.init(icon: "bed.double.fill", title: "Недосып заметен в стрессе",
-                                 detail: "После ночей меньше 6,5 ч средний стресс \(Int(a)), после 7+ ч — \(Int(b))",
+                out.append(.init(icon: "bed.double.fill", title: String(localized: "Недосып заметен в стрессе"),
+                                 detail: String(localized: "После ночей меньше 6,5 ч средний стресс \(Int(a)), после 7+ ч — \(Int(b))"),
                                  tone: .bad))
             } else if let a = avg(short.compactMap(\.restingHR)), let b = avg(long.compactMap(\.restingHR)), a - b >= 2 {
-                out.append(.init(icon: "bed.double.fill", title: "Недосып поднимает пульс покоя",
-                                 detail: "\(Int(a)) уд/мин после короткого сна против \(Int(b)) после 7+ ч", tone: .bad))
+                out.append(.init(icon: "bed.double.fill", title: String(localized: "Недосып поднимает пульс покоя"),
+                                 detail: String(localized: "\(Int(a)) уд/мин после короткого сна против \(Int(b)) после 7+ ч"), tone: .bad))
             }
         }
 
@@ -171,33 +171,33 @@ enum HealthAnalytics {
             return (a, b)
         }
         if let (a, b) = change(\.hrvLastNight), abs(a - b) >= 3 {
-            out.append(.init(icon: "waveform.path.ecg", title: a > b ? "HRV растёт" : "HRV снижается",
-                             detail: "\(Int(a)) мс в среднем за неделю против \(Int(b)) неделей раньше" + (a > b ? " — восстановление лучше" : " — организму тяжелее"),
+            out.append(.init(icon: "waveform.path.ecg", title: a > b ? String(localized: "HRV растёт") : String(localized: "HRV снижается"),
+                             detail: String(localized: "\(Int(a)) мс в среднем за неделю против \(Int(b)) неделей раньше") + (a > b ? String(localized: " — восстановление лучше") : String(localized: " — организму тяжелее")),
                              tone: a > b ? .good : .bad))
         }
         if let (a, b) = change(\.restingHR), abs(a - b) >= 2 {
-            out.append(.init(icon: "heart", title: a < b ? "Пульс покоя снизился" : "Пульс покоя вырос",
-                             detail: "\(Int(a)) против \(Int(b)) уд/мин неделей раньше", tone: a < b ? .good : .bad))
+            out.append(.init(icon: "heart", title: a < b ? String(localized: "Пульс покоя снизился") : String(localized: "Пульс покоя вырос"),
+                             detail: String(localized: "\(Int(a)) против \(Int(b)) уд/мин неделей раньше"), tone: a < b ? .good : .bad))
         }
         if let (a, b) = change(\.sleepSeconds), abs(a - b) >= 20 * 60 {
-            out.append(.init(icon: "moon.zzz.fill", title: a > b ? "Спишь больше" : "Спишь меньше",
-                             detail: "\(hours(a)) в среднем против \(hours(b)) неделей раньше", tone: a > b ? .good : .bad))
+            out.append(.init(icon: "moon.zzz.fill", title: a > b ? String(localized: "Спишь больше") : String(localized: "Спишь меньше"),
+                             detail: String(localized: "\(hours(a)) в среднем против \(hours(b)) неделей раньше"), tone: a > b ? .good : .bad))
         }
         if let (a, b) = change(\.stressAvg), abs(a - b) >= 4 {
-            out.append(.init(icon: "gauge.with.dots.needle.33percent", title: a < b ? "Неделя спокойнее прошлой" : "Неделя напряжённее прошлой",
-                             detail: "Средний стресс \(Int(a)) против \(Int(b))", tone: a < b ? .good : .bad))
+            out.append(.init(icon: "gauge.with.dots.needle.33percent", title: a < b ? String(localized: "Неделя спокойнее прошлой") : String(localized: "Неделя напряжённее прошлой"),
+                             detail: String(localized: "Средний стресс \(Int(a)) против \(Int(b))"), tone: a < b ? .good : .bad))
         }
 
         // Does breathing help?
         if let effect = breathingEffect(service: service, breathing: breathing, m) {
-            out.append(.init(icon: "wind", title: effect.drop > 0 ? "Дыхание работает" : "Дыхание пока не снижает напряжение",
-                             detail: "\(effect.count) сесс. · \(m.title) через 15 мин " + (effect.drop > 0 ? "ниже на \(Int(effect.drop))" : "без изменений"),
+            out.append(.init(icon: "wind", title: effect.drop > 0 ? String(localized: "Дыхание работает") : String(localized: "Дыхание пока не снижает напряжение"),
+                             detail: String(localized: "\(effect.count) сесс. · \(m.title) через 15 мин ") + (effect.drop > 0 ? String(localized: "ниже на \(Int(effect.drop))") : String(localized: "без изменений")),
                              tone: effect.drop > 0 ? .good : .neutral))
         }
 
         if out.isEmpty, base != nil {
-            out.append(.init(icon: "sparkles", title: "Собираю данные",
-                             detail: "Через пару дней с часами и NotchMate здесь появятся закономерности", tone: .neutral))
+            out.append(.init(icon: "sparkles", title: String(localized: "Собираю данные"),
+                             detail: String(localized: "Через пару дней с часами и NotchMate здесь появятся закономерности"), tone: .neutral))
         }
         return out
     }
@@ -229,15 +229,15 @@ enum HealthAnalytics {
 
     static func hours(_ seconds: Double) -> String {
         let m = Int(seconds / 60)
-        return "\(m / 60) ч \(String(format: "%02d", m % 60)) мин"
+        return String(localized: "\(m / 60) ч \(String(format: "%02d", m % 60)) мин")
     }
 
     static func stressLevel(_ v: Double) -> (title: String, color: Color) {
         switch v {
-        case ..<26: return ("покой", Color(red: 0.35, green: 0.7, blue: 1))
-        case ..<51: return ("низкий", Color(red: 1, green: 0.78, blue: 0.3))
-        case ..<76: return ("средний", Color(red: 1, green: 0.55, blue: 0.2))
-        default: return ("высокий", Color(red: 1, green: 0.3, blue: 0.25))
+        case ..<26: return (String(localized: "покой"), Color(red: 0.35, green: 0.7, blue: 1))
+        case ..<51: return (String(localized: "низкий"), Color(red: 1, green: 0.78, blue: 0.3))
+        case ..<76: return (String(localized: "средний"), Color(red: 1, green: 0.55, blue: 0.2))
+        default: return (String(localized: "высокий"), Color(red: 1, green: 0.3, blue: 0.25))
         }
     }
 

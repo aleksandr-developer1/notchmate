@@ -82,7 +82,7 @@ final class AppEnvironment: ObservableObject {
             guard session.seconds >= 30 else { return }
             self.companion.react(.zen, for: 5)
             let minutes = max(1, Int((session.seconds / 60).rounded()))
-            self.companion.say(completed ? "Готово: \(minutes) мин дыхания. Посмотрим, как изменится стресс 🌿" : "Хорошая пауза — \(minutes) мин 🌿", force: true)
+            self.companion.say(completed ? String(localized: "Готово: \(minutes) мин дыхания. Посмотрим, как изменится стресс 🌿") : String(localized: "Хорошая пауза — \(minutes) мин 🌿"), force: true)
             // Garmin needs a few minutes to sync the watch; check the effect later.
             DispatchQueue.main.asyncAfter(deadline: .now() + 20 * 60) { self.health.refresh(force: true) }
         }

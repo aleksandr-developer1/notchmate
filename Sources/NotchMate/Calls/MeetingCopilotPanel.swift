@@ -90,8 +90,8 @@ struct MeetingCopilotView: View {
             }
             if copilot.hints.isEmpty {
                 Text(copilot.isListening
-                     ? "Слушаю разговор — подсказки появятся сами на паузах. ⌃⌥H — подсказать сейчас."
-                     : "Запускаю запись и расшифровку…")
+                     ? String(localized: "Слушаю разговор — подсказки появятся сами на паузах. ⌃⌥H — подсказать сейчас.")
+                     : String(localized: "Запускаю запись и расшифровку…"))
                     .font(Theme.font(12)).foregroundStyle(Theme.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
@@ -123,7 +123,7 @@ struct MeetingCopilotView: View {
     private var header: some View {
         HStack(spacing: 8) {
             Image(systemName: "sparkles").font(.system(size: 12, weight: .bold)).foregroundStyle(accent)
-            Text("Помощник").font(Theme.font(13, .semibold)).foregroundStyle(.white)
+            Text(String(localized: "Помощник")).font(Theme.font(13, .semibold)).foregroundStyle(.white)
             status
             Spacer(minLength: 4)
             modelMenu
@@ -131,12 +131,12 @@ struct MeetingCopilotView: View {
             Button { copilot.clear() } label: {
                 Image(systemName: "trash").font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.secondary)
             }
-            .buttonStyle(PressableStyle()).help("Очистить подсказки")
+            .buttonStyle(PressableStyle()).help(String(localized: "Очистить подсказки"))
             .opacity(copilot.hints.isEmpty ? 0 : 1)
             Button { copilot.close() } label: {
                 Image(systemName: "xmark").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.secondary)
             }
-            .buttonStyle(PressableStyle()).help("Выключить помощника (запись созвона продолжится)")
+            .buttonStyle(PressableStyle()).help(String(localized: "Выключить помощника (запись созвона продолжится)"))
         }
     }
 
@@ -151,13 +151,13 @@ struct MeetingCopilotView: View {
                 }
             }
         } else if !copilot.hints.isEmpty {
-            Text("встреча закончилась").font(Theme.font(10)).foregroundStyle(Theme.tertiary)
+            Text(String(localized: "встреча закончилась")).font(Theme.font(10)).foregroundStyle(Theme.tertiary)
         }
     }
 
     private var modelMenu: some View {
         Menu {
-            Button("Самая быстрая из доступных") { copilot.chooseModel("") }
+            Button(String(localized: "Самая быстрая из доступных")) { copilot.chooseModel("") }
             Divider()
             ForEach(copilot.fastModels) { m in
                 Button(m.available ? m.title : "\(m.title) — \(m.note)") { copilot.chooseModel(m.id) }
@@ -166,14 +166,14 @@ struct MeetingCopilotView: View {
         } label: {
             HStack(spacing: 3) {
                 Image(systemName: "bolt.fill").font(.system(size: 9, weight: .bold))
-                Text(copilot.currentModel.map { $0.model } ?? "нет модели").font(Theme.font(10.5, .semibold)).lineLimit(1)
+                Text(copilot.currentModel.map { $0.model } ?? String(localized: "нет модели")).font(Theme.font(10.5, .semibold)).lineLimit(1)
             }
             .foregroundStyle(copilot.currentModel == nil ? Color.orange : Theme.secondary)
             .padding(.horizontal, 7).frame(height: 20)
             .background(Capsule().fill(Theme.surface))
         }
         .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
-        .help("Модель для подсказок — только быстрые")
+        .help(String(localized: "Модель для подсказок — только быстрые"))
     }
 
     private var repoMenu: some View {
@@ -185,29 +185,29 @@ struct MeetingCopilotView: View {
                 Button((root as NSString).lastPathComponent) { copilot.chooseRepo(root) }
             }
             Divider()
-            Button("Выбрать папку…") {
+            Button(String(localized: "Выбрать папку…")) {
                 let open = NSOpenPanel()
                 open.canChooseDirectories = true
                 open.canChooseFiles = false
                 if open.runModal() == .OK, let url = open.url { copilot.chooseRepo(RepoDetector.gitRoot(url.path) ?? url.path) }
             }
-            Button("Без кода") { copilot.chooseRepo(nil) }
+            Button(String(localized: "Без кода")) { copilot.chooseRepo(nil) }
         } label: {
             HStack(spacing: 3) {
                 Image(systemName: "chevron.left.forwardslash.chevron.right").font(.system(size: 9, weight: .bold))
-                Text(copilot.repoRoot.map { ($0 as NSString).lastPathComponent } ?? "без кода").font(Theme.font(10.5, .semibold)).lineLimit(1)
+                Text(copilot.repoRoot.map { ($0 as NSString).lastPathComponent } ?? String(localized: "без кода")).font(Theme.font(10.5, .semibold)).lineLimit(1)
             }
             .foregroundStyle(copilot.repoRoot == nil ? Theme.tertiary : Theme.secondary)
             .padding(.horizontal, 7).frame(height: 20)
             .background(Capsule().fill(Theme.surface))
         }
         .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
-        .help("По какому проекту подсказывать")
+        .help(String(localized: "По какому проекту подсказывать"))
     }
 
     private var input: some View {
         HStack(spacing: 8) {
-            TextField("Спросить: что ответить про сроки?", text: $copilot.draft)
+            TextField(String(localized: "Спросить: что ответить про сроки?"), text: $copilot.draft)
                 .textFieldStyle(.plain).font(Theme.font(12)).foregroundStyle(.white)
                 .focused($inputFocused)
                 .onSubmit { copilot.ask() }
@@ -216,7 +216,7 @@ struct MeetingCopilotView: View {
             Button { copilot.draft.isEmpty ? copilot.hintNow() : copilot.ask() } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "sparkles").font(.system(size: 10, weight: .bold))
-                    Text("Подсказать").font(Theme.font(11, .bold))
+                    Text(String(localized: "Подсказать")).font(Theme.font(11, .bold))
                 }
                 .foregroundStyle(.black).padding(.horizontal, 10).frame(height: 28)
                 .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(accent))
@@ -238,7 +238,7 @@ private struct HintCard: View {
             if hint.isError {
                 Text(hint.text).font(Theme.font(11.5)).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
             } else if hint.lines.isEmpty {
-                Text(hint.isStreaming ? "Думаю…" : "Добавить нечего").font(Theme.font(11.5)).foregroundStyle(Theme.tertiary)
+                Text(hint.isStreaming ? String(localized: "Думаю…") : String(localized: "Добавить нечего")).font(Theme.font(11.5)).foregroundStyle(Theme.tertiary)
             } else {
                 ForEach(hint.lines) { line in
                     HStack(alignment: .firstTextBaseline, spacing: 7) {

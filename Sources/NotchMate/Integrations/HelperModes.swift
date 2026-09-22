@@ -57,7 +57,7 @@ enum MCPServer {
                 reply(id, ["protocolVersion": version,
                            "capabilities": ["tools": ["listChanged": false]],
                            "serverInfo": ["name": "notchmate", "title": "NotchMate", "version": "1.0"],
-                           "instructions": "Инструменты NotchMate: заметки Obsidian (добавить, найти), Jira (задачи, списание времени), фокус-таймер, календарь, музыка, сообщения в вырезе MacBook."])
+                           "instructions": String(localized: "Инструменты NotchMate: заметки Obsidian (добавить, найти), Jira (задачи, списание времени), фокус-таймер, календарь, музыка, сообщения в вырезе MacBook.")])
             case "ping":
                 reply(id, [:])
             case "tools/list":
@@ -68,7 +68,7 @@ enum MCPServer {
                 if let r = BridgeClient.post("/tool", ["name": name, "arguments": arguments], timeout: 60) {
                     reply(id, ["content": [["type": "text", "text": r["text"] as? String ?? ""]], "isError": r["isError"] as? Bool ?? false])
                 } else {
-                    reply(id, ["content": [["type": "text", "text": "NotchMate не запущен — откройте приложение."]], "isError": true])
+                    reply(id, ["content": [["type": "text", "text": String(localized: "NotchMate не запущен — откройте приложение.")]], "isError": true])
                 }
             default:
                 let msg: [String: Any] = ["jsonrpc": "2.0", "id": id!, "error": ["code": -32601, "message": "Method not found: \(method)"]]

@@ -14,13 +14,13 @@ enum Permission: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .microphone: return "Микрофон"
-        case .screenRecording: return "Запись экрана и звука"
-        case .speech: return "Распознавание речи"
-        case .calendar: return "Календарь"
-        case .reminders: return "Напоминания"
-        case .accessibility: return "Универсальный доступ"
-        case .automation: return "Управление браузером"
+        case .microphone: return String(localized: "Микрофон")
+        case .screenRecording: return String(localized: "Запись экрана и звука")
+        case .speech: return String(localized: "Распознавание речи")
+        case .calendar: return String(localized: "Календарь")
+        case .reminders: return String(localized: "Напоминания")
+        case .accessibility: return String(localized: "Универсальный доступ")
+        case .automation: return String(localized: "Управление браузером")
         }
     }
 
@@ -51,13 +51,13 @@ enum Permission: String, CaseIterable, Identifiable {
     /// One line: what stops working without it.
     var why: String {
         switch self {
-        case .microphone: return "Записать ваш голос на созвоне и понять, что разговор вообще идёт."
-        case .screenRecording: return "Записать голоса собеседников — звук Zoom, Телемоста или браузера. Экран не снимается и никуда не отправляется."
-        case .speech: return "Расшифровать запись созвона встроенным движком macOS, когда whisper не установлен."
-        case .calendar: return "Показывать ближайшую встречу в вырезе, напоминать о ней и понимать, что идёт созвон."
-        case .reminders: return "Показывать дела из «Напоминаний» на шкале дня и отмечать их выполненными."
-        case .accessibility: return "Замечать баннеры уведомлений и новые сообщения, чтобы помощник на них реагировал."
-        case .automation: return "Видеть адрес открытой вкладки: созвон в браузере и отвлекающие сайты во время фокуса."
+        case .microphone: return String(localized: "Записать ваш голос на созвоне и понять, что разговор вообще идёт.")
+        case .screenRecording: return String(localized: "Записать голоса собеседников — звук Zoom, Телемоста или браузера. Экран не снимается и никуда не отправляется.")
+        case .speech: return String(localized: "Расшифровать запись созвона встроенным движком macOS, когда whisper не установлен.")
+        case .calendar: return String(localized: "Показывать ближайшую встречу в вырезе, напоминать о ней и понимать, что идёт созвон.")
+        case .reminders: return String(localized: "Показывать дела из «Напоминаний» на шкале дня и отмечать их выполненными.")
+        case .accessibility: return String(localized: "Замечать баннеры уведомлений и новые сообщения, чтобы помощник на них реагировал.")
+        case .automation: return String(localized: "Видеть адрес открытой вкладки: созвон в браузере и отвлекающие сайты во время фокуса.")
         }
     }
 
@@ -94,10 +94,10 @@ enum PermissionState: Equatable {
 
     var title: String {
         switch self {
-        case .granted: return "разрешено"
-        case .denied: return "запрещено"
-        case .notDetermined: return "не запрашивалось"
-        case .unknown: return "неизвестно"
+        case .granted: return String(localized: "разрешено")
+        case .denied: return String(localized: "запрещено")
+        case .notDetermined: return String(localized: "не запрашивалось")
+        case .unknown: return String(localized: "неизвестно")
         }
     }
 

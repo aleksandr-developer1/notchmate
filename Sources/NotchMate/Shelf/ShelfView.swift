@@ -14,11 +14,11 @@ struct ShelfView: View {
                     HStack {
                         Text("\(shelf.items.count) \(plural(shelf.items.count))")
                             .font(Theme.font(12, .semibold)).foregroundStyle(Theme.secondary)
-                        Text("· перетащите наружу, чтобы использовать").font(Theme.font(11)).foregroundStyle(Theme.tertiary)
+                        Text(String(localized: "· перетащите наружу, чтобы использовать")).font(Theme.font(11)).foregroundStyle(Theme.tertiary)
                         Spacer()
-                        IconButton(systemName: "airplayaudio", size: 11, frame: 26, help: "AirDrop всё") { shelf.airDrop(shelf.items) }
-                        IconButton(systemName: "doc.on.doc", size: 11, frame: 26, help: "Копировать всё") { shelf.copy(shelf.items) }
-                        IconButton(systemName: "trash", size: 11, frame: 26, tint: .red, help: "Очистить полку") {
+                        IconButton(systemName: "airplayaudio", size: 11, frame: 26, help: String(localized: "AirDrop всё")) { shelf.airDrop(shelf.items) }
+                        IconButton(systemName: "doc.on.doc", size: 11, frame: 26, help: String(localized: "Копировать всё")) { shelf.copy(shelf.items) }
+                        IconButton(systemName: "trash", size: 11, frame: 26, tint: .red, help: String(localized: "Очистить полку")) {
                             withAnimation(.spring(response: 0.35)) { shelf.clear() }
                         }
                     }
@@ -45,7 +45,7 @@ struct ShelfView: View {
                 .font(.system(size: 30, weight: .medium))
                 .foregroundStyle(vm.isDropTargeted ? .white : Theme.secondary)
                 .symbolEffect(.bounce, value: vm.isDropTargeted)
-            Text(vm.isDropTargeted ? "Отпустите — сохраню на полке" : "Перетащите файлы, картинки или текст на вырез")
+            Text(vm.isDropTargeted ? String(localized: "Отпустите — сохраню на полке") : String(localized: "Перетащите файлы, картинки или текст на вырез"))
                 .font(Theme.font(13, .semibold)).foregroundStyle(vm.isDropTargeted ? .white : Theme.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -60,9 +60,9 @@ struct ShelfView: View {
 
     private func plural(_ n: Int) -> String {
         let m10 = n % 10, m100 = n % 100
-        if m10 == 1 && m100 != 11 { return "объект" }
-        if (2...4).contains(m10) && !(12...14).contains(m100) { return "объекта" }
-        return "объектов"
+        if m10 == 1 && m100 != 11 { return String(localized: "объект") }
+        if (2...4).contains(m10) && !(12...14).contains(m100) { return String(localized: "объекта") }
+        return String(localized: "объектов")
     }
 }
 
@@ -95,12 +95,12 @@ private struct ShelfTile: View {
         .onDrag { NSItemProvider(contentsOf: item.url) ?? NSItemProvider() }
         .onTapGesture(count: 2) { shelf.open(item) }
         .contextMenu {
-            Button("Открыть") { shelf.open(item) }
-            Button("Показать в Finder") { shelf.reveal(item) }
-            Button("Копировать") { shelf.copy([item]) }
-            Button("Отправить через AirDrop") { shelf.airDrop([item]) }
+            Button(String(localized: "Открыть")) { shelf.open(item) }
+            Button(String(localized: "Показать в Finder")) { shelf.reveal(item) }
+            Button(String(localized: "Копировать")) { shelf.copy([item]) }
+            Button(String(localized: "Отправить через AirDrop")) { shelf.airDrop([item]) }
             Divider()
-            Button("Убрать с полки") { shelf.remove(item) }
+            Button(String(localized: "Убрать с полки")) { shelf.remove(item) }
         }
         .help(item.url.path)
     }

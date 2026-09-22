@@ -61,7 +61,7 @@ struct PermissionsFlowView: View {
                 statusPill(state)
 
                 if state == .denied {
-                    Text("macOS уже спрашивал и больше не спросит. Откройте список и включите «\(Bundle.main.appName)».")
+                    Text(String(localized: "macOS уже спрашивал и больше не спросит. Откройте список и включите «\(Bundle.main.appName)»."))
                         .font(.caption2).foregroundStyle(.secondary)
                         .multilineTextAlignment(.center).frame(maxWidth: 300)
                 }
@@ -84,7 +84,7 @@ struct PermissionsFlowView: View {
                     .disabled(asking)
 
                     if state != .granted, state != .denied {
-                        Button("Открыть Системные настройки") { center.open(p) }
+                        Button(String(localized: "Открыть Системные настройки")) { center.open(p) }
                             .buttonStyle(.link)
                     }
                 }
@@ -100,11 +100,11 @@ struct PermissionsFlowView: View {
     }
 
     private func buttonTitle(_ state: PermissionState) -> String {
-        if asking { return "Ждём macOS…" }
+        if asking { return String(localized: "Ждём macOS…") }
         switch state {
-        case .granted: return index == items.count - 1 ? "Готово" : "Дальше"
-        case .denied: return "Открыть настройки macOS"
-        default: return "Разрешить"
+        case .granted: return index == items.count - 1 ? String(localized: "Готово") : String(localized: "Дальше")
+        case .denied: return String(localized: "Открыть настройки macOS")
+        default: return String(localized: "Разрешить")
         }
     }
 
@@ -130,9 +130,9 @@ struct PermissionsFlowView: View {
                 }
             }
             Spacer()
-            Text("\(min(index + 1, items.count)) из \(items.count)").font(.caption).foregroundStyle(.secondary)
+            Text(String(localized: "\(min(index + 1, items.count)) из \(items.count)")).font(.caption).foregroundStyle(.secondary)
             Spacer()
-            Button(index == items.count - 1 ? "Готово" : "Позже") { advance() }
+            Button(index == items.count - 1 ? String(localized: "Готово") : String(localized: "Позже")) { advance() }
                 .buttonStyle(.accessoryBar)
         }
         .padding(.horizontal, 14).padding(.vertical, 8)
@@ -143,7 +143,7 @@ struct PermissionsFlowView: View {
         VStack(spacing: 12) {
             Image(systemName: center.missing.isEmpty ? "checkmark.seal.fill" : "hand.thumbsup.fill")
                 .font(.system(size: 38)).foregroundStyle(center.missing.isEmpty ? .green : .orange)
-            Text(center.missing.isEmpty ? "Всё готово" : "Можно вернуться позже")
+            Text(center.missing.isEmpty ? String(localized: "Всё готово") : String(localized: "Можно вернуться позже"))
                 .font(.system(size: 17, weight: .semibold, design: .rounded))
             if !center.missing.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
@@ -151,10 +151,10 @@ struct PermissionsFlowView: View {
                         Label(p.title, systemImage: p.icon).foregroundStyle(.secondary)
                     }
                 }
-                Text("Эти разрешения всегда можно выдать в Настройках → Разрешения.")
+                Text(String(localized: "Эти разрешения всегда можно выдать в Настройках → Разрешения."))
                     .font(.caption).foregroundStyle(.secondary)
             }
-            Button("Закрыть") { onFinish() }
+            Button(String(localized: "Закрыть")) { onFinish() }
                 .buttonStyle(.borderedProminent)
         }
         .padding(22)
@@ -179,11 +179,11 @@ struct PermissionsSettings: View {
                     row(p)
                 }
             } footer: {
-                Text("NotchMate не просит доступ к файлам и не отправляет ничего наружу: запись созвонов, расшифровка и адреса вкладок остаются на этом компьютере.")
+                Text(String(localized: "NotchMate не просит доступ к файлам и не отправляет ничего наружу: запись созвонов, расшифровка и адреса вкладок остаются на этом компьютере."))
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section {
-                Button("Пройти мастер разрешений…") { PermissionsWindow.show(onlyMissing: false) }
+                Button(String(localized: "Пройти мастер разрешений…")) { PermissionsWindow.show(onlyMissing: false) }
             }
         }
         .formStyle(.grouped)
@@ -210,7 +210,7 @@ struct PermissionsSettings: View {
                     Text(state.title).font(.caption).foregroundStyle(.secondary)
                 }
                 if state != .granted {
-                    Button("Разрешить") { Task { await center.request(p) } }
+                    Button(String(localized: "Разрешить")) { Task { await center.request(p) } }
                 }
             }
         }
@@ -235,7 +235,7 @@ enum PermissionsWindow {
             window.setContentSize(NSSize(width: 380, height: 360))
         } else {
             let w = NSWindow(contentViewController: NSHostingController(rootView: view))
-            w.title = "Разрешения"
+            w.title = String(localized: "Разрешения")
             w.styleMask = [.titled, .closable, .fullSizeContentView]
             w.titlebarAppearsTransparent = true
             w.isMovableByWindowBackground = true

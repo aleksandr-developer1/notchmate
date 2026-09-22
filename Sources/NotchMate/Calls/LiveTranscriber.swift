@@ -60,11 +60,11 @@ final class LiveTranscriber: @unchecked Sendable {
 
     init?(locale: String, onUpdate: @escaping Update, onError: @escaping (String) -> Void) {
         guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: locale)) else {
-            onError("Распознавание для «\(locale)» недоступно")
+            onError(String(localized: "Распознавание для «\(locale)» недоступно"))
             return nil
         }
         guard recognizer.supportsOnDeviceRecognition else {
-            onError("Для «\(locale)» нет офлайн-распознавания — скачайте язык в Системных настройках → Клавиатура → Диктовка")
+            onError(String(localized: "Для «\(locale)» нет офлайн-распознавания — скачайте язык в Системных настройках → Клавиатура → Диктовка"))
             return nil
         }
         self.recognizer = recognizer
@@ -185,7 +185,7 @@ final class LiveTranscriber: @unchecked Sendable {
                     self.retryAfter = Date().addingTimeInterval(min(10, Double(self.quickFailures)))
                     MeetingLog.shared.write("recognizer_backoff", ["failures": self.quickFailures])
                     if self.quickFailures == 5 {
-                        self.onError("Живая расшифровка не запускается: \(error.localizedDescription)")
+                        self.onError(String(localized: "Живая расшифровка не запускается: \(error.localizedDescription)"))
                     }
                 } else {
                     self.quickFailures = 0

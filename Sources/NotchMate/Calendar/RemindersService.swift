@@ -60,7 +60,7 @@ final class RemindersService: ObservableObject {
         guard hasAccess else { items = []; lists = []; return }
         let all = store.calendars(for: .reminder)
         lists = all
-            .map { CalendarSource(id: $0.calendarIdentifier, title: $0.title, account: $0.source?.title ?? "Другие",
+            .map { CalendarSource(id: $0.calendarIdentifier, title: $0.title, account: $0.source?.title ?? String(localized: "Другие"),
                                   color: Color(nsColor: $0.color ?? .systemOrange)) }
             .sorted { ($0.account, $0.title) < ($1.account, $1.title) }
         let chosen = all.filter { !excluded.contains($0.calendarIdentifier) }
@@ -70,7 +70,7 @@ final class RemindersService: ObservableObject {
         store.fetchReminders(matching: predicate) { [weak self] reminders in
             let mapped: [ReminderItem] = (reminders ?? []).compactMap { r in
                 guard let comps = r.dueDateComponents, let due = Calendar.current.date(from: comps) else { return nil }
-                return ReminderItem(id: r.calendarItemIdentifier, title: r.title ?? "Без названия", due: due,
+                return ReminderItem(id: r.calendarItemIdentifier, title: r.title ?? String(localized: "Без названия"), due: due,
                                     hasTime: comps.hour != nil,
                                     color: Color(nsColor: r.calendar?.color ?? .systemOrange))
             }
@@ -103,12 +103,12 @@ final class RemindersService: ObservableObject {
     }
 
     func describe() -> String {
-        guard hasAccess else { return "Напоминания: нет доступа" }
-        guard !items.isEmpty else { return "Напоминания на сегодня: нет" }
+        guard hasAccess else { return String(localized: "Напоминания: нет доступа") }
+        guard !items.isEmpty else { return String(localized: "Напоминания на сегодня: нет") }
         let f = DateFormatter(); f.dateFormat = "H:mm"
-        return "Напоминания на сегодня:\n" + items.map { i in
-            let when = i.hasTime ? f.string(from: i.due) : "без времени"
-            return "- \(i.title) (\(when)\(i.isOverdue ? ", просрочено" : ""))"
+        return String(localized: "Напоминания на сегодня:\n") + items.map { i in
+            let when = i.hasTime ? f.string(from: i.due) : String(localized: "без времени")
+            return "- \(i.title) (\(when)\(i.isOverdue ? String(localized: ", просрочено") : ""))"
         }.joined(separator: "\n")
     }
 }

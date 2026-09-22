@@ -14,10 +14,10 @@ final class HealthService: ObservableObject {
 
         var text: String {
             switch self {
-            case .off: return "выключено"
+            case .off: return String(localized: "выключено")
             case .setupNeeded(let s): return s
-            case .syncing: return "синхронизация…"
-            case .ok(let d): return d.map { "обновлено " + Self.relative.localizedString(for: $0, relativeTo: Date()) } ?? "подключено"
+            case .syncing: return String(localized: "синхронизация…")
+            case .ok(let d): return d.map { String(localized: "обновлено ") + Self.relative.localizedString(for: $0, relativeTo: Date()) } ?? String(localized: "подключено")
             case .error(let s): return s
             }
         }
@@ -26,7 +26,7 @@ final class HealthService: ObservableObject {
 
         private static let relative: RelativeDateTimeFormatter = {
             let f = RelativeDateTimeFormatter()
-            f.locale = Locale(identifier: "ru_RU")
+            f.locale = AppLanguage.locale
             f.unitsStyle = .short
             return f
         }()
@@ -104,7 +104,7 @@ final class HealthService: ObservableObject {
     /// Opens Terminal: installs the helper into its own venv (first time) and asks for the login there.
     /// The password is typed into Garmin's login by the user and never passes through NotchMate.
     func connectGarmin() {
-        guard let script = scriptURL else { garminState = .error("нет скрипта синхронизации"); return }
+        guard let script = scriptURL else { garminState = .error(String(localized: "нет скрипта синхронизации")); return }
         let fm = FileManager.default
         try? fm.createDirectory(at: Self.supportURL, withIntermediateDirectories: true)
         let installed = Self.supportURL.appendingPathComponent("garmin_sync.py")
@@ -112,34 +112,37 @@ final class HealthService: ObservableObject {
         try? fm.copyItem(at: script, to: installed)
 
         let q = { (u: URL) in "'" + u.path.replacingOccurrences(of: "'", with: "'\\''") + "'" }
+        // Translated text goes inside double quotes: keep the shell from expanding anything in it.
+        let sh = { (t: String) in t.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "$", with: "\\$").replacingOccurrences(of: "`", with: "\\`") }
         let command = """
         #!/bin/zsh
         clear
-        echo "NotchMate · подключение Garmin Connect"
+        echo "\(sh(String(localized: "NotchMate · подключение Garmin Connect")))"
         echo
         SUPPORT=\(q(Self.supportURL))
         if [[ ! -x "$SUPPORT/venv/bin/python3" ]]; then
-          echo "▸ Устанавливаю помощник (один раз, ~30 сек)…"
+          echo "\(sh(String(localized: "▸ Устанавливаю помощник (один раз, ~30 сек)…")))"
           PY=$(command -v python3 || true)
-          if [[ -z "$PY" ]]; then echo "✗ Нужен Python 3: установите Xcode Command Line Tools (xcode-select --install)"; read; exit 1; fi
+          if [[ -z "$PY" ]]; then echo "\(sh(String(localized: "✗ Нужен Python 3: установите Xcode Command Line Tools (xcode-select --install)")))"; read; exit 1; fi
           "$PY" -m venv "$SUPPORT/venv" || { read; exit 1; }
         fi
-        "$SUPPORT/venv/bin/python3" -m pip install -q --upgrade pip garminconnect || { echo "✗ Не удалось установить garminconnect"; read; exit 1; }
+        "$SUPPORT/venv/bin/python3" -m pip install -q --upgrade pip garminconnect || { echo "\(sh(String(localized: "✗ Не удалось установить garminconnect")))"; read; exit 1; }
         "$SUPPORT/venv/bin/python3" \(q(installed)) login \(q(Self.tokensURL))
         echo
-        read "?Нажмите Enter, чтобы закрыть окно"
+        read "?\(sh(String(localized: "Нажмите Enter, чтобы закрыть окно")))"
         """
-        let file = Self.supportURL.appendingPathComponent("Подключить Garmin.command")
+        let file = Self.supportURL.appendingPathComponent(String(localized: "Подключить Garmin.command"))
         do {
             try command.write(to: file, atomically: true, encoding: .utf8)
             try fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: file.path)
         } catch {
-            garminState = .error("не удалось подготовить вход")
+            garminState = .error(String(localized: "не удалось подготовить вход"))
             return
         }
         NSWorkspace.shared.open(file)
         Settings.shared.garminEnabled = true
-        garminState = .setupNeeded("жду вход в Терминале…")
+        garminState = .setupNeeded(String(localized: "жду вход в Терминале…"))
 
         // Pick the token up as soon as the login in Terminal finishes.
         loginPoll?.invalidate()
@@ -152,7 +155,7 @@ final class HealthService: ObservableObject {
                     self.syncGarmin()
                 } else if Date().timeIntervalSince(started) > 15 * 60 {
                     t.invalidate()
-                    self.garminState = .setupNeeded("войдите в Garmin Connect")
+                    self.garminState = .setupNeeded(String(localized: "войдите в Garmin Connect"))
                 }
             }
         }
@@ -172,10 +175,10 @@ final class HealthService: ObservableObject {
     func syncGarmin() {
         guard garminProcess == nil else { return }
         guard FileManager.default.isExecutableFile(atPath: Self.venvPython.path) else {
-            garminState = .setupNeeded("нужно подключить аккаунт"); return
+            garminState = .setupNeeded(String(localized: "нужно подключить аккаунт")); return
         }
-        guard garminLoggedIn else { garminState = .setupNeeded("войдите в Garmin Connect"); return }
-        guard let script = scriptURL else { garminState = .error("нет скрипта синхронизации"); return }
+        guard garminLoggedIn else { garminState = .setupNeeded(String(localized: "войдите в Garmin Connect")); return }
+        guard let script = scriptURL else { garminState = .error(String(localized: "нет скрипта синхронизации")); return }
 
         lastGarminSync = Date()
         garminState = .syncing
@@ -191,7 +194,7 @@ final class HealthService: ObservableObject {
             try p.run()
             garminProcess = p
         } catch {
-            garminState = .error("не запустился помощник")
+            garminState = .error(String(localized: "не запустился помощник"))
             return
         }
         // Read while the script runs: reading only after exit hangs forever if the
@@ -215,13 +218,13 @@ final class HealthService: ObservableObject {
             garminState = .ok(Date())
         } else {
             switch json?["error"] as? String {
-            case "auth": garminState = .setupNeeded("войдите заново — токен истёк")
+            case "auth": garminState = .setupNeeded(String(localized: "войдите заново — токен истёк"))
             case "ratelimit", "blocked":
                 // Every new attempt extends Garmin's IP block — back off for two hours.
                 lastGarminSync = Date().addingTimeInterval(105 * 60)
-                garminState = .error("Garmin ограничил запросы с этого IP, повторю через 2 ч")
-            case "network": garminState = .error("Garmin недоступен, повторю позже")
-            default: garminState = .error(code == 0 ? "ошибка синхронизации" : "ошибка помощника (\(code))")
+                garminState = .error(String(localized: "Garmin ограничил запросы с этого IP, повторю через 2 ч"))
+            case "network": garminState = .error(String(localized: "Garmin недоступен, повторю позже"))
+            default: garminState = .error(code == 0 ? String(localized: "ошибка синхронизации") : String(localized: "ошибка помощника (\(code))"))
             }
             // Keep showing the cached days anyway.
             loadGarminCache()
@@ -254,7 +257,7 @@ final class HealthService: ObservableObject {
         let folder = appleFolderURL
         let fm = FileManager.default
         guard let urls = try? fm.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.contentModificationDateKey]) else {
-            appleState = .setupNeeded("папка экспорта не найдена")
+            appleState = .setupNeeded(String(localized: "папка экспорта не найдена"))
             return
         }
         let cutoff = Date().addingTimeInterval(-40 * 86400)
@@ -262,7 +265,7 @@ final class HealthService: ObservableObject {
             let m = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
             return m > cutoff ? (url, m) : nil
         }
-        guard !files.isEmpty else { appleState = .setupNeeded("ждём первый экспорт с iPhone"); return }
+        guard !files.isEmpty else { appleState = .setupNeeded(String(localized: "ждём первый экспорт с iPhone")); return }
         let fingerprint = files.map { "\($0.0.lastPathComponent)@\($0.1.timeIntervalSince1970)" }.sorted().joined(separator: "|")
         let newest = files.map(\.1).max()
         guard fingerprint != appleFingerprint else { appleState = .ok(newest); return }
@@ -273,7 +276,7 @@ final class HealthService: ObservableObject {
             let parsed = AppleHealthParser.parse(files: paths.compactMap { try? Data(contentsOf: $0) })
             await MainActor.run {
                 self.appleDays = parsed
-                self.appleState = parsed.isEmpty ? .error("файлы не похожи на экспорт Health Auto Export") : .ok(newest)
+                self.appleState = parsed.isEmpty ? .error(String(localized: "файлы не похожи на экспорт Health Auto Export")) : .ok(newest)
                 self.merge()
             }
         }

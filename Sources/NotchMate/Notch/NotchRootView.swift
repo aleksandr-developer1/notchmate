@@ -241,7 +241,7 @@ struct CollapsedView: View {
             case .call?:
                 TimelineView(.periodic(from: .now, by: 1)) { _ in
                     Text(calls.stage == .recording ? FocusTimer.format(calls.elapsed)
-                         : (calls.stage == .transcribing ? "расшифровка" : "протокол"))
+                         : (calls.stage == .transcribing ? String(localized: "расшифровка") : String(localized: "протокол")))
                         .font(Theme.font(compact ? 9 : 10, .bold)).monospacedDigit()
                         .foregroundStyle(calls.stage == .recording ? Color.red : Theme.jira)
                         .lineLimit(1).minimumScaleFactor(0.7)
@@ -276,7 +276,7 @@ struct CollapsedView: View {
                         VStack(alignment: compact ? .leading : .trailing, spacing: 0) {
                             Text(e.title).font(Theme.font(8, .bold)).foregroundStyle(.white.opacity(0.85)).lineLimit(1)
                             TimelineView(.periodic(from: .now, by: 15)) { _ in
-                                Text(e.isNow ? "сейчас" : "через \(max(e.minutesUntil, 0)) мин")
+                                Text(e.isNow ? String(localized: "сейчас") : String(localized: "через \(max(e.minutesUntil, 0)) мин"))
                                     .font(Theme.font(9, .bold)).monospacedDigit().foregroundStyle(e.color)
                                     .lineLimit(1).minimumScaleFactor(0.7)
                             }
@@ -328,7 +328,7 @@ struct CollapsedView: View {
         case .timerDone:
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                Text(focus.kind == .work ? "Перерыв закончился — к работе" : "\(focus.label): пора отдохнуть").font(Theme.font(13, .semibold)).foregroundStyle(.white)
+                Text(focus.kind == .work ? String(localized: "Перерыв закончился — к работе") : String(localized: "\(focus.label): пора отдохнуть")).font(Theme.font(13, .semibold)).foregroundStyle(.white)
                     .lineLimit(1).minimumScaleFactor(0.7)
             }.padding(.horizontal, 12).frame(height: 32)
         case .message(let icon, let text):
@@ -385,7 +385,7 @@ private struct AgentRow: View {
     private var timer: some View {
         TimelineView(.periodic(from: .now, by: 1)) { ctx in
             HStack(spacing: 2) {
-                Text(group.isWaiting ? "ждёт" : FocusTimer.format(ctx.date.timeIntervalSince(group.startedAt)))
+                Text(group.isWaiting ? String(localized: "ждёт") : FocusTimer.format(ctx.date.timeIntervalSince(group.startedAt)))
                     .font(Theme.font(9, .bold)).monospacedDigit()
                     .foregroundStyle(group.isWaiting ? Color.orange : group.agent.tint)
                 if group.sessions.count > 1 {
@@ -411,7 +411,7 @@ private struct AssistantStatusOverlay: View {
                         .scaleEffect(1 + CGFloat(max(0, sin(t * 3))) * 0.16)
                     Image(systemName: "sparkles").font(.system(size: 12, weight: .bold)).foregroundStyle(ai.provider.tint)
                 }
-                Text("Готовлю ответ").font(Theme.font(12, .semibold)).foregroundStyle(.white)
+                Text(String(localized: "Готовлю ответ")).font(Theme.font(12, .semibold)).foregroundStyle(.white)
                 EqualizerBars(isPlaying: true, tint: ai.provider.tint, bars: 5, height: 12)
             }
             .padding(.horizontal, 14)
@@ -459,28 +459,28 @@ private struct NowStrip: View {
                     chip {
                         Image(systemName: calls.stage == .recording ? "record.circle.fill" : "waveform")
                             .font(.system(size: 11, weight: .bold)).foregroundStyle(calls.stage == .recording ? Color.red : Theme.jira)
-                        Text(calls.stage == .recording ? "Запись созвона" : (calls.stage == .transcribing ? "Расшифровка" : "Протокол"))
+                        Text(calls.stage == .recording ? String(localized: "Запись созвона") : (calls.stage == .transcribing ? String(localized: "Расшифровка") : String(localized: "Протокол")))
                             .font(Theme.font(11, .semibold)).foregroundStyle(.white)
                         if calls.stage == .recording {
                             TimelineView(.periodic(from: .now, by: 1)) { _ in
                                 Text(FocusTimer.format(calls.elapsed)).font(Theme.font(10, .bold)).monospacedDigit().foregroundStyle(.red)
                             }
                             Button { Task { await calls.finishRecording() } } label: {
-                                Text("Стоп").font(Theme.font(10, .bold)).foregroundStyle(.black)
+                                Text(String(localized: "Стоп")).font(Theme.font(10, .bold)).foregroundStyle(.black)
                                     .padding(.horizontal, 7).frame(height: 18).background(Capsule().fill(Color.red))
                             }
                             .buttonStyle(PressableStyle())
                             Button { copilot.toggleOrHint() } label: {
                                 HStack(spacing: 3) {
                                     Image(systemName: "sparkles").font(.system(size: 9, weight: .bold))
-                                    Text(copilot.isActive ? "Подсказать" : "Помощник").font(Theme.font(10, .bold))
+                                    Text(copilot.isActive ? String(localized: "Подсказать") : String(localized: "Помощник")).font(Theme.font(10, .bold))
                                 }
                                 .foregroundStyle(.black)
                                 .padding(.horizontal, 7).frame(height: 18)
                                 .background(Capsule().fill(Color(red: 0.62, green: 0.55, blue: 1.0)))
                             }
                             .buttonStyle(PressableStyle())
-                            .help("Подсказки на встрече — что спросить, что ответить, что в коде (⌃⌥H)")
+                            .help(String(localized: "Подсказки на встрече — что спросить, что ответить, что в коде (⌃⌥H)"))
                         }
                     }
                 }
@@ -506,13 +506,13 @@ private struct NowStrip: View {
                             }
                             Text(s.project).font(Theme.font(11, .semibold)).foregroundStyle(.white).lineLimit(1)
                             TimelineView(.periodic(from: .now, by: 1)) { ctx in
-                                Text(s.state == .waiting ? "ждёт ответа" : FocusTimer.format(ctx.date.timeIntervalSince(s.startedAt)))
+                                Text(s.state == .waiting ? String(localized: "ждёт ответа") : FocusTimer.format(ctx.date.timeIntervalSince(s.startedAt)))
                                     .font(Theme.font(10, .bold)).monospacedDigit()
                                     .foregroundStyle(s.state == .waiting ? Color.orange : s.agent.tint)
                             }
                         }
                         .onTapGesture { activate(s.agent) }
-                        .help("Открыть \(s.agent.title)")
+                        .help(String(localized: "Открыть \(s.agent.title)"))
                     }
                 }
                 if focus.isActive {
@@ -706,7 +706,7 @@ struct HeaderStatus: View {
                 }
                 .foregroundStyle(battery.isCharging ? .green : (battery.level <= 20 ? .red : Theme.secondary))
             }
-            IconButton(systemName: "gearshape.fill", size: 11, frame: 24, help: "Настройки  ⌘,") {
+            IconButton(systemName: "gearshape.fill", size: 11, frame: 24, help: String(localized: "Настройки  ⌘,")) {
                 NotificationCenter.default.post(name: .notchMateOpenSettings, object: nil)
             }
         }

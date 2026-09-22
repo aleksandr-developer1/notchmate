@@ -16,10 +16,10 @@ enum FacePalette: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .oled: return "OLED"
-        case .mint: return "Мятный"
-        case .white: return "Белый"
-        case .pink: return "Розовый"
-        case .amber: return "Янтарный"
+        case .mint: return String(localized: "Мятный")
+        case .white: return String(localized: "Белый")
+        case .pink: return String(localized: "Розовый")
+        case .amber: return String(localized: "Янтарный")
         }
     }
 }
@@ -153,7 +153,7 @@ struct FaceView: View {
                 let step = Int(t * clip.fps)
                 frame(clip, range.lowerBound + (seg.loops ? step % n : min(step, n - 1)), size: size)
             } else {
-                Text("Пикси").font(Theme.font(10, .bold)).foregroundStyle(color)
+                Text(String(localized: "Пикси")).font(Theme.font(10, .bold)).foregroundStyle(color)
             }
         }
         .frame(width: size.width, height: size.height)

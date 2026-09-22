@@ -7,7 +7,7 @@ enum AIError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .message(let m): return m
-        case .cancelled: return "Остановлено"
+        case .cancelled: return String(localized: "Остановлено")
         }
     }
 }
@@ -56,7 +56,7 @@ enum CustomOpenAIBackend {
     static func models(baseURL: String, key: String) async throws -> [String] {
         let request = try makeRequest(baseURL: baseURL, path: "models", key: key, method: "GET")
         let (data, response) = try await URLSession.shared.data(for: request)
-        try validate(response, data: data, service: "Свой ИИ")
+        try validate(response, data: data, service: String(localized: "Свой ИИ"))
         guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let items = object["data"] as? [[String: Any]] else { return [] }
         return items.compactMap { $0["id"] as? String }.sorted()
@@ -81,7 +81,7 @@ enum CustomOpenAIBackend {
         guard status >= 200 && status < 300 else {
             var raw = ""
             for try await line in bytes.lines { raw += line }
-            throw AIError.message("Свой ИИ \(status): \(raw)")
+            throw AIError.message(String(localized: "Свой ИИ \(status): \(raw)"))
         }
         for try await line in bytes.lines {
             try Task.checkCancellation()
@@ -101,7 +101,7 @@ enum CustomOpenAIBackend {
         guard let base = URL(string: trimmed),
               let scheme = base.scheme, ["http", "https"].contains(scheme.lowercased()),
               base.host != nil else {
-            throw AIError.message("Укажите корректный Base URL, например http://localhost:11434/v1")
+            throw AIError.message(String(localized: "Укажите корректный Base URL, например http://localhost:11434/v1"))
         }
         let url = base.appendingPathComponent(path)
         var request = URLRequest(url: url, timeoutInterval: 600)
@@ -163,10 +163,10 @@ enum AnthropicKeyBackend {
                 if let d = obj["delta"] as? [String: Any], (d["type"] as? String) == "text_delta", let t = d["text"] as? String { onDelta(t) }
             case "message_delta":
                 if (obj["delta"] as? [String: Any])?["stop_reason"] as? String == "refusal" {
-                    onDelta("\n\n_Модель отказалась отвечать на этот запрос._")
+                    onDelta(String(localized: "\n\n_Модель отказалась отвечать на этот запрос._"))
                 }
             case "error":
-                let msg = (obj["error"] as? [String: Any])?["message"] as? String ?? "Ошибка потока"
+                let msg = (obj["error"] as? [String: Any])?["message"] as? String ?? String(localized: "Ошибка потока")
                 throw AIError.message(msg)
             default: break
             }

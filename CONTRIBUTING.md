@@ -6,7 +6,7 @@ Thanks for wanting to help! NotchMate is a small, friendly project — every bug
 
 ## Good first contributions
 
-- **English localization.** The UI is in Russian; moving strings into a `Localizable.xcstrings` catalog and translating them is the most wanted change.
+- **Translations.** NotchMate ships in 8 languages. Fixing a clumsy phrase or adding a new language is a great first PR — see below.
 - **Intel Macs.** Releases are arm64 only; a universal build is welcome.
 - **New companion animations**, bug fixes and small UI polish.
 
@@ -19,6 +19,20 @@ cd notchmate
 ```
 
 Requirements: macOS 14+, Apple Silicon, Xcode or Command Line Tools with Swift 5.10+. See the [README](README.md#build) for signing and permissions.
+
+## Translations
+
+All UI strings live in [`Resources/Localizable.xcstrings`](Resources/Localizable.xcstrings) (permission prompts in `Resources/InfoPlist.xcstrings`). The source language is Russian: every key is the Russian text, and each language has its own value. You can edit the catalog in Xcode or as JSON.
+
+- Keep format specifiers (`%@`, `%lld`, `%%`) and their count; reorder with positions like `%2$@` if your grammar needs it.
+- Keep Markdown (`**bold**`), emoji and leading/trailing spaces.
+- **New language:** add its values to both catalogs, add the code to `CFBundleLocalizations` in `Resources/Info.plist` and to `AppLanguage.supported` in `Sources/NotchMate/Core/AppLanguage.swift`.
+- **New strings in code:** write UI text as `String(localized: "…")`, then refresh the catalog:
+  ```bash
+  swift build -Xswiftc -emit-localized-strings -Xswiftc -emit-localized-strings-path -Xswiftc /tmp/strings
+  xcrun xcstringstool sync Resources/Localizable.xcstrings --stringsdata /tmp/strings/*.stringsdata
+  ```
+- Prompts sent to AI models stay in Russian on purpose: they end with an instruction to answer in the UI language.
 
 ## Pull requests
 

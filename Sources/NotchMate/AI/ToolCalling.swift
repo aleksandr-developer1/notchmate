@@ -15,7 +15,7 @@ enum ToolCalling {
         }
         var messages: [[String: Any]] = [["role": "system", "content": system]] + history.map { ["role": $0.role, "content": $0.text] }
         let base = baseURL.trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        guard let url = URL(string: base + "/chat/completions") else { throw AIError.message("Неверный Base URL") }
+        guard let url = URL(string: base + "/chat/completions") else { throw AIError.message(String(localized: "Неверный Base URL")) }
 
         for _ in 0..<maxRounds {
             try Task.checkCancellation()
@@ -31,7 +31,7 @@ enum ToolCalling {
             }
             guard let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let message = (obj["choices"] as? [[String: Any]])?.first?["message"] as? [String: Any] else {
-                throw AIError.message("Неожиданный ответ сервера")
+                throw AIError.message(String(localized: "Неожиданный ответ сервера"))
             }
             let calls = message["tool_calls"] as? [[String: Any]] ?? []
             if calls.isEmpty {
@@ -51,7 +51,7 @@ enum ToolCalling {
                 messages.append(["role": "tool", "tool_call_id": call["id"] as? String ?? "", "content": result.text])
             }
         }
-        onDelta("\n\n_Слишком много шагов с инструментами — остановился._")
+        onDelta(String(localized: "\n\n_Слишком много шагов с инструментами — остановился._"))
     }
 
     // MARK: Anthropic Messages API
@@ -87,7 +87,7 @@ enum ToolCalling {
             for block in content where (block["type"] as? String) == "text" {
                 if let t = block["text"] as? String, !t.isEmpty { onDelta(t) }
             }
-            if stop == "refusal" { onDelta("\n\n_Модель отказалась отвечать на этот запрос._"); return }
+            if stop == "refusal" { onDelta(String(localized: "\n\n_Модель отказалась отвечать на этот запрос._")); return }
             guard stop == "tool_use" else { return }
             // Echo the full assistant content back, then answer every tool_use in one user message.
             messages.append(["role": "assistant", "content": content])
@@ -102,6 +102,6 @@ enum ToolCalling {
             }
             messages.append(["role": "user", "content": results])
         }
-        onDelta("\n\n_Слишком много шагов с инструментами — остановился._")
+        onDelta(String(localized: "\n\n_Слишком много шагов с инструментами — остановился._"))
     }
 }

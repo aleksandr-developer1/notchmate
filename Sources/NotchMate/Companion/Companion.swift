@@ -11,40 +11,40 @@ enum Mood: String, Equatable {
     @MainActor var caption: String {
         let n = Settings.shared.companionName
         switch self {
-        case .idle: return "\(n) рядом"
-        case .startup: return "\(n) просыпается…"
-        case .happy: return "\(n) доволен"
-        case .love: return "\(n) любит тебя ♥"
-        case .sleepy: return "\(n) дремлет…"
-        case .focused: return "\(n) сосредоточен"
-        case .excited: return "Ура!"
-        case .surprised: return "О!"
-        case .tired: return "\(n) устал — батарея садится"
-        case .music: return "\(n) качается под музыку"
-        case .eating: return "Ням-ням!"
-        case .wink: return "\(n) подмигивает"
-        case .alert: return "Уведомление!"
-        case .message: return "Тебе написали"
-        case .shutter: return "Щёлк — скриншот"
-        case .call: return "\(n) тихо слушает созвон"
-        case .sad: return "\(n) грустит"
-        case .proud: return "Готово! \(n) гордится"
-        case .dizzy: return "Столько уведомлений…"
-        case .nod: return "\(n) кивает"
-        case .agent: return "\(n) смотрит, как работает агент"
-        case .ready: return "Ответ готов!"
-        case .disappointed: return "Мы же фокусировались…"
-        case .relax: return "\(n) отдыхает с кофе"
-        case .flow: return "\(n) в потоке"
-        case .bored: return "\(n) скучает"
-        case .fishing: return "\(n) рыбачит"
-        case .basketball: return "\(n) играет в мяч"
-        case .watch: return "\(n) следит за курсором"
-        case .breathe: return "Дышим вместе"
-        case .stressed: return "\(n) чувствует напряжение"
-        case .zen: return "\(n) спокоен"
-        case .charged: return "\(n) полон сил"
-        case .drained: return "\(n) без сил"
+        case .idle: return String(localized: "\(n) рядом")
+        case .startup: return String(localized: "\(n) просыпается…")
+        case .happy: return String(localized: "\(n) доволен")
+        case .love: return String(localized: "\(n) любит тебя ♥")
+        case .sleepy: return String(localized: "\(n) дремлет…")
+        case .focused: return String(localized: "\(n) сосредоточен")
+        case .excited: return String(localized: "Ура!")
+        case .surprised: return String(localized: "О!")
+        case .tired: return String(localized: "\(n) устал — батарея садится")
+        case .music: return String(localized: "\(n) качается под музыку")
+        case .eating: return String(localized: "Ням-ням!")
+        case .wink: return String(localized: "\(n) подмигивает")
+        case .alert: return String(localized: "Уведомление!")
+        case .message: return String(localized: "Тебе написали")
+        case .shutter: return String(localized: "Щёлк — скриншот")
+        case .call: return String(localized: "\(n) тихо слушает созвон")
+        case .sad: return String(localized: "\(n) грустит")
+        case .proud: return String(localized: "Готово! \(n) гордится")
+        case .dizzy: return String(localized: "Столько уведомлений…")
+        case .nod: return String(localized: "\(n) кивает")
+        case .agent: return String(localized: "\(n) смотрит, как работает агент")
+        case .ready: return String(localized: "Ответ готов!")
+        case .disappointed: return String(localized: "Мы же фокусировались…")
+        case .relax: return String(localized: "\(n) отдыхает с кофе")
+        case .flow: return String(localized: "\(n) в потоке")
+        case .bored: return String(localized: "\(n) скучает")
+        case .fishing: return String(localized: "\(n) рыбачит")
+        case .basketball: return String(localized: "\(n) играет в мяч")
+        case .watch: return String(localized: "\(n) следит за курсором")
+        case .breathe: return String(localized: "Дышим вместе")
+        case .stressed: return String(localized: "\(n) чувствует напряжение")
+        case .zen: return String(localized: "\(n) спокоен")
+        case .charged: return String(localized: "\(n) полон сил")
+        case .drained: return String(localized: "\(n) без сил")
         }
     }
 }
@@ -217,9 +217,9 @@ final class Companion: ObservableObject {
             NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
         }
         let phrases: [[String]] = [
-            ["Ой-ой, голова кружится 😵‍💫", "Уф… всё плывёт 🌀", "Эй, не тряси меня! 😵"],
-            ["Опять?! Меня сейчас укачает 🤢", "Пощади… 🌀🌀"],
-            ["Всё, я в домике 🙈", "Я жалуюсь в поддержку 😤"],
+            [String(localized: "Ой-ой, голова кружится 😵‍💫"), String(localized: "Уф… всё плывёт 🌀"), String(localized: "Эй, не тряси меня! 😵")],
+            [String(localized: "Опять?! Меня сейчас укачает 🤢"), String(localized: "Пощади… 🌀🌀")],
+            [String(localized: "Всё, я в домике 🙈"), String(localized: "Я жалуюсь в поддержку 😤")],
         ]
         let line = phrases[min(dizzyStreak, phrases.count - 1)].randomElement()!
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in self?.say(line) }
@@ -302,10 +302,10 @@ final class Companion: ObservableObject {
             checkBody(env: env, now: now)
             if settings.waterReminder, now.timeIntervalSince(lastWater) > settings.waterInterval * 60 {
                 lastWater = now
-                say(["Попей воды 💧", "Глоток воды — и дальше! 💧", "Время для стакана воды 💧"].randomElement()!, mood: .wink)
+                say([String(localized: "Попей воды 💧"), String(localized: "Глоток воды — и дальше! 💧"), String(localized: "Время для стакана воды 💧")].randomElement()!, mood: .wink)
             } else if settings.stretchReminder, now.timeIntervalSince(lastStretch) > settings.stretchInterval * 60 {
                 lastStretch = now
-                say(["Разомнись немного 🙆", "Встань, потянись 🧘"].randomElement()!, mood: .happy)
+                say([String(localized: "Разомнись немного 🙆"), String(localized: "Встань, потянись 🧘")].randomElement()!, mood: .happy)
             }
         } else if systemIdle >= 120 {
             // Away from the Mac counts as a break.
@@ -337,12 +337,12 @@ final class Companion: ObservableObject {
         let today = Self.dayKey()
         if batteryGreetedDay != today, settings.healthMoods, let bb = health.today?.bbLatest ?? health.today?.bbHigh {
             batteryGreetedDay = today
-            let sleep = health.today?.sleepSeconds.map { " · сон " + HealthAnalytics.hours($0) } ?? ""
+            let sleep = health.today?.sleepSeconds.map { String(localized: " · сон ") + HealthAnalytics.hours($0) } ?? ""
             if bb >= 70 {
-                say("Body Battery \(Int(bb))\(sleep) — отличный день для сложных задач ⚡️", mood: .charged)
+                say(String(localized: "Body Battery \(Int(bb))\(sleep) — отличный день для сложных задач ⚡️"), mood: .charged)
                 react(.charged, for: 4)
             } else if bb <= 35 {
-                say("Body Battery всего \(Int(bb))\(sleep). Береги силы сегодня 🪫", mood: .drained)
+                say(String(localized: "Body Battery всего \(Int(bb))\(sleep). Береги силы сегодня 🪫"), mood: .drained)
                 react(.drained, for: 4)
             }
             return
@@ -353,7 +353,7 @@ final class Companion: ObservableObject {
               let s = health.latestStress, now.timeIntervalSince(s.t) < 20 * 60, s.v >= settings.healthStressThreshold else { return }
         lastStressNudge = now
         react(.stressed, for: 4)
-        say("Стресс \(Int(s.v)) по Garmin. Подышим \(Int(settings.breathMinutes)) мин? Кликни на меня 🌬️")
+        say(String(localized: "Стресс \(Int(s.v)) по Garmin. Подышим \(Int(settings.breathMinutes)) мин? Кликни на меня 🌬️"))
         pendingBreathOffer = now
     }
 
@@ -381,10 +381,10 @@ final class Companion: ObservableObject {
     private static func greeting() -> String {
         let n = Settings.shared.companionName
         switch Calendar.current.component(.hour, from: Date()) {
-        case 5..<12: return "Доброе утро! Я \(n) ☀️"
-        case 12..<18: return "Привет! \(n) на месте 👋"
-        case 18..<23: return "Добрый вечер! \(n) тут 🌙"
-        default: return "Не спится? \(n) с тобой 🌙"
+        case 5..<12: return String(localized: "Доброе утро! Я \(n) ☀️")
+        case 12..<18: return String(localized: "Привет! \(n) на месте 👋")
+        case 18..<23: return String(localized: "Добрый вечер! \(n) тут 🌙")
+        default: return String(localized: "Не спится? \(n) с тобой 🌙")
         }
     }
 }

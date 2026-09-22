@@ -163,7 +163,7 @@ final class AgentMonitor: ObservableObject {
         var root: [String: Any] = [:]
         if let data = try? Data(contentsOf: url), !data.isEmpty {
             guard let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                throw AIError.message("Не удалось прочитать \(url.path)")
+                throw AIError.message(String(localized: "Не удалось прочитать \(url.path)"))
             }
             root = obj
             let backup = url.appendingPathExtension("notchmate-backup")
@@ -227,32 +227,32 @@ final class AgentMonitor: ObservableObject {
         objectWillChange.send()
     }
 
-    func setMCP(_ target: MCPTarget, install: Bool) async -> String {
+    func setMCP(_ target: MCPTarget, install: Bool) async -> (text: String, ok: Bool) {
         let exe = Bundle.main.executablePath ?? ""
         switch target {
         case .claude:
-            guard let claude = CLITools.find("claude") else { return "Claude Code не найден" }
+            guard let claude = CLITools.find("claude") else { return (String(localized: "Claude Code не найден"), false) }
             if install {
                 _ = await CLITools.run(claude, ["mcp", "remove", "--scope", "user", "notchmate"])
                 let r = await CLITools.run(claude, ["mcp", "add", "--scope", "user", "notchmate", "--", exe, "--mcp"])
                 objectWillChange.send()
-                return r.status == 0 ? "Подключено к Claude Code" : r.out
+                return r.status == 0 ? (String(localized: "Подключено к Claude Code"), true) : (r.out, false)
             } else {
                 let r = await CLITools.run(claude, ["mcp", "remove", "--scope", "user", "notchmate"])
                 objectWillChange.send()
-                return r.status == 0 ? "Отключено от Claude Code" : r.out
+                return r.status == 0 ? (String(localized: "Отключено от Claude Code"), true) : (r.out, false)
             }
         case .codex:
-            guard let codex = CLITools.find("codex") else { return "Codex не найден" }
+            guard let codex = CLITools.find("codex") else { return (String(localized: "Codex не найден"), false) }
             if install {
                 _ = await CLITools.run(codex, ["mcp", "remove", "notchmate"])
                 let r = await CLITools.run(codex, ["mcp", "add", "notchmate", "--", exe, "--mcp"])
                 objectWillChange.send()
-                return r.status == 0 ? "Подключено к Codex" : r.out
+                return r.status == 0 ? (String(localized: "Подключено к Codex"), true) : (r.out, false)
             } else {
                 let r = await CLITools.run(codex, ["mcp", "remove", "notchmate"])
                 objectWillChange.send()
-                return r.status == 0 ? "Отключено от Codex" : r.out
+                return r.status == 0 ? (String(localized: "Отключено от Codex"), true) : (r.out, false)
             }
         }
     }

@@ -27,7 +27,7 @@ final class CallRecorder: NSObject, ObservableObject {
     private var stream: SCStream?
     private let writers = AudioWriters()
     private var folder: URL?
-    private var title = "Созвон"
+    private var title = String(localized: "Созвон")
     private var micIdleSince: Date?
     private var timer: Timer?
     /// Live audio for the meeting assistant (nothing is listening unless it's on).
@@ -157,8 +157,8 @@ final class CallRecorder: NSObject, ObservableObject {
     }
 
     var micStatusText: String {
-        guard !micApps.isEmpty else { return "микрофон свободен" }
-        return "микрофон занят: " + micApps.joined(separator: ", ")
+        guard !micApps.isEmpty else { return String(localized: "микрофон свободен") }
+        return String(localized: "микрофон занят: ") + micApps.joined(separator: ", ")
     }
 
     // MARK: Recording
@@ -167,7 +167,7 @@ final class CallRecorder: NSObject, ObservableObject {
         guard stage == .idle else { return }
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
-            guard let display = content.displays.first else { throw AIError.message("Нет экрана для захвата звука") }
+            guard let display = content.displays.first else { throw AIError.message(String(localized: "Нет экрана для захвата звука")) }
             let filter = SCContentFilter(display: display, excludingApplications: [], exceptingWindows: [])
             let config = SCStreamConfiguration()
             config.capturesAudio = true
@@ -183,7 +183,7 @@ final class CallRecorder: NSObject, ObservableObject {
             let dir = Self.recordingsFolder.appendingPathComponent(Self.stamp())
             try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
             folder = dir
-            title = env?.calendar.events.first { $0.isNow }?.title ?? Self.microphoneHolders().first?.name ?? "Созвон"
+            title = env?.calendar.events.first { $0.isNow }?.title ?? Self.microphoneHolders().first?.name ?? String(localized: "Созвон")
 
             writers.open(system: dir.appendingPathComponent("system.caf"), mic: dir.appendingPathComponent("mic.caf"))
             let stream = SCStream(filter: filter, configuration: config, delegate: nil)
@@ -198,7 +198,7 @@ final class CallRecorder: NSObject, ObservableObject {
             lastError = nil
             env?.companion.react(.focused, for: 3)
         } catch {
-            lastError = "Запись не началась: \(error.localizedDescription)"
+            lastError = String(localized: "Запись не началась: \(error.localizedDescription)")
             stage = .idle
         }
     }
@@ -243,14 +243,14 @@ final class CallRecorder: NSObject, ObservableObject {
         }
         stage = .transcribing
         if await Task.detached(operation: { Self.isSilent(folder) }).value {
-            discard(folder, reason: "тишина")
+            discard(folder, reason: String(localized: "тишина"))
             return
         }
         do {
             let mixed = try await Task.detached { try Self.mixdown(in: folder) }.value
             let text = try await transcribe(mixed)
             guard text.count > 40 else {
-                discard(folder, reason: "речь не распознана")
+                discard(folder, reason: String(localized: "речь не распознана"))
                 return
             }
             try? text.write(to: folder.appendingPathComponent("transcript.txt"), atomically: true, encoding: .utf8)
@@ -271,13 +271,13 @@ final class CallRecorder: NSObject, ObservableObject {
     func processExisting(folder dir: URL, title: String? = nil) async {
         guard stage == .idle else { return }
         self.folder = dir
-        self.title = title ?? "Созвон"
+        self.title = title ?? String(localized: "Созвон")
         let seconds = Self.durationOfFiles(in: dir)
         self.startedAt = Date().addingTimeInterval(-seconds)
         stage = .transcribing
         let silent = seconds < 60 ? true : await Task.detached(operation: { Self.isSilent(dir) }).value
         if silent {
-            discard(dir, reason: seconds < 60 ? "короче минуты" : "тишина")
+            discard(dir, reason: seconds < 60 ? String(localized: "короче минуты") : String(localized: "тишина"))
             startedAt = nil
             return
         }
@@ -285,7 +285,7 @@ final class CallRecorder: NSObject, ObservableObject {
             let mixed = try await Task.detached { try Self.mixdown(in: dir) }.value
             let text = try await transcribe(mixed)
             guard text.count > 40 else {
-                discard(dir, reason: "речь не распознана")
+                discard(dir, reason: String(localized: "речь не распознана"))
                 startedAt = nil
                 return
             }
@@ -400,7 +400,7 @@ final class CallRecorder: NSObject, ObservableObject {
         var inputs: [URL] = []
         if fm.fileExists(atPath: sys.path) { inputs.append(sys) }
         if fm.fileExists(atPath: mic.path) { inputs.append(mic) }
-        guard !inputs.isEmpty else { throw AIError.message("Нет записанного звука") }
+        guard !inputs.isEmpty else { throw AIError.message(String(localized: "Нет записанного звука")) }
 
         if let ffmpeg = ["/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg"].first(where: { fm.isExecutableFile(atPath: $0) }) {
             var args: [String] = ["-loglevel", "error", "-y"]
@@ -442,9 +442,9 @@ final class CallRecorder: NSObject, ObservableObject {
     // MARK: Summary + note
 
     private func summarize(_ transcript: String, duration: TimeInterval) async throws -> String {
-        guard let env else { throw AIError.message("Нет окружения") }
+        guard let env else { throw AIError.message(String(localized: "Нет окружения")) }
         let prompt = """
-        Ниже расшифровка рабочего созвона (распознавание речи, возможны ошибки). Сделай краткий протокол на русском в Markdown:
+        Ниже расшифровка рабочего созвона (распознавание речи, возможны ошибки). Сделай краткий протокол в Markdown. \(AppLanguage.replyInstruction) Заголовки разделов пиши на том же языке:
 
         **О чём говорили** — 3–6 пунктов.
         **Решения** — что решили.
@@ -456,36 +456,36 @@ final class CallRecorder: NSObject, ObservableObject {
         Расшифровка:
         \(transcript.prefix(60000))
         """
-        return try await env.ai.oneShot(prompt: prompt, system: "Ты делаешь точные протоколы рабочих встреч. Отвечай по-русски.",
+        return try await env.ai.oneShot(prompt: prompt, system: "Ты делаешь точные протоколы рабочих встреч. \(AppLanguage.replyInstruction)",
                                         preferLocal: settings.callsSummaryLocalOnly)
     }
 
     private func writeNote(summary: String, transcript: String, duration: TimeInterval, folder: URL) -> String {
         guard let env, let vault = env.obsidian.vault else { return "" }
-        let df = DateFormatter(); df.locale = Locale(identifier: "ru_RU"); df.dateFormat = "yyyy-MM-dd HH-mm"
-        let human = DateFormatter(); human.locale = Locale(identifier: "ru_RU"); human.dateFormat = "d MMMM, HH:mm"
+        let df = DateFormatter(); df.locale = Locale(identifier: "en_US_POSIX"); df.dateFormat = "yyyy-MM-dd HH-mm"
+        let human = DateFormatter(); human.locale = AppLanguage.locale; human.setLocalizedDateFormatFromTemplate("dMMMMHHmm")
         let started = startedAt ?? Date().addingTimeInterval(-duration)
         let safeTitle = title.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
         let rel = "\(settings.callsFolder)/\(df.string(from: started)) \(safeTitle).md"
         let url = URL(fileURLWithPath: vault.path).appendingPathComponent(rel)
-        let attendees = env.calendar.events.first { $0.start <= started && $0.end >= started }.map { "\n**Событие:** \($0.title)" } ?? ""
+        let attendees = env.calendar.events.first { $0.start <= started && $0.end >= started }.map { String(localized: "\n**Событие:** \($0.title)") } ?? ""
         let body = """
         ---
-        type: созвон
+        type: \(String(localized: "созвон"))
         date: \(ISO8601DateFormatter().string(from: started))
-        duration: \(Int(duration / 60)) мин
+        duration: \(String(localized: "\(Int(duration / 60)) мин"))
         ---
 
         # \(title)
 
-        **Когда:** \(human.string(from: started)) · \(Int(duration / 60)) мин\(attendees)
-        **Запись:** локально, [аудио и расшифровка](\(folder.path))
+        **\(String(localized: "Когда:"))** \(human.string(from: started)) · \(String(localized: "\(Int(duration / 60)) мин"))\(attendees)
+        **\(String(localized: "Запись:"))** \(String(localized: "локально")), [\(String(localized: "аудио и расшифровка"))](\(folder.path))
 
         \(summary)
 
         ---
 
-        <details><summary>Расшифровка</summary>
+        <details><summary>\(String(localized: "Расшифровка"))</summary>
 
         \(transcript)
 
@@ -494,11 +494,11 @@ final class CallRecorder: NSObject, ObservableObject {
         do {
             try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
             try body.write(to: url, atomically: true, encoding: .utf8)
-            _ = env.obsidian.capture("Созвон «\(title)» (\(Int(duration / 60)) мин) — [[\((rel as NSString).lastPathComponent.replacingOccurrences(of: ".md", with: ""))]]")
+            _ = env.obsidian.capture(String(localized: "Созвон «\(title)» (\(Int(duration / 60)) мин) — [[\((rel as NSString).lastPathComponent.replacingOccurrences(of: ".md", with: ""))]]"))
             env.obsidian.refresh(force: true)
             return rel
         } catch {
-            lastError = "Заметка не сохранилась: \(error.localizedDescription)"
+            lastError = String(localized: "Заметка не сохранилась: \(error.localizedDescription)")
             return ""
         }
     }

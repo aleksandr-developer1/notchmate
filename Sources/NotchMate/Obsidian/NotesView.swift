@@ -90,7 +90,7 @@ private struct NotesPane<Store: NotesStore>: View {
                 .foregroundStyle(Theme.secondary)
                 .frame(width: 22)
 
-            TextField("", text: $captureText, prompt: Text("Записать мысль…").foregroundStyle(Theme.tertiary), axis: .vertical)
+            TextField("", text: $captureText, prompt: Text(String(localized: "Записать мысль…")).foregroundStyle(Theme.tertiary), axis: .vertical)
                 .textFieldStyle(.plain)
                 .font(Theme.font(14))
                 .foregroundStyle(.white)
@@ -104,11 +104,11 @@ private struct NotesPane<Store: NotesStore>: View {
                 }
 
             if savedFlash {
-                Label("Сохранено", systemImage: "checkmark.circle.fill")
+                Label(String(localized: "Сохранено"), systemImage: "checkmark.circle.fill")
                     .font(Theme.font(11, .semibold)).foregroundStyle(.green)
                     .transition(.scale.combined(with: .opacity))
             } else {
-                Text(settings.captureTarget == .daily ? "↩ в заметку дня · ⌘↩ новая" : "↩ во «Входящие» · ⌘↩ новая")
+                Text(settings.captureTarget == .daily ? String(localized: "↩ в заметку дня · ⌘↩ новая") : String(localized: "↩ во «Входящие» · ⌘↩ новая"))
                     .font(Theme.font(10, .medium)).foregroundStyle(Theme.tertiary)
                     .opacity(captureText.isEmpty ? 0.8 : 1)
             }
@@ -154,22 +154,22 @@ private struct NotesPane<Store: NotesStore>: View {
 
     private var listColumn: some View {
         VStack(spacing: 8) {
-            GlassField(icon: "magnifyingglass", placeholder: "Поиск по \(store.notes.count) заметкам", text: $query, focus: $searchFocused) {
+            GlassField(icon: "magnifyingglass", placeholder: String(localized: "Поиск по \(store.notes.count) заметкам"), text: $query, focus: $searchFocused) {
                 if let first = hits.first { store.open(first.note) }
             }
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVStack(alignment: .leading, spacing: 2) {
                     if query.isEmpty {
                         if !store.pinned.isEmpty {
-                            sectionHeader("Закреплённые", icon: "pin.fill")
+                            sectionHeader(String(localized: "Закреплённые"), icon: "pin.fill")
                             ForEach(store.pinned) { row($0, snippet: nil) }
                         }
-                        sectionHeader("Недавние", icon: "clock")
+                        sectionHeader(String(localized: "Недавние"), icon: "clock")
                         ForEach(store.recent.filter { !store.isPinned($0) }) { row($0, snippet: nil) }
                     } else if hits.isEmpty {
                         VStack(spacing: 8) {
-                            Text("Ничего не найдено").font(Theme.font(12)).foregroundStyle(Theme.secondary)
-                            PillButton(title: "Создать «\(query)»", icon: "plus") {
+                            Text(String(localized: "Ничего не найдено")).font(Theme.font(12)).foregroundStyle(Theme.secondary)
+                            PillButton(title: String(localized: "Создать «\(query)»"), icon: "plus") {
                                 if let n = store.createNote(title: query, body: "") { selected = n; query = "" }
                             }
                         }
@@ -213,11 +213,11 @@ private struct NotesPane<Store: NotesStore>: View {
         .onTapGesture(count: 2) { store.open(note) }
         .onTapGesture { withAnimation(.easeOut(duration: 0.15)) { selected = note } }
         .contextMenu {
-            Button(isObsidian ? "Открыть в Obsidian" : "Открыть в Заметках") { store.open(note) }
-            Button(store.isPinned(note) ? "Открепить" : "Закрепить") { store.togglePin(note) }
+            Button(isObsidian ? String(localized: "Открыть в Obsidian") : String(localized: "Открыть в Заметках")) { store.open(note) }
+            Button(store.isPinned(note) ? String(localized: "Открепить") : String(localized: "Закрепить")) { store.togglePin(note) }
             if isObsidian {
-                Button("Показать в Finder") { reveal(note) }
-                Button("Копировать ссылку [[…]]") {
+                Button(String(localized: "Показать в Finder")) { reveal(note) }
+                Button(String(localized: "Копировать ссылку [[…]]")) {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString("[[\(note.title)]]", forType: .string)
                 }
@@ -251,15 +251,15 @@ private struct NotePreview<Store: NotesStore>: View {
                     }
                     Spacer()
                     IconButton(systemName: store.isPinned(note) ? "pin.fill" : "pin", size: 11, frame: 26,
-                               tint: store.isPinned(note) ? tint : .white, help: "Закрепить") {
+                               tint: store.isPinned(note) ? tint : .white, help: String(localized: "Закрепить")) {
                         store.togglePin(note)
                     }
                     if let url = note.url {
-                        IconButton(systemName: "folder", size: 11, frame: 26, help: "Показать в Finder") {
+                        IconButton(systemName: "folder", size: 11, frame: 26, help: String(localized: "Показать в Finder")) {
                             NSWorkspace.shared.activateFileViewerSelecting([url])
                         }
                     }
-                    PillButton(title: "Открыть", icon: "arrow.up.forward", tint: tint, prominent: true) { store.open(note) }
+                    PillButton(title: String(localized: "Открыть"), icon: "arrow.up.forward", tint: tint, prominent: true) { store.open(note) }
                 }
                 .padding(.horizontal, 14).padding(.top, 10).padding(.bottom, 8)
 
@@ -273,7 +273,7 @@ private struct NotePreview<Store: NotesStore>: View {
             } else {
                 VStack(spacing: 6) {
                     Image(systemName: "text.book.closed").font(.system(size: 28)).foregroundStyle(Theme.tertiary)
-                    Text("Выберите заметку").font(Theme.font(12)).foregroundStyle(Theme.secondary)
+                    Text(String(localized: "Выберите заметку")).font(Theme.font(12)).foregroundStyle(Theme.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -305,7 +305,7 @@ struct MarkdownBody: View {
         let lines = parse()
         VStack(alignment: .leading, spacing: 3) {
             if lines.allSatisfy({ if case .blank = $0.kind { return true }; return false }) {
-                Text("Пустая заметка").font(Theme.font(12)).foregroundStyle(Theme.tertiary)
+                Text(String(localized: "Пустая заметка")).font(Theme.font(12)).foregroundStyle(Theme.tertiary)
             }
             ForEach(lines) { line in view(for: line) }
         }
@@ -399,15 +399,15 @@ private struct UnavailableView: View {
                 .font(.system(size: 34)).foregroundStyle(source == .obsidian ? Theme.obsidian : .yellow)
             Text(message).font(Theme.font(15, .bold)).foregroundStyle(.white).multilineTextAlignment(.center)
             if source == .obsidian {
-                Text("Откройте хранилище в Obsidian или выберите папку в настройках")
+                Text(String(localized: "Откройте хранилище в Obsidian или выберите папку в настройках"))
                     .font(Theme.font(12)).foregroundStyle(Theme.secondary)
-                PillButton(title: "Выбрать папку…", icon: "folder", tint: Theme.obsidian, prominent: true) {
+                PillButton(title: String(localized: "Выбрать папку…"), icon: "folder", tint: Theme.obsidian, prominent: true) {
                     NotificationCenter.default.post(name: .notchMateOpenSettings, object: nil)
                 }
             } else {
-                Text("NotchMate нужен доступ к приложению «Заметки»")
+                Text(String(localized: "NotchMate нужен доступ к приложению «Заметки»"))
                     .font(Theme.font(12)).foregroundStyle(Theme.secondary)
-                PillButton(title: "Открыть настройки", icon: "gearshape", tint: .yellow, prominent: true) {
+                PillButton(title: String(localized: "Открыть настройки"), icon: "gearshape", tint: .yellow, prominent: true) {
                     if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation") {
                         NSWorkspace.shared.open(url)
                     }

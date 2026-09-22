@@ -38,7 +38,7 @@ final class CodexAppServer: ObservableObject {
         if initialized, process?.isRunning == true { return }
         guard let exe = CLITools.find("codex") else {
             isInstalled = false
-            throw AIError.message("Codex CLI не найден. Установите: npm i -g @openai/codex (или brew install codex)")
+            throw AIError.message(String(localized: "Codex CLI не найден. Установите: npm i -g @openai/codex (или brew install codex)"))
         }
         isInstalled = true
         let p = Process()
@@ -62,9 +62,9 @@ final class CodexAppServer: ObservableObject {
                     self.isRunning = false
                     self.initialized = false
                     self.threadID = nil
-                    for (_, c) in self.pending { c.resume(throwing: AIError.message("Codex app-server завершился")) }
+                    for (_, c) in self.pending { c.resume(throwing: AIError.message(String(localized: "Codex app-server завершился"))) }
                     self.pending.removeAll()
-                    self.turnContinuation?.resume(throwing: AIError.message("Codex app-server завершился"))
+                    self.turnContinuation?.resume(throwing: AIError.message(String(localized: "Codex app-server завершился")))
                     self.turnContinuation = nil
                 }
             }
@@ -165,7 +165,7 @@ final class CodexAppServer: ObservableObject {
     func send(_ text: String, model: String?, instructions: String = AIChatService.systemPrompt, quick: Bool = false,
               onDelta: @escaping (String) -> Void) async throws {
         try await ensureStartedIfNeeded()
-        guard isLoggedIn else { throw AIError.message("Войдите в ChatGPT в настройках ИИ") }
+        guard isLoggedIn else { throw AIError.message(String(localized: "Войдите в ChatGPT в настройках ИИ")) }
         if threadID == nil {
             var params: [String: Any] = ["cwd": CLITools.workspace.path, "approvalPolicy": "on-request", "sandbox": "read-only", "ephemeral": true,
                                          "developerInstructions": instructions]
@@ -173,7 +173,7 @@ final class CodexAppServer: ObservableObject {
             let r = try await request("thread/start", params)
             threadID = (r["thread"] as? [String: Any])?["id"] as? String
         }
-        guard let threadID else { throw AIError.message("Не удалось начать диалог") }
+        guard let threadID else { throw AIError.message(String(localized: "Не удалось начать диалог")) }
         self.onDelta = onDelta
         var turn: [String: Any] = ["threadId": threadID, "input": [["type": "text", "text": text]]]
         if let model, !model.isEmpty { turn["model"] = model }
@@ -233,7 +233,7 @@ final class CodexAppServer: ObservableObject {
         if let id = obj["id"] as? Int, method == nil {
             let cont = pending.removeValue(forKey: id)
             if let err = obj["error"] as? [String: Any] {
-                cont?.resume(throwing: AIError.message(err["message"] as? String ?? "Ошибка Codex"))
+                cont?.resume(throwing: AIError.message(err["message"] as? String ?? String(localized: "Ошибка Codex")))
             } else {
                 cont?.resume(returning: obj["result"] as? [String: Any] ?? [:])
             }
@@ -268,7 +268,7 @@ final class CodexAppServer: ObservableObject {
             if let msg = (params["error"] as? [String: Any])?["message"] as? String { lastError = msg }
         case "account/login/completed":
             loginInProgress = false
-            if params["success"] as? Bool == false { lastError = params["error"] as? String ?? "Вход не выполнен" }
+            if params["success"] as? Bool == false { lastError = params["error"] as? String ?? String(localized: "Вход не выполнен") }
             Task { await refreshAccount() }
             NSApp.activate()
         case "account/updated":

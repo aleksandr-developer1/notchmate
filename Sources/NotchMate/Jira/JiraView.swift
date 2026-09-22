@@ -23,10 +23,10 @@ struct JiraView: View {
     private var setupPrompt: some View {
         VStack(spacing: 10) {
             Image(systemName: "briefcase.fill").font(.system(size: 30)).foregroundStyle(Theme.jira)
-            Text("Подключите Jira").font(Theme.font(15, .bold)).foregroundStyle(.white)
-            Text("Нужен адрес и Personal Access Token — задачи, эстимейты и списание времени появятся здесь")
+            Text(String(localized: "Подключите Jira")).font(Theme.font(15, .bold)).foregroundStyle(.white)
+            Text(String(localized: "Нужен адрес и Personal Access Token — задачи, эстимейты и списание времени появятся здесь"))
                 .font(Theme.font(12)).foregroundStyle(Theme.secondary).multilineTextAlignment(.center)
-            PillButton(title: "Открыть настройки Jira", icon: "gearshape.fill", tint: Theme.jira, prominent: true) {
+            PillButton(title: String(localized: "Открыть настройки Jira"), icon: "gearshape.fill", tint: Theme.jira, prominent: true) {
                 NotificationCenter.default.post(name: .notchMateOpenSettings, object: nil)
             }
         }
@@ -45,7 +45,7 @@ private struct ActiveIssueCard: View {
             } else {
                 VStack(spacing: 6) {
                     Image(systemName: "hand.point.right.fill").font(.system(size: 22)).foregroundStyle(Theme.tertiary)
-                    Text(jira.issues.isEmpty ? (jira.isLoading ? "Загружаю задачи…" : "Задач нет") : "Выберите задачу справа")
+                    Text(jira.issues.isEmpty ? (jira.isLoading ? String(localized: "Загружаю задачи…") : String(localized: "Задач нет")) : String(localized: "Выберите задачу справа"))
                         .font(Theme.font(12)).foregroundStyle(Theme.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -58,13 +58,13 @@ private struct ActiveIssueCard: View {
 
     @ViewBuilder private func content(_ issue: JiraIssue) -> some View {
         HStack(spacing: 6) {
-            Text(issue.isWorking ? "В РАБОТЕ" : "ВЫБРАНА").font(Theme.font(9, .heavy)).foregroundStyle(Theme.jira)
+            Text(issue.isWorking ? String(localized: "В РАБОТЕ") : String(localized: "ВЫБРАНА")).font(Theme.font(9, .heavy)).foregroundStyle(Theme.jira)
             Button { jira.open(issue) } label: {
                 HStack(spacing: 3) {
                     Text(issue.key).font(Theme.font(11, .bold))
                     Image(systemName: "arrow.up.forward").font(.system(size: 8, weight: .bold))
                 }.foregroundStyle(.white.opacity(0.85))
-            }.buttonStyle(.plain).help("Открыть в Jira")
+            }.buttonStyle(.plain).help(String(localized: "Открыть в Jira"))
             Spacer()
             StatusPill(issue: issue)
         }
@@ -84,15 +84,15 @@ private struct ActiveIssueCard: View {
                 EstimateBar(spent: Double(spent) / Double(total),
                             logged: Double(logged) / Double(total), over: over)
                 HStack(spacing: 0) {
-                    stat("Прошло", JiraService.format(spent), .white)
-                    stat("Осталось", JiraService.format(remaining), over ? .red : Theme.jira)
-                    stat("Оценка", JiraService.format(original), Theme.secondary)
+                    stat(String(localized: "Прошло"), JiraService.format(spent), .white)
+                    stat(String(localized: "Осталось"), JiraService.format(remaining), over ? .red : Theme.jira)
+                    stat(String(localized: "Оценка"), JiraService.format(original), Theme.secondary)
                 }
                 HStack(spacing: 4) {
                     if let since = issue.inProgressSince {
-                        Text("В работе с \(since.formatted(.dateTime.day().month(.abbreviated).hour().minute().locale(Locale(identifier: "ru_RU"))))")
+                        Text(String(localized: "В работе с \(since.formatted(.dateTime.day().month(.abbreviated).hour().minute().locale(AppLanguage.locale)))"))
                     }
-                    if logged > 0 { Text("· списано \(JiraService.format(logged))") }
+                    if logged > 0 { Text(String(localized: "· списано \(JiraService.format(logged))")) }
                 }
                 .font(Theme.font(10)).foregroundStyle(Theme.tertiary).lineLimit(1)
                 sessionControls(issue, session: session)
@@ -116,7 +116,7 @@ private struct ActiveIssueCard: View {
             Button { jira.toggleTracking(issue) } label: {
                 HStack(spacing: 6) {
                     Image(systemName: jira.isTracking && mine ? "pause.fill" : "play.fill").font(.system(size: 11, weight: .bold))
-                    Text(mine && session > 0 ? FocusTimer.format(TimeInterval(session)) : "Начать таймер")
+                    Text(mine && session > 0 ? FocusTimer.format(TimeInterval(session)) : String(localized: "Начать таймер"))
                         .font(Theme.font(12, .bold)).monospacedDigit()
                 }
                 .foregroundStyle(.black).padding(.horizontal, 12).frame(height: 30)
@@ -124,23 +124,23 @@ private struct ActiveIssueCard: View {
             }
             .buttonStyle(PressableStyle())
             .disabled(busyElsewhere)
-            .help(busyElsewhere ? "Сначала завершите таймер по \(jira.sessionKey ?? "")" : "Таймер работы над задачей")
+            .help(busyElsewhere ? String(localized: "Сначала завершите таймер по \(jira.sessionKey ?? "")") : String(localized: "Таймер работы над задачей"))
 
             if mine && session >= 60 {
-                PillButton(title: "Списать \(JiraService.format(session))", icon: "arrow.up.doc.fill", tint: .green) {
+                PillButton(title: String(localized: "Списать \(JiraService.format(session))"), icon: "arrow.up.doc.fill", tint: .green) {
                     Task { await jira.logSession() }
                 }
-                .help("Создать worklog в Jira — остаток эстимейта уменьшится")
+                .help(String(localized: "Создать worklog в Jira — остаток эстимейта уменьшится"))
             }
             if mine && !jira.sessionIsIdle {
-                IconButton(systemName: "xmark", size: 10, frame: 26, tint: Theme.secondary, help: "Сбросить таймер без списания") {
+                IconButton(systemName: "xmark", size: 10, frame: 26, tint: Theme.secondary, help: String(localized: "Сбросить таймер без списания")) {
                     jira.discardSession()
                 }
             }
             Spacer(minLength: 0)
         }
         if let msg = jira.lastLogMessage {
-            Text(msg).font(Theme.font(10, .medium)).foregroundStyle(msg.hasPrefix("Списано") ? .green : .orange).lineLimit(1)
+            Text(msg.text).font(Theme.font(10, .medium)).foregroundStyle(msg.ok ? .green : .orange).lineLimit(1)
         }
     }
 }
@@ -188,11 +188,11 @@ private struct IssueList: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("Мои задачи").font(Theme.font(13, .bold)).foregroundStyle(.white)
+                Text(String(localized: "Мои задачи")).font(Theme.font(13, .bold)).foregroundStyle(.white)
                 Text("\(jira.issues.count)").font(Theme.font(11, .semibold)).foregroundStyle(Theme.tertiary)
                 Spacer()
                 if jira.isLoading { ProgressView().controlSize(.mini) }
-                IconButton(systemName: "arrow.clockwise", size: 10, frame: 24, help: "Обновить") { jira.refresh() }
+                IconButton(systemName: "arrow.clockwise", size: 10, frame: 24, help: String(localized: "Обновить")) { jira.refresh() }
             }
             if let err = jira.error {
                 Text(err).font(Theme.font(11)).foregroundStyle(.orange).lineLimit(2)
@@ -234,12 +234,12 @@ private struct IssueList: View {
         .onTapGesture(count: 2) { jira.open(issue) }
         .onTapGesture { withAnimation(.easeOut(duration: 0.15)) { jira.select(issue) } }
         .contextMenu {
-            Button("Сделать активной") { jira.select(issue) }
-            Button("Открыть в Jira") { jira.open(issue) }
-            Button("Копировать ключ") {
+            Button(String(localized: "Сделать активной")) { jira.select(issue) }
+            Button(String(localized: "Открыть в Jira")) { jira.open(issue) }
+            Button(String(localized: "Копировать ключ")) {
                 NSPasteboard.general.clearContents(); NSPasteboard.general.setString(issue.key, forType: .string)
             }
-            Button("Копировать «\(issue.key) \(issue.summary)»") {
+            Button(String(localized: "Копировать «\(issue.key) \(issue.summary)»")) {
                 NSPasteboard.general.clearContents(); NSPasteboard.general.setString("\(issue.key) \(issue.summary)", forType: .string)
             }
         }

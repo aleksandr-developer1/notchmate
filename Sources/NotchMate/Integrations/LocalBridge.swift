@@ -93,7 +93,7 @@ final class LocalBridge {
         case ("POST", "/tool"):
             let name = body["name"] as? String ?? ""
             let args = body["arguments"] as? [String: Any] ?? [:]
-            let result: (text: String, isError: Bool) = await onTool?(name, args) ?? (text: "NotchMate не готов", isError: true)
+            let result: (text: String, isError: Bool) = await onTool?(name, args) ?? (text: String(localized: "NotchMate не готов"), isError: true)
             respond(conn, status: 200, json: ["text": result.text, "isError": result.isError])
         default:
             respond(conn, status: 404, json: ["error": "not found"])

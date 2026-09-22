@@ -117,13 +117,13 @@ final class MeetingCopilot: ObservableObject {
         Task {
             guard await LiveTranscriber.authorize() else {
                 MeetingLog.shared.write("error", ["where": "authorize"])
-                lastError = "Нет разрешения на распознавание речи — Системные настройки → Конфиденциальность → Распознавание речи"
+                lastError = String(localized: "Нет разрешения на распознавание речи — Системные настройки → Конфиденциальность → Распознавание речи")
                 return
             }
             if env.calls.stage == .idle { await env.calls.beginRecording() }
             guard env.calls.stage == .recording else {
                 MeetingLog.shared.write("error", ["where": "recording", "message": env.calls.lastError ?? "not recording"])
-                lastError = env.calls.lastError ?? "Созвон сейчас не записывается — помощнику нечего слушать"
+                lastError = env.calls.lastError ?? String(localized: "Созвон сейчас не записывается — помощнику нечего слушать")
                 return
             }
             startListening()
@@ -198,12 +198,12 @@ final class MeetingCopilot: ObservableObject {
         let ai = env.ai
         var list: [FastModel] = [
             FastModel(provider: .anthropicKey, model: "claude-haiku-4-5", title: "Anthropic API · Claude Haiku 4.5",
-                      available: ai.isReady(.anthropicKey), note: "нужен ключ Anthropic"),
-            FastModel(provider: .claude, model: "haiku", title: "Claude (аккаунт) · Haiku",
-                      available: ai.isReady(.claude), note: "войдите в Claude"),
+                      available: ai.isReady(.anthropicKey), note: String(localized: "нужен ключ Anthropic")),
+            FastModel(provider: .claude, model: "haiku", title: String(localized: "Claude (аккаунт) · Haiku"),
+                      available: ai.isReady(.claude), note: String(localized: "войдите в Claude")),
         ]
         for id in ai.codexModelIDs where Self.isFastName(id) {
-            list.append(FastModel(provider: .chatgpt, model: id, title: "ChatGPT · \(id)", available: ai.isReady(.chatgpt), note: "войдите в ChatGPT"))
+            list.append(FastModel(provider: .chatgpt, model: id, title: "ChatGPT · \(id)", available: ai.isReady(.chatgpt), note: String(localized: "войдите в ChatGPT")))
         }
         // Keep the chosen one in the list even before remote lists arrive.
         let chosen = settings.meetingModel
@@ -224,7 +224,7 @@ final class MeetingCopilot: ObservableObject {
             extra += ids.filter(Self.isFastName).map { FastModel(provider: .openaiKey, model: $0, title: "OpenAI API · \($0)", available: true, note: "") }
         }
         if env.ai.isReady(.customOpenAI), let ids = try? await CustomOpenAIBackend.models(baseURL: settings.aiCustomBaseURL, key: Keychain.get(CustomOpenAIBackend.account) ?? "") {
-            extra += ids.filter(Self.isFastName).map { FastModel(provider: .customOpenAI, model: $0, title: "Своя ИИ · \($0)", available: true, note: "") }
+            extra += ids.filter(Self.isFastName).map { FastModel(provider: .customOpenAI, model: $0, title: String(localized: "Своя ИИ · \($0)"), available: true, note: "") }
         }
         for m in extra where !fastModels.contains(where: { $0.id == m.id }) { fastModels.append(m) }
         MeetingLog.shared.write("models", ["available": fastModels.filter(\.available).map(\.id), "chosen": settings.meetingModel])
@@ -382,7 +382,7 @@ final class MeetingCopilot: ObservableObject {
         let conversation = transcript(limit: 3500)
         guard question != nil || conversation.count > 20 else {
             MeetingLog.shared.write("hint_skipped", ["reason": "empty transcript", "chars": conversation.count])
-            lastError = "Пока нечего подсказать — разговор ещё не расшифрован"
+            lastError = String(localized: "Пока нечего подсказать — разговор ещё не расшифрован")
             return
         }
         lastError = nil
@@ -402,11 +402,11 @@ final class MeetingCopilot: ObservableObject {
         guard let model = currentModel else {
             hints.removeFirst()
             isThinking = false
-            lastError = "Нет доступной быстрой модели — добавьте ключ Anthropic/OpenAI или войдите в Claude/ChatGPT в настройках ИИ"
+            lastError = String(localized: "Нет доступной быстрой модели — добавьте ключ Anthropic/OpenAI или войдите в Claude/ChatGPT в настройках ИИ")
             MeetingLog.shared.write("hint_skipped", ["reason": "no fast model"])
             return
         }
-        let role = settings.meetingRole.isEmpty ? "специалист по обсуждаемой теме" : settings.meetingRole
+        let role = settings.meetingRole.isEmpty ? String(localized: "специалист по обсуждаемой теме") : settings.meetingRole
 
         let requested = Date()
         let hintID = id.uuidString
@@ -485,7 +485,7 @@ final class MeetingCopilot: ObservableObject {
 
     // MARK: Prompt
 
-    static let system = "Ты — незаметный суфлёр на рабочей встрече. Отвечаешь мгновенно, очень коротко, по-русски, строго в заданном формате."
+    static let system = "Ты — незаметный суфлёр на рабочей встрече. Отвечаешь мгновенно, очень коротко, строго в заданном формате. \(AppLanguage.replyInstruction) Метки строк (ВАРИАНТ:, СКАЗАТЬ:, КОД:, РИСК:, СПРОСИТЬ:) не переводи."
 
     /// Stable parts first (instructions, project overview) so servers with prompt caching reuse them between hints.
     static func prompt(conversation: String, question: String?, overview: String, relevant: String, previous: [String],

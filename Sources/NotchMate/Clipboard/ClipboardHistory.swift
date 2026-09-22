@@ -10,7 +10,7 @@ struct ClipItem: Identifiable, Hashable {
     var preview: String {
         switch kind {
         case .text(let s): return s.trimmingCharacters(in: .whitespacesAndNewlines)
-        case .image: return "Изображение"
+        case .image: return String(localized: "Изображение")
         case .files(let urls): return urls.map(\.lastPathComponent).joined(separator: ", ")
         }
     }

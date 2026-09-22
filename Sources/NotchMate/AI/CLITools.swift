@@ -56,7 +56,11 @@ enum CLITools {
     /// Opens Terminal running a command (for interactive logins).
     static func openInTerminal(_ command: String) {
         let script = FileManager.default.temporaryDirectory.appendingPathComponent("notchmate-\(UUID().uuidString.prefix(6)).command")
-        let body = "#!/bin/zsh\nexport PATH=\"\(environment["PATH"] ?? "")\"\nclear\n\(command)\necho\necho 'Готово — это окно можно закрыть.'\n"
+        // The translated line goes inside double quotes: keep the shell from expanding anything in it.
+        let done = String(localized: "Готово — это окно можно закрыть.")
+            .replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "$", with: "\\$").replacingOccurrences(of: "`", with: "\\`")
+        let body = "#!/bin/zsh\nexport PATH=\"\(environment["PATH"] ?? "")\"\nclear\n\(command)\necho\necho \"\(done)\"\n"
         try? body.write(to: script, atomically: true, encoding: .utf8)
         try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: script.path)
         NSWorkspace.shared.open(script)

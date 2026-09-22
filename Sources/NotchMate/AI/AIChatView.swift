@@ -37,7 +37,7 @@ struct AIChatView: View {
                     }
                 }
                 Divider()
-                Button("Настройки ИИ…") { NotificationCenter.default.post(name: .notchMateOpenSettings, object: nil) }
+                Button(String(localized: "Настройки ИИ…")) { NotificationCenter.default.post(name: .notchMateOpenSettings, object: nil) }
             } label: {
                 HStack(spacing: 6) {
                     Circle().fill(ai.provider.tint).frame(width: 8, height: 8)
@@ -55,11 +55,11 @@ struct AIChatView: View {
             if ai.provider == .chatgpt, let used = ai.codex.usedPercent {
                 HStack(spacing: 4) {
                     Ring(progress: used / 100, tint: used > 80 ? .orange : ai.provider.tint, lineWidth: 2.5).frame(width: 12, height: 12)
-                    Text("\(Int(used))% лимита").font(Theme.font(10, .medium)).foregroundStyle(Theme.tertiary)
+                    Text(String(localized: "\(Int(used))% лимита")).font(Theme.font(10, .medium)).foregroundStyle(Theme.tertiary)
                 }
-                .help(ai.codex.resetsAt.map { "Сбросится \($0.formatted(date: .omitted, time: .shortened))" } ?? "")
+                .help(ai.codex.resetsAt.map { String(localized: "Сбросится \($0.formatted(date: .omitted, time: .shortened))") } ?? "")
             }
-            IconButton(systemName: "square.and.pencil", size: 11, frame: 26, help: "Новый чат") { ai.newChat() }
+            IconButton(systemName: "square.and.pencil", size: 11, frame: 26, help: String(localized: "Новый чат")) { ai.newChat() }
         }
     }
 
@@ -68,27 +68,27 @@ struct AIChatView: View {
     private var connectPrompt: some View {
         VStack(spacing: 10) {
             Image(systemName: "sparkles").font(.system(size: 28)).foregroundStyle(ai.provider.tint)
-            Text("Подключите \(ai.provider.title)").font(Theme.font(15, .bold)).foregroundStyle(.white)
+            Text(String(localized: "Подключите \(ai.provider.title)")).font(Theme.font(15, .bold)).foregroundStyle(.white)
             Text(connectHint).font(Theme.font(12)).foregroundStyle(Theme.secondary).multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 8) {
                 switch ai.provider {
                 case .chatgpt:
-                    PillButton(title: ai.codex.loginInProgress ? "Ждём браузер…" : "Войти через ChatGPT", icon: "person.crop.circle", tint: ai.provider.tint, prominent: true) {
+                    PillButton(title: ai.codex.loginInProgress ? String(localized: "Ждём браузер…") : String(localized: "Войти через ChatGPT"), icon: "person.crop.circle", tint: ai.provider.tint, prominent: true) {
                         Task { await ai.codex.login() }
                     }
                 case .claude:
-                    PillButton(title: "Войти в Claude", icon: "person.crop.circle", tint: ai.provider.tint, prominent: true) { ai.claude.login() }
+                    PillButton(title: String(localized: "Войти в Claude"), icon: "person.crop.circle", tint: ai.provider.tint, prominent: true) { ai.claude.login() }
                 case .openaiKey, .anthropicKey:
-                    PillButton(title: "Добавить ключ", icon: "key.fill", tint: ai.provider.tint, prominent: true) {
+                    PillButton(title: String(localized: "Добавить ключ"), icon: "key.fill", tint: ai.provider.tint, prominent: true) {
                         NotificationCenter.default.post(name: .notchMateOpenSettings, object: nil)
                     }
                 case .customOpenAI:
-                    PillButton(title: "Настроить сервер", icon: "server.rack", tint: ai.provider.tint, prominent: true) {
+                    PillButton(title: String(localized: "Настроить сервер"), icon: "server.rack", tint: ai.provider.tint, prominent: true) {
                         NotificationCenter.default.post(name: .notchMateOpenSettings, object: nil)
                     }
                 }
-                PillButton(title: "Другой способ", icon: "arrow.left.arrow.right") {
+                PillButton(title: String(localized: "Другой способ"), icon: "arrow.left.arrow.right") {
                     NotificationCenter.default.post(name: .notchMateOpenSettings, object: nil)
                 }
             }
@@ -102,11 +102,11 @@ struct AIChatView: View {
 
     private var connectHint: String {
         switch ai.provider {
-        case .chatgpt: return ai.codex.isInstalled ? "Вход через ваш аккаунт ChatGPT в браузере — используется подписка, без ключей" : "Нужен Codex CLI: npm i -g @openai/codex"
-        case .claude: return ai.claude.isInstalled ? "Откроется Терминал со входом в Claude Code — используется ваша подписка Claude" : "Нужен Claude Code: brew install claude-code"
-        case .openaiKey: return "Вставьте ключ OpenAI API в настройках"
-        case .anthropicKey: return "Вставьте ключ Anthropic API в настройках"
-        case .customOpenAI: return "Укажите Base URL, модель и API key в настройках"
+        case .chatgpt: return ai.codex.isInstalled ? String(localized: "Вход через ваш аккаунт ChatGPT в браузере — используется подписка, без ключей") : String(localized: "Нужен Codex CLI: npm i -g @openai/codex")
+        case .claude: return ai.claude.isInstalled ? String(localized: "Откроется Терминал со входом в Claude Code — используется ваша подписка Claude") : String(localized: "Нужен Claude Code: brew install claude-code")
+        case .openaiKey: return String(localized: "Вставьте ключ OpenAI API в настройках")
+        case .anthropicKey: return String(localized: "Вставьте ключ Anthropic API в настройках")
+        case .customOpenAI: return String(localized: "Укажите Base URL, модель и API key в настройках")
         }
     }
 
@@ -133,7 +133,7 @@ struct AIChatView: View {
 
     private var suggestions: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Спросите что угодно или начните с готового:").font(Theme.font(12)).foregroundStyle(Theme.secondary)
+            Text(String(localized: "Спросите что угодно или начните с готового:")).font(Theme.font(12)).foregroundStyle(Theme.secondary)
             FlowChips(items: quickActions) { action in ai.send(action.prompt()) }
         }
         .padding(.top, 6)
@@ -148,12 +148,12 @@ struct AIChatView: View {
         var list: [QuickAction] = []
         if let clip = lastClipText {
             let snippet = String(clip.prefix(4000))
-            list.append(QuickAction(title: "Объясни скопированное", icon: "doc.on.clipboard") { "Объясни простыми словами:\n\n\(snippet)" })
-            list.append(QuickAction(title: "Переведи буфер", icon: "globe") { "Переведи на английский (если текст на английском — на русский):\n\n\(snippet)" })
-            list.append(QuickAction(title: "Сократи буфер", icon: "text.redaction") { "Сократи до 2–3 предложений, сохранив смысл:\n\n\(snippet)" })
+            list.append(QuickAction(title: String(localized: "Объясни скопированное"), icon: "doc.on.clipboard") { String(localized: "Объясни простыми словами:\n\n\(snippet)") })
+            list.append(QuickAction(title: String(localized: "Переведи буфер"), icon: "globe") { String(localized: "Переведи на английский (если текст на английском — на русский):\n\n\(snippet)") })
+            list.append(QuickAction(title: String(localized: "Сократи буфер"), icon: "text.redaction") { String(localized: "Сократи до 2–3 предложений, сохранив смысл:\n\n\(snippet)") })
         }
-        list.append(QuickAction(title: "План на день", icon: "checklist") { "Помоги спланировать рабочий день: предложи структуру с блоками фокуса и перерывами." })
-        list.append(QuickAction(title: "Текст задачи для Jira", icon: "briefcase") { "Помоги сформулировать задачу для Jira: заголовок, описание, критерии приёмки. Сначала задай мне 2–3 уточняющих вопроса." })
+        list.append(QuickAction(title: String(localized: "План на день"), icon: "checklist") { String(localized: "Помоги спланировать рабочий день: предложи структуру с блоками фокуса и перерывами.") })
+        list.append(QuickAction(title: String(localized: "Текст задачи для Jira"), icon: "briefcase") { String(localized: "Помоги сформулировать задачу для Jira: заголовок, описание, критерии приёмки. Сначала задай мне 2–3 уточняющих вопроса.") })
         return list
     }
 
@@ -161,7 +161,7 @@ struct AIChatView: View {
 
     private var inputBar: some View {
         HStack(alignment: .bottom, spacing: 8) {
-            TextField("", text: $ai.draft, prompt: Text("Сообщение \(ai.provider.title)…").foregroundStyle(Theme.tertiary), axis: .vertical)
+            TextField("", text: $ai.draft, prompt: Text(String(localized: "Сообщение \(ai.provider.title)…")).foregroundStyle(Theme.tertiary), axis: .vertical)
                 .textFieldStyle(.plain)
                 .font(Theme.font(13))
                 .foregroundStyle(.white)
@@ -173,7 +173,7 @@ struct AIChatView: View {
                 }
                 .padding(.vertical, 8)
             if ai.isResponding {
-                IconButton(systemName: "stop.fill", size: 11, frame: 30, tint: .white, filled: true, help: "Остановить") { ai.stop() }
+                IconButton(systemName: "stop.fill", size: 11, frame: 30, tint: .white, filled: true, help: String(localized: "Остановить")) { ai.stop() }
             } else {
                 Button { ai.send() } label: {
                     Image(systemName: "arrow.up").font(.system(size: 13, weight: .bold)).foregroundStyle(.black)
@@ -228,11 +228,11 @@ private struct MessageBubble: View {
                     .fill(message.role == "user" ? tint.opacity(0.22) : (message.isError ? Color.red.opacity(0.14) : Theme.surface))
             )
             .contextMenu {
-                Button("Копировать") {
+                Button(String(localized: "Копировать")) {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(message.text, forType: .string)
                 }
-                Button("Сохранить в Obsidian") { _ = AppEnvironment.shared.obsidian.capture(message.text) }
+                Button(String(localized: "Сохранить в Obsidian")) { _ = AppEnvironment.shared.obsidian.capture(message.text) }
             }
             if message.role != "user" { Spacer(minLength: 40) }
         }

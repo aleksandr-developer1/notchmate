@@ -11,9 +11,9 @@ struct HealthView: View {
         var id: String { rawValue }
         var title: String {
             switch self {
-            case .today: return "Сегодня"
-            case .week: return "Неделя"
-            case .insights: return "Инсайты"
+            case .today: return String(localized: "Сегодня")
+            case .week: return String(localized: "Неделя")
+            case .insights: return String(localized: "Инсайты")
             }
         }
     }
@@ -72,7 +72,7 @@ struct HealthView: View {
                 }
             }
             .padding(2).background(Capsule().fill(Color.white.opacity(0.05)))
-            IconButton(systemName: "arrow.clockwise", size: 10, frame: 22, help: "Обновить") { health.refresh(force: true) }
+            IconButton(systemName: "arrow.clockwise", size: 10, frame: 22, help: String(localized: "Обновить")) { health.refresh(force: true) }
         }
     }
 }
@@ -100,20 +100,20 @@ private struct HealthTodayPage: View {
 
             VStack(spacing: 6) {
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 6), GridItem(.flexible(), spacing: 6)], spacing: 6) {
-                    MetricTile(icon: "heart.fill", tint: .pink, title: "Покой",
-                               value: day.restingHR.map { "\(Int($0))" }, unit: "уд/мин",
+                    MetricTile(icon: "heart.fill", tint: .pink, title: String(localized: "Покой"),
+                               value: day.restingHR.map { "\(Int($0))" }, unit: String(localized: "уд/мин"),
                                delta: delta(day.restingHR, yesterday?.restingHR), lowerIsBetter: true)
-                    MetricTile(icon: "moon.zzz.fill", tint: .indigo, title: "Сон",
-                               value: day.sleepSeconds.map { String(format: "%.1f", $0 / 3600) }, unit: day.sleepScore.map { "ч · \(Int($0))" } ?? "ч",
+                    MetricTile(icon: "moon.zzz.fill", tint: .indigo, title: String(localized: "Сон"),
+                               value: day.sleepSeconds.map { String(format: "%.1f", $0 / 3600) }, unit: day.sleepScore.map { String(localized: "ч · \(Int($0))") } ?? String(localized: "ч"),
                                delta: nil)
                     MetricTile(icon: "waveform.path.ecg", tint: .mint, title: "HRV",
-                               value: day.hrvLastNight.map { "\(Int($0))" }, unit: "мс",
+                               value: day.hrvLastNight.map { "\(Int($0))" }, unit: String(localized: "мс"),
                                delta: delta(day.hrvLastNight, day.hrvWeekly), lowerIsBetter: false)
-                    MetricTile(icon: "figure.walk", tint: .green, title: "Шаги",
-                               value: day.steps.map { $0 >= 10000 ? String(format: "%.1fк", $0 / 1000) : "\(Int($0))" }, unit: "",
+                    MetricTile(icon: "figure.walk", tint: .green, title: String(localized: "Шаги"),
+                               value: day.steps.map { $0 >= 10000 ? String(format: String(localized: "%.1fк"), $0 / 1000) : "\(Int($0))" }, unit: "",
                                delta: nil)
                 }
-                PillButton(title: "Подышать", icon: "wind", tint: Color(red: 0.45, green: 0.8, blue: 1), prominent: true) {
+                PillButton(title: String(localized: "Подышать"), icon: "wind", tint: Color(red: 0.45, green: 0.8, blue: 1), prominent: true) {
                     breathing.start()
                 }
                 .frame(maxWidth: .infinity)
@@ -217,18 +217,18 @@ private struct StressNow: View {
                 }
                 .frame(width: 38, height: 38)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("Стресс · \(level.title)").font(Theme.font(11, .semibold)).foregroundStyle(level.color)
+                    Text(String(localized: "Стресс · \(level.title)")).font(Theme.font(11, .semibold)).foregroundStyle(level.color)
                     Text(ago(point.t)).font(Theme.font(9)).foregroundStyle(Theme.tertiary)
                 }
             } else if let heart {
                 Image(systemName: "heart.fill").foregroundStyle(.pink).font(.system(size: 18))
                     .symbolEffect(.pulse, options: .repeating)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("Пульс \(Int(heart.v))").font(Theme.font(12, .semibold)).foregroundStyle(.white)
+                    Text(String(localized: "Пульс \(Int(heart.v))")).font(Theme.font(12, .semibold)).foregroundStyle(.white)
                     Text(ago(heart.t)).font(Theme.font(9)).foregroundStyle(Theme.tertiary)
                 }
             } else {
-                Text("Нет свежих данных").font(Theme.font(11)).foregroundStyle(Theme.tertiary)
+                Text(String(localized: "Нет свежих данных")).font(Theme.font(11)).foregroundStyle(Theme.tertiary)
             }
             Spacer(minLength: 0)
         }
@@ -239,7 +239,7 @@ private struct StressNow: View {
 
     private func ago(_ d: Date) -> String {
         let m = Int(Date().timeIntervalSince(d) / 60)
-        return m < 1 ? "только что" : (m < 60 ? "\(m) мин назад" : "\(m / 60) ч назад")
+        return m < 1 ? String(localized: "только что") : (m < 60 ? String(localized: "\(m) мин назад") : String(localized: "\(m / 60) ч назад"))
     }
 }
 
@@ -265,11 +265,11 @@ private struct TodayChart: View {
 
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 10) {
-                legend(stress.isEmpty ? "Пульс" : "Стресс", stress.isEmpty ? .pink : .orange)
+                legend(stress.isEmpty ? String(localized: "Пульс") : String(localized: "Стресс"), stress.isEmpty ? .pink : .orange)
                 if !battery.isEmpty { legend("Body Battery", Color(red: 0.4, green: 0.75, blue: 1)) }
                 Spacer()
-                legend("Созвон", .red); legend("Фокус", .yellow); legend("Встреча", .purple)
-                if !away.isEmpty { legend("Не за Mac", Color.white.opacity(0.35)) }
+                legend(String(localized: "Созвон"), .red); legend(String(localized: "Фокус"), .yellow); legend(String(localized: "Встреча"), .purple)
+                if !away.isEmpty { legend(String(localized: "Не за Mac"), Color.white.opacity(0.35)) }
             }
             Chart {
                 // Away from the Mac: a quiet band behind the lines.
@@ -278,13 +278,13 @@ private struct TodayChart: View {
                         .foregroundStyle(Color.white.opacity(0.07))
                 }
                 ForEach(Array(stress.enumerated()), id: \.offset) { _, p in
-                    AreaMark(x: .value("t", p.t), y: .value("Стресс", p.v))
+                    AreaMark(x: .value("t", p.t), y: .value(String(localized: "Стресс"), p.v))
                         .foregroundStyle(LinearGradient(colors: [.red.opacity(0.55), .orange.opacity(0.35), .yellow.opacity(0.08)],
                                                         startPoint: .top, endPoint: .bottom))
                         .interpolationMethod(.monotone)
                 }
                 ForEach(Array(pulse.enumerated()), id: \.offset) { _, p in
-                    LineMark(x: .value("t", p.t), y: .value("Пульс", p.v), series: .value("s", "pulse"))
+                    LineMark(x: .value("t", p.t), y: .value(String(localized: "Пульс"), p.v), series: .value("s", "pulse"))
                         .foregroundStyle(.pink).lineStyle(StrokeStyle(lineWidth: 1.5)).interpolationMethod(.monotone)
                 }
                 ForEach(Array(battery.enumerated()), id: \.offset) { _, p in
@@ -349,7 +349,7 @@ private struct TodayChart: View {
             if (present || minute == b), let s = runStart {
                 if minute - s >= 5 {
                     spans.append(Span(start: Date(timeIntervalSince1970: Double(s * 60)), end: Date(timeIntervalSince1970: Double(minute * 60)),
-                                      kind: "Не за Mac", color: Color.white.opacity(0.3)))
+                                      kind: String(localized: "Не за Mac"), color: Color.white.opacity(0.3)))
                 }
                 runStart = nil
             }
@@ -359,7 +359,7 @@ private struct TodayChart: View {
 
     /// Consecutive minutes of the same context merged into spans.
     private func contextSpans(from start: Date, to end: Date) -> [Span] {
-        let kinds: [(MacContext, String, Color)] = [(.call, "Созвон", .red), (.meeting, "Встреча", .purple), (.focus, "Фокус", .yellow)]
+        let kinds: [(MacContext, String, Color)] = [(.call, String(localized: "Созвон"), .red), (.meeting, String(localized: "Встреча"), .purple), (.focus, String(localized: "Фокус"), .yellow)]
         var spans: [Span] = []
         let a = Int(start.timeIntervalSince1970 / 60), b = Int(end.timeIntervalSince1970 / 60)
         for (flag, title, color) in kinds {
@@ -425,48 +425,48 @@ private struct HealthWeekPage: View {
     var body: some View {
         let week = health.recent(7)
         HStack(spacing: 10) {
-            chartCard("Сон", icon: "moon.zzz.fill", tint: .indigo, summary: avgText(week.compactMap(\.sleepSeconds)) { HealthAnalytics.hours($0) }) {
+            chartCard(String(localized: "Сон"), icon: "moon.zzz.fill", tint: .indigo, summary: avgText(week.compactMap(\.sleepSeconds)) { HealthAnalytics.hours($0) }) {
                 Chart {
                     ForEach(week, id: \.date) { d in
                         let x = label(d.date)
                         ForEach(stages(d), id: \.0) { name, secs, color in
-                            BarMark(x: .value("День", x), y: .value("ч", secs / 3600))
+                            BarMark(x: .value(String(localized: "День"), x), y: .value(String(localized: "ч"), secs / 3600))
                                 .foregroundStyle(color).cornerRadius(2)
                                 .position(by: .value("stage", name), axis: .vertical)
                         }
                         if let score = d.sleepScore {
-                            PointMark(x: .value("День", x), y: .value("ч", (d.sleepSeconds ?? 0) / 3600 + 0.6))
+                            PointMark(x: .value(String(localized: "День"), x), y: .value(String(localized: "ч"), (d.sleepSeconds ?? 0) / 3600 + 0.6))
                                 .symbolSize(0)
                                 .annotation(position: .overlay) {
                                     Text("\(Int(score))").font(Theme.font(8, .bold)).foregroundStyle(Theme.secondary)
                                 }
                         }
                     }
-                    RuleMark(y: .value("норма", 7)).foregroundStyle(Color.white.opacity(0.2)).lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                    RuleMark(y: .value(String(localized: "норма"), 7)).foregroundStyle(Color.white.opacity(0.2)).lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
                 }
                 .chartYAxis(.hidden)
                 .chartXAxis { AxisMarks { _ in AxisValueLabel().font(Theme.font(8)).foregroundStyle(Theme.tertiary) } }
             }
 
             let hasStress = week.contains { $0.stressAvg != nil }
-            chartCard(hasStress ? "Стресс и Body Battery" : "Пульс покоя", icon: hasStress ? "gauge.with.dots.needle.50percent" : "heart.fill",
+            chartCard(hasStress ? String(localized: "Стресс и Body Battery") : String(localized: "Пульс покоя"), icon: hasStress ? "gauge.with.dots.needle.50percent" : "heart.fill",
                       tint: hasStress ? .orange : .pink,
-                      summary: hasStress ? avgText(week.compactMap(\.stressAvg)) { "средний \(Int($0))" } : avgText(week.compactMap(\.restingHR)) { "\(Int($0)) уд/мин" }) {
+                      summary: hasStress ? avgText(week.compactMap(\.stressAvg)) { String(localized: "средний \(Int($0))") } : avgText(week.compactMap(\.restingHR)) { String(localized: "\(Int($0)) уд/мин") }) {
                 Chart {
                     ForEach(week, id: \.date) { d in
                         let x = label(d.date)
                         if hasStress {
                             if let lo = d.bbLow, let hi = d.bbHigh {
-                                BarMark(x: .value("День", x), yStart: .value("min", lo), yEnd: .value("max", hi), width: .fixed(14))
+                                BarMark(x: .value(String(localized: "День"), x), yStart: .value("min", lo), yEnd: .value("max", hi), width: .fixed(14))
                                     .foregroundStyle(Color(red: 0.4, green: 0.75, blue: 1).opacity(0.25)).cornerRadius(4)
                             }
                             if let s = d.stressAvg {
-                                BarMark(x: .value("День", x), y: .value("Стресс", s), width: .fixed(6))
+                                BarMark(x: .value(String(localized: "День"), x), y: .value(String(localized: "Стресс"), s), width: .fixed(6))
                                     .foregroundStyle(HealthAnalytics.stressLevel(s).color).cornerRadius(3)
                             }
                         } else if let r = d.restingHR {
-                            LineMark(x: .value("День", x), y: .value("Покой", r)).foregroundStyle(.pink).interpolationMethod(.monotone)
-                            PointMark(x: .value("День", x), y: .value("Покой", r)).foregroundStyle(.pink).symbolSize(18)
+                            LineMark(x: .value(String(localized: "День"), x), y: .value(String(localized: "Покой"), r)).foregroundStyle(.pink).interpolationMethod(.monotone)
+                            PointMark(x: .value(String(localized: "День"), x), y: .value(String(localized: "Покой"), r)).foregroundStyle(.pink).symbolSize(18)
                         }
                     }
                 }
@@ -475,9 +475,9 @@ private struct HealthWeekPage: View {
             }
 
             VStack(spacing: 6) {
-                trendTile("Пульс покоя", week.compactMap(\.restingHR), unit: "уд/мин", tint: .pink, lowerIsBetter: true)
-                trendTile("HRV ночью", week.compactMap(\.hrvLastNight), unit: "мс", tint: .mint, lowerIsBetter: false)
-                trendTile("Шаги", week.compactMap(\.steps), unit: "в день", tint: .green, lowerIsBetter: false)
+                trendTile(String(localized: "Пульс покоя"), week.compactMap(\.restingHR), unit: String(localized: "уд/мин"), tint: .pink, lowerIsBetter: true)
+                trendTile(String(localized: "HRV ночью"), week.compactMap(\.hrvLastNight), unit: String(localized: "мс"), tint: .mint, lowerIsBetter: false)
+                trendTile(String(localized: "Шаги"), week.compactMap(\.steps), unit: String(localized: "в день"), tint: .green, lowerIsBetter: false)
             }
             .frame(width: 150)
         }
@@ -510,7 +510,7 @@ private struct HealthWeekPage: View {
                 }
             }
             HStack(alignment: .bottom, spacing: 6) {
-                Text(HealthAnalytics.avg(values).map { $0 >= 10000 ? String(format: "%.1fк", $0 / 1000) : "\(Int($0))" } ?? "—")
+                Text(HealthAnalytics.avg(values).map { $0 >= 10000 ? String(format: String(localized: "%.1fк"), $0 / 1000) : "\(Int($0))" } ?? "—")
                     .font(Theme.font(15, .bold)).monospacedDigit().foregroundStyle(.white)
                 Text(unit).font(Theme.font(8)).foregroundStyle(Theme.tertiary)
                 Spacer(minLength: 0)
@@ -523,16 +523,16 @@ private struct HealthWeekPage: View {
     }
 
     private func stages(_ d: HealthDay) -> [(String, Double, Color)] {
-        if d.deepSeconds == nil && d.remSeconds == nil, let total = d.sleepSeconds { return [("Сон", total, .indigo)] }
-        return [("Глубокий", d.deepSeconds ?? 0, Color(red: 0.3, green: 0.3, blue: 0.85)),
-                ("Лёгкий", d.lightSeconds ?? 0, Color(red: 0.45, green: 0.55, blue: 1)),
+        if d.deepSeconds == nil && d.remSeconds == nil, let total = d.sleepSeconds { return [(String(localized: "Сон"), total, .indigo)] }
+        return [(String(localized: "Глубокий"), d.deepSeconds ?? 0, Color(red: 0.3, green: 0.3, blue: 0.85)),
+                (String(localized: "Лёгкий"), d.lightSeconds ?? 0, Color(red: 0.45, green: 0.55, blue: 1)),
                 ("REM", d.remSeconds ?? 0, Color(red: 0.75, green: 0.5, blue: 1)),
-                ("Пробуждения", d.awakeSeconds ?? 0, Color.white.opacity(0.35))]
+                (String(localized: "Пробуждения"), d.awakeSeconds ?? 0, Color.white.opacity(0.35))]
     }
 
     private func label(_ key: String) -> String {
         guard let d = HealthDay.date(key) else { return key }
-        let f = DateFormatter(); f.locale = Locale(identifier: "ru_RU"); f.dateFormat = "EEEEEE"
+        let f = DateFormatter(); f.locale = AppLanguage.locale; f.dateFormat = "EEEEEE"
         return f.string(from: d)
     }
 
@@ -578,11 +578,11 @@ private struct HealthInsightsPage: View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 6) {
-                    Text("Что нагружает").font(Theme.font(11, .semibold)).foregroundStyle(.white)
+                    Text(String(localized: "Что нагружает")).font(Theme.font(11, .semibold)).foregroundStyle(.white)
                     HStack(spacing: 2) {
                         ForEach([false, true], id: \.self) { apps in
                             Button { withAnimation(.easeOut(duration: 0.2)) { byApps = apps } } label: {
-                                Text(apps ? "Приложения" : "Занятия").font(Theme.font(9, .semibold))
+                                Text(apps ? String(localized: "Приложения") : String(localized: "Занятия")).font(Theme.font(9, .semibold))
                                     .foregroundStyle(byApps == apps ? Color.black : Theme.secondary)
                                     .padding(.horizontal, 6).frame(height: 16)
                                     .background(Capsule().fill(byApps == apps ? Color.white.opacity(0.85) : Color.clear))
@@ -594,12 +594,12 @@ private struct HealthInsightsPage: View {
                     Spacer()
                     if let base {
                         Text("≈ \(Int(base))").font(Theme.font(9)).foregroundStyle(Theme.tertiary)
-                            .help("Средний \(metric.title), пока вы за Mac")
+                            .help(String(localized: "Средний \(metric.title), пока вы за Mac"))
                     }
                 }
                 if loads.isEmpty {
                     Spacer()
-                    Text(byApps ? "Приложения и сайты начали записываться — нужно немного данных с часов" : "Нужно пару дней данных с часов, пока NotchMate открыта")
+                    Text(byApps ? String(localized: "Приложения и сайты начали записываться — нужно немного данных с часов") : String(localized: "Нужно пару дней данных с часов, пока NotchMate открыта"))
                         .font(Theme.font(11)).foregroundStyle(Theme.tertiary).multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity)
                     Spacer()
@@ -626,7 +626,7 @@ private struct HealthInsightsPage: View {
                                 .foregroundStyle(l.delta > 0 ? .orange : .green).frame(width: 28, alignment: .trailing)
                         }
                         .frame(height: 20)
-                        .help("\(l.title): \(metric.title) ≈ \(Int(l.value)) за \(l.minutes) мин")
+                        .help(String(localized: "\(l.title): \(metric.title) ≈ \(Int(l.value)) за \(l.minutes) мин"))
                     }
                     Spacer(minLength: 0)
                 }
@@ -675,17 +675,17 @@ private struct HealthEmptyState: View {
             Image(systemName: "heart.text.square.fill").font(.system(size: 40)).foregroundStyle(.pink)
                 .symbolEffect(.pulse, options: .repeating)
             VStack(alignment: .leading, spacing: 6) {
-                Text(health.isEnabled ? "Жду данные" : "Подключите Garmin или Apple Health")
+                Text(health.isEnabled ? String(localized: "Жду данные") : String(localized: "Подключите Garmin или Apple Health"))
                     .font(Theme.font(16, .bold)).foregroundStyle(.white)
                 Text(health.isEnabled
-                     ? "Garmin: \(Settings.shared.garminEnabled ? health.garminState.text : "выключен") · Apple Health: \(Settings.shared.appleHealthEnabled ? health.appleState.text : "выключен")"
-                     : "Стресс, Body Battery, сон и пульс — и как на них влияют созвоны, фокус и встречи.")
+                     ? "Garmin: \(Settings.shared.garminEnabled ? health.garminState.text : String(localized: "выключен")) · Apple Health: \(Settings.shared.appleHealthEnabled ? health.appleState.text : String(localized: "выключен"))"
+                     : String(localized: "Стресс, Body Battery, сон и пульс — и как на них влияют созвоны, фокус и встречи."))
                     .font(Theme.font(12)).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 8) {
-                    PillButton(title: "Настройки", icon: "gearshape.fill", prominent: true) {
+                    PillButton(title: String(localized: "Настройки"), icon: "gearshape.fill", prominent: true) {
                         NotificationCenter.default.post(name: .notchMateOpenSettings, object: nil)
                     }
-                    PillButton(title: "Подышать", icon: "wind") { breathing.start() }
+                    PillButton(title: String(localized: "Подышать"), icon: "wind") { breathing.start() }
                 }
             }
             Spacer(minLength: 0)
@@ -717,9 +717,9 @@ private struct BreathingPanel: View {
                     Text(breathing.pattern.subtitle).font(Theme.font(11)).foregroundStyle(Theme.secondary)
                     HStack(spacing: 6) {
                         Ring(progress: 1 - s.remaining / breathing.duration, tint: tint, lineWidth: 3).frame(width: 16, height: 16)
-                        Text("осталось " + FocusTimer.format(s.remaining)).font(Theme.font(12, .semibold)).monospacedDigit().foregroundStyle(tint)
+                        Text(String(localized: "осталось ") + FocusTimer.format(s.remaining)).font(Theme.font(12, .semibold)).monospacedDigit().foregroundStyle(tint)
                     }
-                    PillButton(title: "Закончить", icon: "stop.fill") { breathing.stop() }
+                    PillButton(title: String(localized: "Закончить"), icon: "stop.fill") { breathing.stop() }
                 }
                 Spacer(minLength: 0)
             }
@@ -768,7 +768,7 @@ struct BreathingNotchOverlay: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("\(s.phase.title) · \(s.secondsLeftInPhase)").font(Theme.font(13, .bold)).foregroundStyle(.white)
                         .contentTransition(.numericText())
-                    Text("осталось " + FocusTimer.format(s.remaining)).font(Theme.font(10, .medium)).monospacedDigit().foregroundStyle(tint)
+                    Text(String(localized: "осталось ") + FocusTimer.format(s.remaining)).font(Theme.font(10, .medium)).monospacedDigit().foregroundStyle(tint)
                 }
                 Spacer(minLength: 0)
                 Button { breathing.stop() } label: {

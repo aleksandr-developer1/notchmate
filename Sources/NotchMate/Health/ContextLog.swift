@@ -19,15 +19,15 @@ struct MacContext: OptionSet, Codable, Hashable {
 
     /// Contexts worth comparing, in display order.
     static let tracked: [(MacContext, String, String)] = [
-        (.call, "Созвоны", "video.fill"),
-        (.meeting, "Встречи", "calendar"),
-        (.focus, "Фокус", "timer"),
-        (.flow, "Активная печать", "keyboard"),
-        (.jira, "Задачи Jira", "briefcase.fill"),
-        (.agent, "С агентами", "terminal"),
-        (.music, "С музыкой", "music.note"),
-        (.distracted, "Отвлечения", "eye.trianglebadge.exclamationmark"),
-        (.break, "Перерывы", "cup.and.saucer.fill"),
+        (.call, String(localized: "Созвоны"), "video.fill"),
+        (.meeting, String(localized: "Встречи"), "calendar"),
+        (.focus, String(localized: "Фокус"), "timer"),
+        (.flow, String(localized: "Активная печать"), "keyboard"),
+        (.jira, String(localized: "Задачи Jira"), "briefcase.fill"),
+        (.agent, String(localized: "С агентами"), "terminal"),
+        (.music, String(localized: "С музыкой"), "music.note"),
+        (.distracted, String(localized: "Отвлечения"), "eye.trianglebadge.exclamationmark"),
+        (.break, String(localized: "Перерывы"), "cup.and.saucer.fill"),
     ]
 }
 

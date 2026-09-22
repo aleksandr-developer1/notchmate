@@ -51,7 +51,7 @@ private struct PlayerCard: View {
             }
             .onHover { h in withAnimation(.easeOut(duration: 0.15)) { artHover = h } }
             .onTapGesture { player.openSourceApp() }
-            .help("Открыть \(player.sourceAppName)")
+            .help(String(localized: "Открыть \(player.sourceAppName)"))
 
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top, spacing: 8) {
@@ -95,14 +95,14 @@ private struct PlayerCard: View {
 
                 HStack(spacing: 4) {
                     IconButton(systemName: "shuffle", size: 11, frame: 26,
-                               tint: (track.shuffle ?? 1) > 1 ? player.accent : .white.opacity(0.7), help: "Перемешать") {
+                               tint: (track.shuffle ?? 1) > 1 ? player.accent : .white.opacity(0.7), help: String(localized: "Перемешать")) {
                         player.send(.toggleShuffle)
                     }
-                    IconButton(systemName: "backward.fill", size: 15, frame: 34, help: "Назад") { player.send(.previous) }
+                    IconButton(systemName: "backward.fill", size: 15, frame: 34, help: String(localized: "Назад")) { player.send(.previous) }
                     PlayPauseButton(isPlaying: track.isPlaying, tint: player.accent) { player.send(.toggle) }
-                    IconButton(systemName: "forward.fill", size: 15, frame: 34, help: "Вперёд") { player.send(.next) }
+                    IconButton(systemName: "forward.fill", size: 15, frame: 34, help: String(localized: "Вперёд")) { player.send(.next) }
                     IconButton(systemName: (track.repeatMode ?? 1) == 2 ? "repeat.1" : "repeat", size: 11, frame: 26,
-                               tint: (track.repeatMode ?? 1) > 1 ? player.accent : .white.opacity(0.7), help: "Повтор") {
+                               tint: (track.repeatMode ?? 1) > 1 ? player.accent : .white.opacity(0.7), help: String(localized: "Повтор")) {
                         player.send(.toggleRepeat)
                     }
                     Spacer(minLength: 8)
@@ -180,7 +180,7 @@ private struct DiscoButton: View {
                 Image(systemName: disco.isOn ? "sparkles" : "party.popper.fill")
                     .font(.system(size: 10, weight: .semibold))
                     .contentTransition(.symbolEffect(.replace))
-                Text("Диско")
+                Text(String(localized: "Диско"))
             }
             .font(Theme.font(10, .bold))
             .foregroundStyle(disco.isOn ? AnyShapeStyle(player.accent)
@@ -196,7 +196,7 @@ private struct DiscoButton: View {
         }
         .buttonStyle(PressableStyle())
         .animation(.easeOut(duration: 0.2), value: disco.isOn)
-        .help(disco.isOn ? "Выключить режим дискотеки" : "Режим дискотеки: свечение по рамке экрана")
+        .help(disco.isOn ? String(localized: "Выключить режим дискотеки") : String(localized: "Режим дискотеки: свечение по рамке экрана"))
     }
 }
 
@@ -223,8 +223,8 @@ private struct TapTempoButton: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .help(tempo.tempo == nil ? "Темп определяется по звуку. Можно простучать в такт (4+ раз)"
-                                 : "Темп \(Int(tempo.tempo!.bpm.rounded())) BPM. Стучи в такт, чтобы поправить")
+        .help(tempo.tempo == nil ? String(localized: "Темп определяется по звуку. Можно простучать в такт (4+ раз)")
+                                 : String(localized: "Темп \(Int(tempo.tempo!.bpm.rounded())) BPM. Стучи в такт, чтобы поправить"))
     }
 }
 
@@ -249,7 +249,7 @@ private struct PlayPauseButton: View {
         }
         .buttonStyle(PressableStyle())
         .onHover { h in withAnimation(.easeOut(duration: 0.15)) { hovering = h } }
-        .help(isPlaying ? "Пауза" : "Играть")
+        .help(isPlaying ? String(localized: "Пауза") : String(localized: "Играть"))
     }
 }
 
@@ -293,12 +293,12 @@ private struct EmptyPlayerCard: View {
             .frame(width: 134, height: 134)
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Тишина").font(Theme.font(18, .bold)).foregroundStyle(.white)
-                Text(player.isAvailable ? "Включите музыку — управление появится здесь" : "Модуль Now Playing недоступен")
+                Text(String(localized: "Тишина")).font(Theme.font(18, .bold)).foregroundStyle(.white)
+                Text(player.isAvailable ? String(localized: "Включите музыку — управление появится здесь") : String(localized: "Модуль Now Playing недоступен"))
                     .font(Theme.font(12)).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 4)
                 HStack(spacing: 6) {
-                    PillButton(title: "Яндекс Музыка", icon: "play.fill", tint: Theme.yandex, prominent: true) {
+                    PillButton(title: String(localized: "Яндекс Музыка"), icon: "play.fill", tint: Theme.yandex, prominent: true) {
                         NowPlayingService.launchYandexMusic()
                     }
                     if NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.spotify.client") != nil {
@@ -308,7 +308,7 @@ private struct EmptyPlayerCard: View {
                             }
                         }
                     }
-                    IconButton(systemName: "play.fill", size: 12, frame: 28, filled: true, help: "Продолжить последнее") {
+                    IconButton(systemName: "play.fill", size: 12, frame: 28, filled: true, help: String(localized: "Продолжить последнее")) {
                         player.send(.play)
                     }
                 }
@@ -344,7 +344,7 @@ private struct WidgetColumn: View {
                         Text(focus.isActive ? FocusTimer.format(focus.remaining) : "25:00")
                             .font(Theme.font(15, .bold)).monospacedDigit().foregroundStyle(.white)
                             .contentTransition(.numericText(countsDown: true))
-                        Text(focus.isActive ? focus.label : "Фокус").font(Theme.font(10, .medium)).foregroundStyle(Theme.secondary)
+                        Text(focus.isActive ? focus.label : String(localized: "Фокус")).font(Theme.font(10, .medium)).foregroundStyle(Theme.secondary)
                     }
                     Spacer(minLength: 0)
                 }
@@ -357,9 +357,9 @@ private struct WidgetColumn: View {
                     }
                     .frame(width: 30, height: 30)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text(Date(), format: .dateTime.weekday(.wide).locale(Locale(identifier: "ru_RU")))
+                        Text(Date(), format: .dateTime.weekday(.wide).locale(AppLanguage.locale))
                             .font(Theme.font(13, .bold)).foregroundStyle(.white).lineLimit(1)
-                        Text("Заметка дня").font(Theme.font(10, .medium)).foregroundStyle(Theme.secondary)
+                        Text(String(localized: "Заметка дня")).font(Theme.font(10, .medium)).foregroundStyle(Theme.secondary)
                     }
                     Spacer(minLength: 0)
                 }

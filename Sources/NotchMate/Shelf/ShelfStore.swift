@@ -37,13 +37,13 @@ final class ShelfStore: ObservableObject {
 
     /// Plain text / images dropped from apps become files in the cache.
     func add(text: String) {
-        let url = storeDir.appendingPathComponent("Текст \(Self.stamp()).txt")
+        let url = storeDir.appendingPathComponent(String(localized: "Текст \(Self.stamp()).txt"))
         try? text.write(to: url, atomically: true, encoding: .utf8)
         add(urls: [url])
     }
 
     func add(imageData: Data) {
-        let url = storeDir.appendingPathComponent("Изображение \(Self.stamp()).png")
+        let url = storeDir.appendingPathComponent(String(localized: "Изображение \(Self.stamp()).png"))
         if let img = NSImage(data: imageData), let tiff = img.tiffRepresentation,
            let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]) {
             try? png.write(to: url)

@@ -57,7 +57,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         env.ai.onAssistantError = { [weak self] message in
             if let self, !self.notchController.viewModel.isOpen {
-                self.notchController.viewModel.showHUD(.message(icon: "exclamationmark.triangle.fill", text: "Ошибка ответа"), duration: 4)
+                self.notchController.viewModel.showHUD(.message(icon: "exclamationmark.triangle.fill", text: String(localized: "Ошибка ответа")), duration: 4)
             }
         }
 
@@ -99,19 +99,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem?.button?.image = image
 
         let menu = NSMenu()
-        menu.addItem(withTitle: "Открыть панель", action: #selector(toggleNotch), keyEquivalent: "")
-        menu.addItem(withTitle: "Быстрая заметка", action: #selector(quickCapture), keyEquivalent: "")
-        menu.addItem(withTitle: "Чат ИИ", action: #selector(openAIChat), keyEquivalent: "")
-        menu.addItem(withTitle: "Помощник на встрече", action: #selector(meetingAssistant), keyEquivalent: "")
+        menu.addItem(withTitle: String(localized: "Открыть панель"), action: #selector(toggleNotch), keyEquivalent: "")
+        menu.addItem(withTitle: String(localized: "Быстрая заметка"), action: #selector(quickCapture), keyEquivalent: "")
+        menu.addItem(withTitle: String(localized: "Чат ИИ"), action: #selector(openAIChat), keyEquivalent: "")
+        menu.addItem(withTitle: String(localized: "Помощник на встрече"), action: #selector(meetingAssistant), keyEquivalent: "")
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Настройки…", action: #selector(openSettingsAction), keyEquivalent: ",")
-        let perms = NSMenuItem(title: "Разрешения…", action: #selector(openPermissions), keyEquivalent: "")
+        menu.addItem(withTitle: String(localized: "Настройки…"), action: #selector(openSettingsAction), keyEquivalent: ",")
+        let perms = NSMenuItem(title: String(localized: "Разрешения…"), action: #selector(openPermissions), keyEquivalent: "")
         if !PermissionCenter.shared.missing.isEmpty {
             perms.image = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: nil)
         }
         menu.addItem(perms)
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Выйти из NotchMate", action: #selector(quit), keyEquivalent: "q")
+        menu.addItem(withTitle: String(localized: "Выйти из NotchMate"), action: #selector(quit), keyEquivalent: "q")
         menu.items.forEach { $0.target = self }
         statusItem?.menu = menu
     }
@@ -164,7 +164,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if settingsWindow == nil {
             let hosting = NSHostingController(rootView: SettingsView().environmentObject(AppEnvironment.shared))
             let window = NSWindow(contentViewController: hosting)
-            window.title = "NotchMate — Настройки"
+            window.title = String(localized: "NotchMate — Настройки")
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
             window.titlebarAppearsTransparent = true
             window.isReleasedWhenClosed = false

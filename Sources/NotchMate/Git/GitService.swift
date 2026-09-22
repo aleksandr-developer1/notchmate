@@ -209,20 +209,20 @@ final class GitService: ObservableObject {
         let companion = env.companion
         if old.state == .pending, new.state == .failure {
             companion.notify(.sad, badge: CompanionBadge(symbol: "xmark.octagon.fill", image: nil, tint: .red), seconds: 4)
-            companion.say("CI упал\(new.failedCheck.map { ": \($0)" } ?? "") 💥", force: true)
+            companion.say(String(localized: "CI упал\(new.failedCheck.map { ": \($0)" } ?? "") 💥"), force: true)
             env.attention.gitCIFailed(repo: repo, ci: new)
         } else if old.state == .pending, new.state == .success {
             companion.notify(.proud, badge: CompanionBadge(symbol: "checkmark.seal.fill", image: nil, tint: .green), seconds: 3)
-            companion.say("CI зелёный ✅ \(repo)")
+            companion.say(String(localized: "CI зелёный ✅ \(repo)"))
         }
         if new.review != old.review, let review = new.review, old.prNumber == new.prNumber {
             switch review {
             case "APPROVED":
                 companion.notify(.love, badge: CompanionBadge(symbol: "hand.thumbsup.fill", image: nil, tint: .green), seconds: 3)
-                companion.say("PR #\(new.prNumber ?? 0) одобрили 🎉", force: true)
+                companion.say(String(localized: "PR #\(new.prNumber ?? 0) одобрили 🎉"), force: true)
             case "CHANGES_REQUESTED":
                 companion.notify(.surprised, badge: CompanionBadge(symbol: "text.bubble.fill", image: nil, tint: .orange), seconds: 3)
-                companion.say("В PR #\(new.prNumber ?? 0) просят правки ✍️", force: true)
+                companion.say(String(localized: "В PR #\(new.prNumber ?? 0) просят правки ✍️"), force: true)
             default: break
             }
         }
@@ -233,7 +233,7 @@ final class GitService: ObservableObject {
     func generateMessage() {
         guard let env, let s = status, !generating else { return }
         guard env.ai.isReady(env.ai.provider) else {
-            lastError = "Подключите ИИ в настройках"
+            lastError = String(localized: "Подключите ИИ в настройках")
             return
         }
         generating = true
@@ -241,7 +241,7 @@ final class GitService: ObservableObject {
         generateTask = Task {
             defer { generating = false }
             let context = await Git.commitContext(s.root, stagedOnly: s.staged > 0)
-            guard !context.diff.isEmpty else { lastError = "Нет изменений"; return }
+            guard !context.diff.isEmpty else { lastError = String(localized: "Нет изменений"); return }
             let system = """
             You write git commit messages. Reply with the commit message only: no quotes, no markdown fences, no explanations.
             First line: imperative summary, at most 72 characters. If the change is non-trivial, add a blank line and 1–4 short bullet lines.
@@ -266,7 +266,7 @@ final class GitService: ObservableObject {
                 guard !Task.isCancelled else { return }
                 withAnimation(.easeOut(duration: 0.2)) { commitMessage = text.trimmingCharacters(in: .whitespacesAndNewlines) }
             } catch {
-                lastError = "ИИ: \(error.localizedDescription)"
+                lastError = String(localized: "ИИ: \(error.localizedDescription)")
             }
         }
     }
@@ -274,7 +274,7 @@ final class GitService: ObservableObject {
     func commit() {
         guard let s = status, busy == nil else { return }
         let message = commitMessage.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !message.isEmpty else { lastError = "Напишите сообщение коммита"; return }
+        guard !message.isEmpty else { lastError = String(localized: "Напишите сообщение коммита"); return }
         run("commit") {
             if s.staged == 0 {
                 let add = await Git.run(["add", "-A"], in: s.root)
@@ -283,7 +283,7 @@ final class GitService: ObservableObject {
             return await Git.run(["commit", "-F", "-"], in: s.root, stdin: message)
         } success: { [weak self] _ in
             self?.commitMessage = ""
-            self?.lastResult = "Закоммичено"
+            self?.lastResult = String(localized: "Закоммичено")
             self?.env?.companion.react(.proud, for: 2.5)
         }
     }
@@ -292,7 +292,7 @@ final class GitService: ObservableObject {
         guard let s = status, busy == nil else { return }
         let args = s.upstream == nil ? ["push", "-u", "origin", "HEAD"] : ["push"]
         run("push") { await Git.run(args, in: s.root, timeout: 90) } success: { [weak self] _ in
-            self?.lastResult = "Отправлено в \(s.upstream ?? "origin/\(s.branch)")"
+            self?.lastResult = String(localized: "Отправлено в \(s.upstream ?? "origin/\(s.branch)")")
             self?.env?.companion.react(.excited, for: 2)
             DispatchQueue.main.asyncAfter(deadline: .now() + 6) { self?.refreshCI() }
         }
@@ -301,7 +301,7 @@ final class GitService: ObservableObject {
     func pull() {
         guard let s = status, busy == nil else { return }
         run("pull") { await Git.run(["pull", "--ff-only"], in: s.root, timeout: 90) } success: { [weak self] out in
-            self?.lastResult = out.contains("Already up to date") ? "Уже актуально" : "Подтянуто"
+            self?.lastResult = out.contains("Already up to date") ? String(localized: "Уже актуально") : String(localized: "Подтянуто")
             self?.env?.companion.react(.nod, for: 1.4)
         }
     }

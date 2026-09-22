@@ -8,6 +8,7 @@
   <img src="https://img.shields.io/badge/macOS-14%2B-000?logo=apple&logoColor=white" alt="macOS 14+">
   <img src="https://img.shields.io/badge/Swift-5.10-F05138?logo=swift&logoColor=white" alt="Swift 5.10">
   <img src="https://img.shields.io/badge/Apple%20Silicon-arm64-555" alt="Apple Silicon">
+  <img src="https://img.shields.io/badge/languages-8-7b5cff" alt="8 languages">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3DA639" alt="MIT"></a>
   <a href="https://github.com/aleksandr-developer1/notchmate/stargazers"><img src="https://img.shields.io/github/stars/aleksandr-developer1/notchmate?style=social" alt="Stars"></a>
 </p>
@@ -20,6 +21,8 @@
 > **Бета-версия.** NotchMate работает каждый день, но ещё обкатывается: возможны ошибки, а интерфейс и настройки будут меняться. Если что-то пошло не так, заведите issue.
 
 Умный помощник за вырезом камеры MacBook: музыка, заметки, задачи, встречи, созвоны и ИИ-чат в одной панели, которая выезжает из выреза.
+
+🌍 **Языки интерфейса:** русский, English, Deutsch, Español, Français, Português (Brasil), 简体中文 и 日本語. NotchMate говорит на языке системы, а другой можно выбрать в «Настройки → Основные → Язык».
 
 <p align="center">
   <a href="https://github.com/aleksandr-developer1/notchmate/releases/latest"><img src="https://img.shields.io/badge/%D0%A1%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C_%D0%B4%D0%BB%D1%8F_macOS-arm64-000?style=for-the-badge&logo=apple&logoColor=white" alt="Скачать для macOS"></a>

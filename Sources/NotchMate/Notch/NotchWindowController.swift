@@ -254,24 +254,24 @@ final class NotchWindowController {
         }
         env.jira.onOverrun = { [weak self] issue in
             self?.env.companion.notify(.sad, badge: .init(symbol: "exclamationmark.triangle.fill", image: nil, tint: .orange), seconds: 4)
-            self?.viewModel.showHUD(.speech("\(issue.key): эстимейт превышен"), duration: 4)
+            self?.viewModel.showHUD(.speech(String(localized: "\(issue.key): эстимейт превышен")), duration: 4)
         }
         env.ai.onRespondingChanged = { [weak self] responding in
             if responding { self?.env.companion.react(.focused, for: 120) } else { self?.env.companion.react(.nod, for: 1.4) }
             if !responding, let self, !self.viewModel.isOpen {
-                self.viewModel.showHUD(.message(icon: "checkmark.circle.fill", text: "Ответ готов"), duration: 3.2)
+                self.viewModel.showHUD(.message(icon: "checkmark.circle.fill", text: String(localized: "Ответ готов")), duration: 3.2)
             }
         }
         env.distractions.onNudge = { [weak self] source in
             guard let self else { return }
-            let target = self.env.jira.activeIssue.map { $0.key } ?? "фокусу"
+            let target = self.env.jira.activeIssue.map { $0.key } ?? String(localized: "фокусу")
             self.env.companion.notify(.disappointed, badge: .init(symbol: "eye.trianglebadge.exclamationmark", image: nil, tint: .orange), seconds: 4)
-            self.viewModel.showHUD(.speech("\(source) подождёт — вернёмся к \(target)?"), duration: 4)
+            self.viewModel.showHUD(.speech(String(localized: "\(source) подождёт — вернёмся к \(target)?")), duration: 4)
         }
         env.agents.onWaiting = { [weak self] s in
             guard let self else { return }
             self.env.companion.notify(.alert, badge: .init(symbol: s.agent.icon == nil ? s.agent.fallbackSymbol : nil, image: s.agent.icon, tint: s.agent.tint), seconds: 3)
-            self.viewModel.showHUD(.speech("\(s.agent.title) ждёт ответа · \(s.project)"), duration: 5)
+            self.viewModel.showHUD(.speech(String(localized: "\(s.agent.title) ждёт ответа · \(s.project)")), duration: 5)
             if Settings.shared.agentSound { NSSound(named: "Ping")?.play() }
         }
         env.agents.onFinished = { [weak self] s in
@@ -281,18 +281,18 @@ final class NotchWindowController {
             self.env.companion.notify(.ready, badge: .init(symbol: s.agent.icon == nil ? s.agent.fallbackSymbol : nil, image: s.agent.icon, tint: s.agent.tint), seconds: 3)
             // Short answers don't need a banner; long runs do (you were waiting for them, so this ignores quiet mode).
             if seconds >= 20 {
-                self.viewModel.showHUD(.speech("\(s.agent.title) закончил · \(s.project) · \(FocusTimer.format(TimeInterval(seconds)))"), duration: 5)
+                self.viewModel.showHUD(.speech(String(localized: "\(s.agent.title) закончил · \(s.project) · \(FocusTimer.format(TimeInterval(seconds)))")), duration: 5)
                 if Settings.shared.agentSound { NSSound(named: "Glass")?.play() }
             }
         }
         env.calendar.onSoon = { [weak self] e in
             guard let self else { return }
             self.env.companion.notify(.alert, badge: .init(symbol: "calendar", image: nil, tint: e.color), seconds: 3)
-            self.viewModel.showHUD(.speech("Через \(max(e.minutesUntil, 1)) мин: \(e.title)"), duration: 6)
+            self.viewModel.showHUD(.speech(String(localized: "Через \(max(e.minutesUntil, 1)) мин: \(e.title)")), duration: 6)
         }
         env.calendar.onStart = { [weak self] e in
             guard let self, e.meetingURL != nil else { return }
-            self.viewModel.showHUD(.speech("Начинается: \(e.title)"), duration: 6)
+            self.viewModel.showHUD(.speech(String(localized: "Начинается: \(e.title)")), duration: 6)
         }
         NotificationCenter.default.addObserver(forName: .notchMateShowSpeech, object: nil, queue: .main) { [weak self] note in
             MainActor.assumeIsolated {
@@ -303,7 +303,7 @@ final class NotchWindowController {
         env.calls.onFinished = { [weak self] title, _ in
             guard let self else { return }
             self.env.companion.notify(.proud, badge: .init(symbol: "text.document.fill", image: nil, tint: Theme.obsidian), seconds: 3)
-            self.viewModel.showHUD(.speech("Протокол созвона готов: \(title)"), duration: 6)
+            self.viewModel.showHUD(.speech(String(localized: "Протокол созвона готов: \(title)")), duration: 6)
         }
         env.companion.onSpeak = { [weak self] text in
             self?.viewModel.showHUD(.speech(text), duration: 4)
@@ -320,7 +320,7 @@ final class NotchWindowController {
         NotificationCenter.default.addObserver(forName: .notchMateCaptureSaved, object: nil, queue: .main) { [weak self] note in
             MainActor.assumeIsolated {
                 guard let self else { return }
-                let text = note.object as? String ?? "Сохранено"
+                let text = note.object as? String ?? String(localized: "Сохранено")
                 self.env.companion.bump(\.notes)
                 self.env.companion.react(.happy, for: 2.5)
                 if self.viewModel.isOpen && self.viewModel.openReason == .hotkey && self.viewModel.tab == .notes && !self.viewModel.pointerVisited {

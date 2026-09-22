@@ -14,7 +14,7 @@ struct CompanionView: View {
     @State private var question = ""
     @FocusState private var inputFocused: Bool
 
-    private let quick = ["Что у меня сегодня?", "Что сейчас важнее?", "План до вечера"]
+    private let quick = [String(localized: "Что у меня сегодня?"), String(localized: "Что сейчас важнее?"), String(localized: "План до вечера")]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -80,19 +80,19 @@ struct CompanionView: View {
         if let r = reminders.items.first(where: { $0.hasTime && $0.due > Date() }), Calendar.current.isDateInToday(r.due),
            calendar.next.map({ $0.isNow || $0.start > r.due }) ?? true, calendar.next?.isNow != true {
             let mins = Int(ceil(r.due.timeIntervalSinceNow / 60))
-            let until = mins < 60 ? "\(mins) мин" : "\(mins / 60) ч \(mins % 60) мин"
-            return md("Через **\(until)** напомню: «\(r.title)».")
+            let until = mins < 60 ? String(localized: "\(mins) мин") : String(localized: "\(mins / 60) ч \(mins % 60) мин")
+            return md(String(localized: "Через **\(until)** напомню: «\(r.title)»."))
         }
         if let e = calendar.hasAccess ? calendar.next : nil, Calendar.current.isDateInToday(e.start) {
             if e.isNow {
-                return md("Сейчас идёт **\(e.title)**" + (items.isEmpty ? "." : ", и ещё кое-что ждёт тебя."))
+                return md(String(localized: "Сейчас идёт **\(e.title)**") + (items.isEmpty ? "." : String(localized: ", и ещё кое-что ждёт тебя.")))
             }
             let mins = e.minutesUntil
-            let until = mins < 60 ? "\(mins) мин" : "\(mins / 60) ч \(mins % 60) мин"
-            return md("До «\(e.title)» **\(until)**." + (items.isEmpty ? " Время свободно." : " Успеешь разобрать дела ниже."))
+            let until = mins < 60 ? String(localized: "\(mins) мин") : String(localized: "\(mins / 60) ч \(mins % 60) мин")
+            return md(String(localized: "До «\(e.title)» **\(until)**.") + (items.isEmpty ? String(localized: " Время свободно.") : String(localized: " Успеешь разобрать дела ниже.")))
         }
-        if items.isEmpty { return md("Сегодня больше ничего не запланировано. Спроси меня о дне.") }
-        return md(items.count == 1 ? "Одно дело ждёт тебя." : "\(items.count) дела ждут внимания.")
+        if items.isEmpty { return md(String(localized: "Сегодня больше ничего не запланировано. Спроси меня о дне.")) }
+        return md(items.count == 1 ? String(localized: "Одно дело ждёт тебя.") : String(localized: "\(items.count) дела ждут внимания."))
     }
 
     private func md(_ s: String) -> AttributedString { (try? AttributedString(markdown: s)) ?? AttributedString(s) }
@@ -105,7 +105,7 @@ struct CompanionView: View {
                 } label: {
                     HStack(spacing: 5) {
                         Image(systemName: "checklist").font(.system(size: 10, weight: .semibold))
-                        Text(reminders.status == .notDetermined ? "Показывать напоминания" : "Разрешить доступ к напоминаниям")
+                        Text(reminders.status == .notDetermined ? String(localized: "Показывать напоминания") : String(localized: "Разрешить доступ к напоминаниям"))
                             .font(Theme.font(11, .medium))
                     }
                     .foregroundStyle(.black)
@@ -113,7 +113,7 @@ struct CompanionView: View {
                     .background(Capsule().fill(settings.faceColor.color))
                 }
                 .buttonStyle(PressableStyle())
-                .help("Дела из приложения «Напоминания» появятся на шкале дня")
+                .help(String(localized: "Дела из приложения «Напоминания» появятся на шкале дня"))
             }
             ForEach(attention.items.prefix(4)) { item in
                 Button { attention.perform(item) } label: {
@@ -133,7 +133,7 @@ struct CompanionView: View {
                 .help(item.actionTitle ?? item.title)
                 .contextMenu {
                     if let title = item.actionTitle { Button(title) { attention.perform(item) } }
-                    if item.dismissable { Button("Убрать") { attention.dismiss(item) } }
+                    if item.dismissable { Button(String(localized: "Убрать")) { attention.dismiss(item) } }
                 }
             }
         }
@@ -146,7 +146,7 @@ struct CompanionView: View {
     private var inputRow: some View {
         if ai.isReady(ai.provider) {
             HStack(spacing: 6) {
-                TextField("", text: $question, prompt: Text("Спросить \(settings.companionName) про день…").foregroundStyle(Theme.tertiary))
+                TextField("", text: $question, prompt: Text(String(localized: "Спросить \(settings.companionName) про день…")).foregroundStyle(Theme.tertiary))
                     .textFieldStyle(.plain).font(Theme.font(13)).foregroundStyle(.white)
                     .focused($inputFocused)
                     .onSubmit(ask)
@@ -159,7 +159,7 @@ struct CompanionView: View {
                     }
                 }
                 if ai.tabyThinking {
-                    IconButton(systemName: "stop.fill", size: 9, frame: 24, filled: true, help: "Остановить") { ai.stopTaby() }
+                    IconButton(systemName: "stop.fill", size: 9, frame: 24, filled: true, help: String(localized: "Остановить")) { ai.stopTaby() }
                 } else {
                     Button(action: ask) {
                         Image(systemName: "arrow.up").font(.system(size: 11, weight: .bold)).foregroundStyle(.black)
@@ -173,7 +173,7 @@ struct CompanionView: View {
             .padding(.leading, 12).padding(.trailing, 4).frame(height: 32)
             .card(radius: 16, fill: Color.white.opacity(inputFocused ? 0.1 : 0.06))
         } else {
-            PillButton(title: "Подключить ИИ", icon: "sparkles", tint: settings.faceColor.color, prominent: true) {
+            PillButton(title: String(localized: "Подключить ИИ"), icon: "sparkles", tint: settings.faceColor.color, prominent: true) {
                 NotificationCenter.default.post(name: .notchMateOpenSettings, object: nil)
             }
         }
@@ -251,10 +251,10 @@ private struct DayTimeline: View {
                         let rx = x(r.due)
                         let late = r.due < now
                         Menu {
-                            Button("Готово") { complete(r) }
-                            Button("Отложить на час") { snooze(r) }
+                            Button(String(localized: "Готово")) { complete(r) }
+                            Button(String(localized: "Отложить на час")) { snooze(r) }
                             Divider()
-                            Button("Открыть «Напоминания»") { openReminders() }
+                            Button(String(localized: "Открыть «Напоминания»")) { openReminders() }
                         } label: {
                             VStack(spacing: 2) {
                                 Text(r.title).font(Theme.font(10, .medium))
@@ -281,7 +281,7 @@ private struct DayTimeline: View {
                             .overlay(RoundedRectangle(cornerRadius: 4, style: .continuous).strokeBorder(Color.green, lineWidth: 1))
                             .frame(width: max(4, min(w, x(focusEnd)) - x(now)), height: 10)
                             .offset(x: x(now), y: 21)
-                            .help("Фокус до \(Self.time(focusEnd))")
+                            .help(String(localized: "Фокус до \(Self.time(focusEnd))"))
                     }
 
                     Circle().fill(Color.white).frame(width: 10, height: 10)
@@ -302,10 +302,10 @@ private struct DayTimeline: View {
                         .offset(y: 34)
 
                     if !hasAccess {
-                        Text("Дай доступ к календарю или напоминаниям, чтобы видеть день")
+                        Text(String(localized: "Дай доступ к календарю или напоминаниям, чтобы видеть день"))
                             .font(Theme.font(10)).foregroundStyle(Theme.tertiary).offset(y: 2)
                     } else if visible.isEmpty && !reminders.contains(where: { $0.due >= from && $0.due <= to }) {
-                        Text("Свободный день").font(Theme.font(10)).foregroundStyle(Theme.tertiary).offset(y: 2)
+                        Text(String(localized: "Свободный день")).font(Theme.font(10)).foregroundStyle(Theme.tertiary).offset(y: 2)
                     }
                 }
                 .frame(width: w, height: geo.size.height, alignment: .topLeading)
@@ -334,7 +334,7 @@ private struct DayTimeline: View {
                 Button {
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { hours = p }
                 } label: {
-                    Text("\(Int(p))ч").font(Theme.font(9.5, .semibold)).monospacedDigit()
+                    Text(String(localized: "\(Int(p))ч")).font(Theme.font(9.5, .semibold)).monospacedDigit()
                         .foregroundStyle(active ? Color.black : Theme.secondary)
                         .padding(.horizontal, 6).frame(height: 16)
                         .background(Capsule().fill(active ? Color.white.opacity(0.85) : Color.clear))

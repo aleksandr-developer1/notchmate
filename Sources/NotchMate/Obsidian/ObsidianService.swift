@@ -47,7 +47,7 @@ struct NoteSearchHit: Identifiable, Hashable {
 enum NotesSource: String, CaseIterable, Identifiable {
     case apple, obsidian
     var id: String { rawValue }
-    var title: String { self == .apple ? "Стандартные" : "Obsidian" }
+    var title: String { self == .apple ? String(localized: "Стандартные") : "Obsidian" }
 }
 
 /// What the notes tab needs from a notes backend (Apple Notes or an Obsidian vault).
@@ -95,7 +95,7 @@ final class ObsidianService: NotesStore {
     /// Obsidian counts as connected once a vault is chosen or detected.
     var isConnected: Bool { vault != nil }
 
-    var unavailableMessage: String? { vault == nil ? "Хранилище Obsidian не найдено" : nil }
+    var unavailableMessage: String? { vault == nil ? String(localized: "Хранилище Obsidian не найдено") : nil }
 
     func start() {
         loadVaults()
@@ -265,11 +265,11 @@ final class ObsidianService: NotesStore {
             var existing = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
             if !existing.isEmpty && !existing.hasSuffix("\n") { existing += "\n" }
             try (existing + body + "\n").write(to: url, atomically: true, encoding: .utf8)
-            lastCaptureMessage = "Сохранено в «\((rel as NSString).deletingPathExtension)»"
+            lastCaptureMessage = String(localized: "Сохранено в «\((rel as NSString).deletingPathExtension)»")
             refresh(force: true)
             return true
         } catch {
-            lastCaptureMessage = "Не удалось сохранить: \(error.localizedDescription)"
+            lastCaptureMessage = String(localized: "Не удалось сохранить: \(error.localizedDescription)")
             return false
         }
     }
@@ -316,7 +316,7 @@ final class ObsidianService: NotesStore {
             if let f = json["format"] as? String, !f.isEmpty { format = f }
         }
         let df = DateFormatter()
-        df.locale = Locale(identifier: "ru_RU")
+        df.locale = AppLanguage.systemLocale  // Obsidian names daily notes in the system language
         df.dateFormat = Self.momentToICU(format)
         let name = df.string(from: Date())
         return folder.isEmpty ? "\(name).md" : "\(folder)/\(name).md"

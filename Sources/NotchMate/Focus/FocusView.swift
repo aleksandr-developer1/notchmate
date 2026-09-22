@@ -24,7 +24,7 @@ struct FocusView: View {
 
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 8) {
-                    Text(focus.phase == .idle ? "Помидоро" : focus.kind.title).font(Theme.font(17, .bold)).foregroundStyle(.white)
+                    Text(focus.phase == .idle ? String(localized: "Помидоро") : focus.kind.title).font(Theme.font(17, .bold)).foregroundStyle(.white)
                     cycleDots
                 }
                 if focus.kind == .work, focus.phase != .idle {
@@ -34,9 +34,9 @@ struct FocusView: View {
                 HStack(spacing: 8) { controls }
 
                 HStack(spacing: 10) {
-                    Label("\(Int(settings.pomoWork))/\(Int(settings.pomoShort))/\(Int(settings.pomoLong)) мин", systemImage: "slider.horizontal.3")
+                    Label(String(localized: "\(Int(settings.pomoWork))/\(Int(settings.pomoShort))/\(Int(settings.pomoLong)) мин"), systemImage: "slider.horizontal.3")
                     if distractions.sessionCount > 0 {
-                        Label("отвлечений: \(distractions.sessionCount)", systemImage: "eye.trianglebadge.exclamationmark")
+                        Label(String(localized: "отвлечений: \(distractions.sessionCount)"), systemImage: "eye.trianglebadge.exclamationmark")
                             .foregroundStyle(.orange)
                     }
                 }
@@ -62,30 +62,30 @@ struct FocusView: View {
     @ViewBuilder private var controls: some View {
         switch focus.phase {
         case .idle:
-            PillButton(title: "Старт \(Int(settings.pomoWork)) мин", icon: "play.fill", tint: .orange, prominent: true) {
+            PillButton(title: String(localized: "Старт \(Int(settings.pomoWork)) мин"), icon: "play.fill", tint: .orange, prominent: true) {
                 if let issue = jira.activeIssue {
                     focus.start(label: "\(issue.key) · \(issue.summary)", task: issue.key)
                 } else {
-                    focus.start(label: "Помидор")
+                    focus.start(label: String(localized: "Помидор"))
                 }
             }
         case .running, .paused:
-            PillButton(title: focus.phase == .running ? "Пауза" : "Продолжить",
+            PillButton(title: focus.phase == .running ? String(localized: "Пауза") : String(localized: "Продолжить"),
                        icon: focus.phase == .running ? "pause.fill" : "play.fill", tint: tint, prominent: true) { focus.toggle() }
             if focus.kind.isBreak {
-                PillButton(title: "К работе", icon: "forward.fill") { focus.skipBreak() }
+                PillButton(title: String(localized: "К работе"), icon: "forward.fill") { focus.skipBreak() }
             } else {
-                PillButton(title: "+5 мин", icon: "plus") { focus.add(minutes: 5) }
+                PillButton(title: String(localized: "+5 мин"), icon: "plus") { focus.add(minutes: 5) }
             }
-            PillButton(title: "Сброс", icon: "arrow.counterclockwise") { withAnimation { focus.reset() } }
+            PillButton(title: String(localized: "Сброс"), icon: "arrow.counterclockwise") { withAnimation { focus.reset() } }
         case .finished:
             if focus.kind == .work {
                 PillButton(title: focus.nextBreakTitle, icon: "cup.and.saucer.fill", tint: .green, prominent: true) { focus.startBreak() }
-                PillButton(title: "Ещё фокус", icon: "play.fill") { focus.start(label: focus.label) }
+                PillButton(title: String(localized: "Ещё фокус"), icon: "play.fill") { focus.start(label: focus.label) }
             } else {
-                PillButton(title: "К работе", icon: "play.fill", tint: .orange, prominent: true) { focus.start(label: focus.label) }
+                PillButton(title: String(localized: "К работе"), icon: "play.fill", tint: .orange, prominent: true) { focus.start(label: focus.label) }
             }
-            PillButton(title: "Стоп", icon: "stop.fill") { withAnimation { focus.reset() } }
+            PillButton(title: String(localized: "Стоп"), icon: "stop.fill") { withAnimation { focus.reset() } }
         }
     }
 
@@ -93,10 +93,10 @@ struct FocusView: View {
 
     private var statusText: String {
         switch focus.phase {
-        case .idle: return "готов"
-        case .running: return focus.kind.isBreak ? "отдыхаем" : "идёт"
-        case .paused: return "пауза"
-        case .finished: return focus.kind == .work ? "готово!" : "перерыв окончен"
+        case .idle: return String(localized: "готов")
+        case .running: return focus.kind.isBreak ? String(localized: "отдыхаем") : String(localized: "идёт")
+        case .paused: return String(localized: "пауза")
+        case .finished: return focus.kind == .work ? String(localized: "готово!") : String(localized: "перерыв окончен")
         }
     }
 }
@@ -104,6 +104,6 @@ struct FocusView: View {
 extension FocusTimer {
     var nextBreakTitle: String {
         let long = completedInCycle % cycleLength == 0 && completedInCycle > 0
-        return long ? "Длинный перерыв" : "Перерыв"
+        return long ? String(localized: "Длинный перерыв") : String(localized: "Перерыв")
     }
 }

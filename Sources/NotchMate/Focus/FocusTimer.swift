@@ -9,9 +9,9 @@ final class FocusTimer: ObservableObject {
         var isBreak: Bool { self != .work }
         var title: String {
             switch self {
-            case .work: return "Фокус"
-            case .shortBreak: return "Перерыв"
-            case .longBreak: return "Длинный перерыв"
+            case .work: return String(localized: "Фокус")
+            case .shortBreak: return String(localized: "Перерыв")
+            case .longBreak: return String(localized: "Длинный перерыв")
             }
         }
     }
@@ -21,7 +21,7 @@ final class FocusTimer: ObservableObject {
     @Published private(set) var total: TimeInterval = 25 * 60
     @Published private(set) var remaining: TimeInterval = 25 * 60
     @Published private(set) var completedInCycle = 0
-    @Published var label: String = "Помидор"
+    @Published var label: String = String(localized: "Помидор")
     /// Jira key or task text the pomodoros are counted for.
     @Published private(set) var taskRef: String?
 
@@ -45,7 +45,7 @@ final class FocusTimer: ObservableObject {
 
     // MARK: Control
 
-    func start(minutes: Double? = nil, label: String = "Помидор", task: String? = nil) {
+    func start(minutes: Double? = nil, label: String = String(localized: "Помидор"), task: String? = nil) {
         autoWork?.cancel()
         kind = .work
         self.label = label

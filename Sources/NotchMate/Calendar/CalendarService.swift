@@ -110,7 +110,7 @@ final class CalendarService: ObservableObject {
         let end = Calendar.current.date(byAdding: .day, value: 7, to: startOfDay)!
         let all = store.calendars(for: .event)
         sources = all
-            .map { CalendarSource(id: $0.calendarIdentifier, title: $0.title, account: $0.source?.title ?? "Другие",
+            .map { CalendarSource(id: $0.calendarIdentifier, title: $0.title, account: $0.source?.title ?? String(localized: "Другие"),
                                   color: Color(nsColor: $0.color ?? .systemBlue)) }
             .sorted { ($0.account, $0.title) < ($1.account, $1.title) }
         let chosen = all.filter { !excluded.contains($0.calendarIdentifier) }
@@ -126,7 +126,7 @@ final class CalendarService: ObservableObject {
             .filter { hidden[Self.key(id: $0.eventIdentifier ?? "", start: $0.startDate)] == nil }
             .sorted { $0.startDate < $1.startDate }
             .map { e in
-                CalendarEvent(id: e.eventIdentifier ?? UUID().uuidString, title: e.title ?? "Без названия",
+                CalendarEvent(id: e.eventIdentifier ?? UUID().uuidString, title: e.title ?? String(localized: "Без названия"),
                               start: e.startDate, end: e.endDate,
                               color: Color(nsColor: e.calendar?.color ?? .systemBlue),
                               meetingURL: Self.meetingLink(e), location: e.location)
@@ -156,13 +156,13 @@ final class CalendarService: ObservableObject {
     }
 
     func describe(days: Int) -> String {
-        guard hasAccess else { return "Календарь: нет доступа" }
+        guard hasAccess else { return String(localized: "Календарь: нет доступа") }
         let limit = Calendar.current.date(byAdding: .day, value: days, to: Calendar.current.startOfDay(for: Date()))!
         let list = events.filter { $0.end > Date() && $0.start < limit }
-        guard !list.isEmpty else { return "Календарь: событий нет" }
+        guard !list.isEmpty else { return String(localized: "Календарь: событий нет") }
         let df = DateFormatter(); df.locale = Locale(identifier: "ru_RU"); df.dateFormat = "EEE d MMM HH:mm"
         let tf = DateFormatter(); tf.dateFormat = "HH:mm"
-        return "События календаря:\n" + list.map { "• \(df.string(from: $0.start))–\(tf.string(from: $0.end)) \($0.title)\($0.meetingURL != nil ? " (есть ссылка на звонок)" : "")" }.joined(separator: "\n")
+        return String(localized: "События календаря:\n") + list.map { "• \(df.string(from: $0.start))–\(tf.string(from: $0.end)) \($0.title)\($0.meetingURL != nil ? String(localized: " (есть ссылка на звонок)") : "")" }.joined(separator: "\n")
     }
 
     func join(_ event: CalendarEvent) {

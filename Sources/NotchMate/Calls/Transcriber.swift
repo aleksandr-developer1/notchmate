@@ -18,7 +18,7 @@ enum Transcriber {
         }
         if let text = try? await apple(url, locale: locale, onProgress: onProgress), !text.isEmpty { return text }
         if let text = try whisper(url, locale: localeID), !text.isEmpty { return text }
-        throw AIError.message("Не удалось расшифровать: для «\(localeID)» нет распознавания на устройстве. Включите язык в Системных настройках → Клавиатура → Диктовка, или поставьте модель whisper.")
+        throw AIError.message(String(localized: "Не удалось расшифровать: для «\(localeID)» нет распознавания на устройстве. Включите язык в Системных настройках → Клавиатура → Диктовка, или поставьте модель whisper."))
     }
 
     // MARK: 1. macOS 26 engine
@@ -56,14 +56,14 @@ enum Transcriber {
 
     private static func apple(_ url: URL, locale: Locale, onProgress: @escaping @Sendable (Progress) -> Void) async throws -> String {
         guard let recognizer = SFSpeechRecognizer(locale: locale), recognizer.isAvailable else {
-            throw AIError.message("Распознавание для этого языка недоступно")
+            throw AIError.message(String(localized: "Распознавание для этого языка недоступно"))
         }
         let status = await withCheckedContinuation { (c: CheckedContinuation<SFSpeechRecognizerAuthorizationStatus, Never>) in
             SFSpeechRecognizer.requestAuthorization { c.resume(returning: $0) }
         }
-        guard status == .authorized else { throw AIError.message("Нет разрешения на распознавание речи") }
+        guard status == .authorized else { throw AIError.message(String(localized: "Нет разрешения на распознавание речи")) }
         guard recognizer.supportsOnDeviceRecognition else {
-            throw AIError.message("Для «\(locale.identifier)» нет офлайн-модели — скачайте язык в Системных настройках → Клавиатура → Диктовка")
+            throw AIError.message(String(localized: "Для «\(locale.identifier)» нет офлайн-модели — скачайте язык в Системных настройках → Клавиатура → Диктовка"))
         }
 
         let chunks = try split(url, seconds: 50)

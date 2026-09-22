@@ -7,46 +7,46 @@ struct HotkeysSettings: View {
     var body: some View {
         Form {
             Section {
-                ShortcutRow(keys: ["⌃", "⌥", "N"], title: "Открыть / закрыть панель",
-                            detail: "Открывает на последней вкладке, повторное нажатие закрывает.",
+                ShortcutRow(keys: ["⌃", "⌥", "N"], title: String(localized: "Открыть / закрыть панель"),
+                            detail: String(localized: "Открывает на последней вкладке, повторное нажатие закрывает."),
                             isOn: $settings.hotKeyToggleEnabled)
-                ShortcutRow(keys: ["⌃", "⌥", "M"], title: "Быстрая заметка",
-                            detail: "Открывает «Заметки» с полем ввода: пишите и нажмите ↩.",
+                ShortcutRow(keys: ["⌃", "⌥", "M"], title: String(localized: "Быстрая заметка"),
+                            detail: String(localized: "Открывает «Заметки» с полем ввода: пишите и нажмите ↩."),
                             isOn: $settings.hotKeyCaptureEnabled)
-                ShortcutRow(keys: ["⌃", "⌥", "H"], title: "Помощник на созвоне",
-                            detail: "Первое нажатие включает подсказки и запись разговора, повторное — подсказать прямо сейчас.",
+                ShortcutRow(keys: ["⌃", "⌥", "H"], title: String(localized: "Помощник на созвоне"),
+                            detail: String(localized: "Первое нажатие включает подсказки и запись разговора, повторное — подсказать прямо сейчас."),
                             isOn: $settings.hotKeyMeetingEnabled)
             } header: {
-                Text("В любой программе")
+                Text(String(localized: "В любой программе"))
             } footer: {
-                Text("Если сочетание не срабатывает, скорее всего его уже заняла другая программа — выключите его здесь или там.")
+                Text(String(localized: "Если сочетание не срабатывает, скорее всего его уже заняла другая программа — выключите его здесь или там."))
                     .font(.caption).foregroundStyle(.secondary)
             }
 
-            Section("В открытой панели") {
+            Section(String(localized: "В открытой панели")) {
                 ForEach(Array(NotchGroup.visible.enumerated()), id: \.element) { i, group in
-                    ShortcutRow(keys: ["⌘", "\(i + 1)"], title: group.title, detail: "Перейти на вкладку.")
+                    ShortcutRow(keys: ["⌘", "\(i + 1)"], title: group.title, detail: String(localized: "Перейти на вкладку."))
                 }
-                ShortcutRow(keys: ["Esc"], title: "Закрыть панель", detail: "Возвращает фокус в программу, где вы работали.")
-                ShortcutRow(keys: ["⌘", ","], title: "Настройки", detail: "Открывает это окно.")
+                ShortcutRow(keys: ["Esc"], title: String(localized: "Закрыть панель"), detail: String(localized: "Возвращает фокус в программу, где вы работали."))
+                ShortcutRow(keys: ["⌘", ","], title: String(localized: "Настройки"), detail: String(localized: "Открывает это окно."))
             }
 
-            Section("Ввод текста") {
-                ShortcutRow(keys: ["↩"], title: "Чат ИИ — отправить", detail: "⇧↩ — новая строка.")
-                ShortcutRow(keys: ["↩"], title: "Быстрая заметка — сохранить",
-                            detail: settings.captureTarget == .daily ? "Добавляет в заметку дня. ⇧↩ — новая строка." : "Добавляет во «Входящие». ⇧↩ — новая строка.")
-                ShortcutRow(keys: ["⌘", "↩"], title: "Быстрая заметка — новой заметкой", detail: "Создаёт отдельную заметку из написанного.")
-                ShortcutRow(keys: ["↩"], title: "Помощник на созвоне — спросить", detail: "Задать свой вопрос в поле внизу панели подсказок.")
+            Section(String(localized: "Ввод текста")) {
+                ShortcutRow(keys: ["↩"], title: String(localized: "Чат ИИ — отправить"), detail: String(localized: "⇧↩ — новая строка."))
+                ShortcutRow(keys: ["↩"], title: String(localized: "Быстрая заметка — сохранить"),
+                            detail: settings.captureTarget == .daily ? String(localized: "Добавляет в заметку дня. ⇧↩ — новая строка.") : String(localized: "Добавляет во «Входящие». ⇧↩ — новая строка."))
+                ShortcutRow(keys: ["⌘", "↩"], title: String(localized: "Быстрая заметка — новой заметкой"), detail: String(localized: "Создаёт отдельную заметку из написанного."))
+                ShortcutRow(keys: ["↩"], title: String(localized: "Помощник на созвоне — спросить"), detail: String(localized: "Задать свой вопрос в поле внизу панели подсказок."))
             }
 
-            Section("Мышь и трекпад") {
-                GestureRow(icon: "cursorarrow.motionlines", title: settings.openTrigger == .hover ? "Навести на вырез" : "Клик по вырезу",
-                           detail: "Открывает панель.")
-                GestureRow(icon: "doc.on.doc", title: "Перетащить файл на вырез", detail: "Кладёт файл на полку.")
-                GestureRow(icon: "hand.tap", title: "Двойной клик", detail: "Открывает задачу Jira, заметку, файл на полке или изменённый файл в Git.")
-                GestureRow(icon: "arrow.up.left.and.arrow.down.right", title: "Щипок или прокрутка над шкалой дня",
-                           detail: "Сужает и расширяет шкалу от 1 до 24 часов. Двойной клик по шкале — снова 10 часов.")
-                GestureRow(icon: "hand.draw", title: "Перетащить панель подсказок", detail: "Панель помощника на созвоне двигается за любое пустое место.")
+            Section(String(localized: "Мышь и трекпад")) {
+                GestureRow(icon: "cursorarrow.motionlines", title: settings.openTrigger == .hover ? String(localized: "Навести на вырез") : String(localized: "Клик по вырезу"),
+                           detail: String(localized: "Открывает панель."))
+                GestureRow(icon: "doc.on.doc", title: String(localized: "Перетащить файл на вырез"), detail: String(localized: "Кладёт файл на полку."))
+                GestureRow(icon: "hand.tap", title: String(localized: "Двойной клик"), detail: String(localized: "Открывает задачу Jira, заметку, файл на полке или изменённый файл в Git."))
+                GestureRow(icon: "arrow.up.left.and.arrow.down.right", title: String(localized: "Щипок или прокрутка над шкалой дня"),
+                           detail: String(localized: "Сужает и расширяет шкалу от 1 до 24 часов. Двойной клик по шкале — снова 10 часов."))
+                GestureRow(icon: "hand.draw", title: String(localized: "Перетащить панель подсказок"), detail: String(localized: "Панель помощника на созвоне двигается за любое пустое место."))
             }
         }
         .formStyle(.grouped)

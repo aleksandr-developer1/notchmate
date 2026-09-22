@@ -4,19 +4,19 @@ import ServiceManagement
 enum CaptureTarget: String, CaseIterable, Identifiable {
     case daily, inbox
     var id: String { rawValue }
-    var title: String { self == .daily ? "Ежедневная заметка" : "Файл «Входящие»" }
+    var title: String { self == .daily ? String(localized: "Ежедневная заметка") : String(localized: "Файл «Входящие»") }
 }
 
 enum ActivityLayout: String, CaseIterable, Identifiable {
     case besideFace, wings
     var id: String { rawValue }
-    var title: String { self == .besideFace ? "По бокам от мордочки" : "Слева и справа от камеры" }
+    var title: String { self == .besideFace ? String(localized: "По бокам от мордочки") : String(localized: "Слева и справа от камеры") }
 }
 
 enum OpenTrigger: String, CaseIterable, Identifiable {
     case hover, click
     var id: String { rawValue }
-    var title: String { self == .hover ? "При наведении" : "По клику" }
+    var title: String { self == .hover ? String(localized: "При наведении") : String(localized: "По клику") }
 }
 
 enum NotchGlowMode: String, CaseIterable, Identifiable {
@@ -26,8 +26,8 @@ enum NotchGlowMode: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .off: return "Выключено"
-        case .artwork: return "Цвета обложки"
+        case .off: return String(localized: "Выключено")
+        case .artwork: return String(localized: "Цвета обложки")
         }
     }
 }
@@ -171,7 +171,7 @@ final class Settings: ObservableObject {
             "hotKeyCapture": true,
             "vaultPath": "",
             "captureTarget": CaptureTarget.daily.rawValue,
-            "inboxPath": "Входящие.md",
+            "inboxPath": String(localized: "Входящие.md"),
             "captureTimestamp": true,
             "pinnedNotes": [String](),
             "pinnedAppleNotes": [String](),
@@ -222,11 +222,11 @@ final class Settings: ObservableObject {
             "callsCaptureMic": true,
             "callsKeepAudio": false,
             "callsSummaryLocalOnly": true,
-            "callsFolder": "Созвоны",
-            "callsLocale": "ru-RU",
+            "callsFolder": String(localized: "Созвоны"),
+            "callsLocale": AppLanguage.defaultSpeechLocale,
             "meetingAutoHints": true,
             "meetingModel": "",
-            "meetingRole": "разработчик и автор обсуждаемого проекта, хорошо знает код, архитектуру и предметную область",
+            "meetingRole": String(localized: "разработчик и автор обсуждаемого проекта, хорошо знает код, архитектуру и предметную область"),
             "meetingHideFromCapture": true,
             "meetingHintInterval": 12,
             "hotKeyMeeting": true,
@@ -243,7 +243,7 @@ final class Settings: ObservableObject {
             "reactCamera": true,
             "reactNetwork": true,
             "reactClipboard": true,
-            "companionName": "Пикси",
+            "companionName": String(localized: "Пикси"),
             "faceColor": FacePalette.oled.rawValue,
             "followCursor": true,
             "waterReminder": true,
@@ -271,7 +271,7 @@ final class Settings: ObservableObject {
         hotKeyCaptureEnabled = d.bool(forKey: "hotKeyCapture")
         vaultPath = d.string(forKey: "vaultPath") ?? ""
         captureTarget = CaptureTarget(rawValue: d.string(forKey: "captureTarget") ?? "") ?? .daily
-        inboxPath = d.string(forKey: "inboxPath") ?? "Входящие.md"
+        inboxPath = d.string(forKey: "inboxPath") ?? String(localized: "Входящие.md")
         captureTimestamp = d.bool(forKey: "captureTimestamp")
         pinnedNotes = d.stringArray(forKey: "pinnedNotes") ?? []
         pinnedAppleNotes = d.stringArray(forKey: "pinnedAppleNotes") ?? []
@@ -322,8 +322,8 @@ final class Settings: ObservableObject {
         callsCaptureMic = d.bool(forKey: "callsCaptureMic")
         callsKeepAudio = d.bool(forKey: "callsKeepAudio")
         callsSummaryLocalOnly = d.bool(forKey: "callsSummaryLocalOnly")
-        callsFolder = d.string(forKey: "callsFolder") ?? "Созвоны"
-        callsLocale = d.string(forKey: "callsLocale") ?? "ru-RU"
+        callsFolder = d.string(forKey: "callsFolder") ?? String(localized: "Созвоны")
+        callsLocale = d.string(forKey: "callsLocale") ?? AppLanguage.defaultSpeechLocale
         meetingAutoHints = d.bool(forKey: "meetingAutoHints")
         meetingModel = d.string(forKey: "meetingModel") ?? ""
         meetingRole = d.string(forKey: "meetingRole") ?? ""
@@ -345,7 +345,7 @@ final class Settings: ObservableObject {
         reactClipboard = d.bool(forKey: "reactClipboard")
         activityLayout = ActivityLayout(rawValue: d.string(forKey: "activityLayout") ?? "") ?? .besideFace
         dockFaceWhenCovered = d.bool(forKey: "dockFaceWhenCovered")
-        companionName = d.string(forKey: "companionName") ?? "Пикси"
+        companionName = d.string(forKey: "companionName") ?? String(localized: "Пикси")
         faceColor = FacePalette(rawValue: d.string(forKey: "faceColor") ?? "") ?? .oled
         followCursor = d.bool(forKey: "followCursor")
         gitEnabled = d.bool(forKey: "gitEnabled")

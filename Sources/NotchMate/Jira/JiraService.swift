@@ -4,7 +4,7 @@ import Foundation
 enum JiraAuth: String, CaseIterable, Identifiable {
     case token, basic
     var id: String { rawValue }
-    var title: String { self == .token ? "Personal Access Token" : "Логин и пароль" }
+    var title: String { self == .token ? "Personal Access Token" : String(localized: "Логин и пароль") }
 }
 
 /// A stretch of time the issue spent in an "In Progress"-category status. `end == nil` — still there.
@@ -58,7 +58,7 @@ final class JiraService: ObservableObject {
     @Published private(set) var sessionKey: String?
     @Published private(set) var sessionStart: Date?
     @Published private(set) var sessionAccumulated: TimeInterval = 0
-    @Published var lastLogMessage: String?
+    @Published var lastLogMessage: (text: String, ok: Bool)?
 
     private let settings = Settings.shared
     private let d = UserDefaults.standard
@@ -184,13 +184,13 @@ final class JiraService: ObservableObject {
     func logSession(comment: String = "") async {
         guard let key = sessionKey else { return }
         let seconds = Int(sessionElapsed())
-        guard seconds >= 60 else { lastLogMessage = "Меньше минуты — нечего списывать"; return }
+        guard seconds >= 60 else { lastLogMessage = (String(localized: "Меньше минуты — нечего списывать"), false); return }
         do {
             try await logWork(key: key, seconds: seconds, comment: comment)
-            lastLogMessage = "Списано \(Self.format(seconds)) в \(key)"
+            lastLogMessage = (String(localized: "Списано \(Self.format(seconds)) в \(key)"), true)
             discardSession()
         } catch {
-            lastLogMessage = "Не удалось списать: \(error.localizedDescription)"
+            lastLogMessage = (String(localized: "Не удалось списать: \(error.localizedDescription)"), false)
         }
     }
 
@@ -241,14 +241,14 @@ final class JiraService: ObservableObject {
         }
     }
 
-    func testConnection() async -> String {
+    func testConnection() async -> (text: String, ok: Bool) {
         do {
             let json = try await request("/rest/api/2/myself") as? [String: Any]
             me = json?["displayName"] as? String
             refresh()
-            return "Подключено: \(me ?? "OK")"
+            return (String(localized: "Подключено: \(me ?? "OK")"), true)
         } catch {
-            return "Ошибка: \(error.localizedDescription)"
+            return (String(localized: "Ошибка: \(error.localizedDescription)"), false)
         }
     }
 
@@ -347,7 +347,7 @@ final class JiraService: ObservableObject {
 
     private func request(_ path: String, method: String = "GET", body: [String: Any]? = nil) async throws -> Any? {
         let base = settings.jiraURL.trimmingCharacters(in: CharacterSet(charactersIn: "/ "))
-        guard let url = URL(string: base + path) else { throw JiraError.message("Неверный адрес Jira") }
+        guard let url = URL(string: base + path) else { throw JiraError.message(String(localized: "Неверный адрес Jira")) }
         var req = URLRequest(url: url, timeoutInterval: 20)
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -367,8 +367,8 @@ final class JiraService: ObservableObject {
         let code = (response as? HTTPURLResponse)?.statusCode ?? 0
         switch code {
         case 200..<300: return data.isEmpty ? nil : try? JSONSerialization.jsonObject(with: data)
-        case 401: throw JiraError.message("401 — неверный токен или логин")
-        case 403: throw JiraError.message("403 — нет доступа (возможно, нужна капча: войдите в Jira в браузере)")
+        case 401: throw JiraError.message(String(localized: "401 — неверный токен или логин"))
+        case 403: throw JiraError.message(String(localized: "403 — нет доступа (возможно, нужна капча: войдите в Jira в браузере)"))
         default:
             let msg = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])
                 .flatMap { ($0["errorMessages"] as? [String])?.first }
@@ -386,7 +386,7 @@ final class JiraService: ObservableObject {
         let neg = s < 0
         let a = abs(s)
         let h = a / 3600, m = a / 60 % 60
-        let str = h > 0 ? (m > 0 ? "\(h)ч \(m)м" : "\(h)ч") : "\(m)м"
+        let str = h > 0 ? (m > 0 ? String(localized: "\(h)ч \(m)м") : String(localized: "\(h)ч")) : String(localized: "\(m)м")
         return neg ? "−" + str : str
     }
 }

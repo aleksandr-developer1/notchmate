@@ -1,0 +1,430 @@
+{
+  "sourceLanguage": "ru",
+  "strings": {
+    "NSAppleEventsUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate zeigt und speichert deine Notizen aus „Notizen“ und prüft die offene Website im Browser, um Ablenkungen im Fokus zu erkennen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate shows and saves your notes from Notes and checks the open website in the browser to notice distractions during focus."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate muestra y guarda tus notas de Notas y comprueba la web abierta en el navegador para detectar distracciones durante el foco."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate affiche et enregistre vos notes de Notes et vérifie le site ouvert dans le navigateur pour repérer les distractions pendant le focus."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate は「メモ」のメモを表示・保存し、集中中の気晴らしに気づくためにブラウザで開いているサイトを確認します。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O NotchMate mostra e salva suas notas do Notas e verifica o site aberto no navegador para perceber distrações durante o foco."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate показывает и записывает ваши заметки из «Заметок» и проверяет открытый сайт в браузере, чтобы замечать отвлечения во время фокуса."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate 会显示并保存你在“备忘录”中的笔记，并检查浏览器中打开的网站，以便在专注时发现分心。"
+          }
+        }
+      }
+    },
+    "NSCalendarsFullAccessUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate zeigt deine nächsten Termine in der Notch und erinnert dich daran."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate shows your upcoming meetings in the notch and reminds you about them."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate muestra tus próximas reuniones en el notch y te las recuerda."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate affiche vos prochaines réunions dans l’encoche et vous les rappelle."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate は次の会議をノッチに表示し、お知らせします。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O NotchMate mostra suas próximas reuniões no notch e lembra você delas."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate показывает ближайшие встречи в вырезе и напоминает о них."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate 会在刘海中显示即将到来的会议并提醒你。"
+          }
+        }
+      }
+    },
+    "NSCalendarsUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate zeigt deine nächsten Termine in der Notch und erinnert dich daran."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate shows your upcoming meetings in the notch and reminds you about them."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate muestra tus próximas reuniones en el notch y te las recuerda."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate affiche vos prochaines réunions dans l’encoche et vous les rappelle."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate は次の会議をノッチに表示し、お知らせします。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O NotchMate mostra suas próximas reuniões no notch e lembra você delas."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate показывает ближайшие встречи в вырезе и напоминает о них."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate 会在刘海中显示即将到来的会议并提醒你。"
+          }
+        }
+      }
+    },
+    "NSLocalNetworkUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate verbindet sich mit deinem KI-Server im lokalen Netzwerk."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate connects to your AI server on the local network."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate se conecta a tu servidor de IA en la red local."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate se connecte à votre serveur d’IA sur le réseau local."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate はローカルネットワーク上の AI サーバーに接続します。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O NotchMate se conecta ao seu servidor de IA na rede local."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate подключается к вашему ИИ-серверу в локальной сети."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate 会连接到局域网中的你的 AI 服务器。"
+          }
+        }
+      }
+    },
+    "NSMicrophoneUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate nimmt Anrufe auf, um auf diesem Computer Transkript und Protokoll zu erstellen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate records calls to make a transcript and minutes on this computer."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate graba las llamadas para hacer la transcripción y el acta en este ordenador."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate enregistre les appels pour en faire la transcription et le compte rendu sur cet ordinateur."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate は通話を録音し、このコンピュータ上で文字起こしと議事録を作成します。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O NotchMate grava chamadas para fazer a transcrição e a ata neste computador."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate записывает созвон, чтобы сделать расшифровку и протокол на этом компьютере."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate 录制通话，以便在这台电脑上生成转写和纪要。"
+          }
+        }
+      }
+    },
+    "NSRemindersFullAccessUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate zeigt die heutigen Erinnerungen auf der Tagesleiste und hakt sie ab."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate shows today's reminders on the day timeline and marks them done."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate muestra los recordatorios de hoy en la línea del día y los marca como hechos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate affiche les rappels du jour sur la frise et les coche."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate は今日のリマインダーをタイムラインに表示し、完了にします。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O NotchMate mostra os lembretes de hoje na linha do dia e os marca como concluídos."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Помощник показывает напоминания на сегодня на шкале дня и отмечает их выполненными."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate 会在日程时间线上显示今天的提醒并标记完成。"
+          }
+        }
+      }
+    },
+    "NSRemindersUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate zeigt die heutigen Erinnerungen auf der Tagesleiste und hakt sie ab."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate shows today's reminders on the day timeline and marks them done."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate muestra los recordatorios de hoy en la línea del día y los marca como hechos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate affiche les rappels du jour sur la frise et les coche."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate は今日のリマインダーをタイムラインに表示し、完了にします。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O NotchMate mostra os lembretes de hoje na linha do dia e os marca como concluídos."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Помощник показывает напоминания на сегодня на шкале дня и отмечает их выполненными."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NotchMate 会在日程时间线上显示今天的提醒并标记完成。"
+          }
+        }
+      }
+    },
+    "NSSpeechRecognitionUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anrufe werden auf diesem Computer transkribiert."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calls are transcribed on this computer."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las llamadas se transcriben en este ordenador."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les appels sont transcrits sur cet ordinateur."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通話はこのコンピュータ上で文字起こしされます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "As chamadas são transcritas neste computador."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Расшифровка созвона выполняется на этом компьютере."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通话在这台电脑上转写。"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

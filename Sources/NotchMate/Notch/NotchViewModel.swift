@@ -42,16 +42,16 @@ enum NotchTab: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .assistant: return "Помощник"
-        case .ai: return "Чат ИИ"
-        case .home: return "Музыка"
-        case .health: return "Здоровье"
+        case .assistant: return String(localized: "Помощник")
+        case .ai: return String(localized: "Чат ИИ")
+        case .home: return String(localized: "Музыка")
+        case .health: return String(localized: "Здоровье")
         case .jira: return "Jira"
         case .git: return "Git"
-        case .notes: return "Заметки"
-        case .shelf: return "Полка"
-        case .clipboard: return "Буфер"
-        case .focus: return "Фокус"
+        case .notes: return String(localized: "Заметки")
+        case .shelf: return String(localized: "Полка")
+        case .clipboard: return String(localized: "Буфер")
+        case .focus: return String(localized: "Фокус")
         }
     }
 
@@ -95,12 +95,12 @@ enum NotchGroup: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .assistant: return "Помощник"
-        case .home: return "Музыка"
-        case .health: return "Здоровье"
-        case .work: return "Работа"
-        case .notes: return "Заметки"
-        case .shelf: return "Полка"
+        case .assistant: return String(localized: "Помощник")
+        case .home: return String(localized: "Музыка")
+        case .health: return String(localized: "Здоровье")
+        case .work: return String(localized: "Работа")
+        case .notes: return String(localized: "Заметки")
+        case .shelf: return String(localized: "Полка")
         }
     }
 }

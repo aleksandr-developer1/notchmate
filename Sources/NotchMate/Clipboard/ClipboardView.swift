@@ -18,19 +18,19 @@ struct ClipboardView: View {
     var body: some View {
         VStack(spacing: 8) {
             HStack(spacing: 8) {
-                GlassField(icon: "magnifyingglass", placeholder: "Поиск в истории буфера", text: $query, focus: $searchFocused) {
+                GlassField(icon: "magnifyingglass", placeholder: String(localized: "Поиск в истории буфера"), text: $query, focus: $searchFocused) {
                     if let first = filtered.first { copy(first) }
                 }
-                IconButton(systemName: "trash", size: 11, frame: 30, tint: .red, help: "Очистить (кроме закреплённых)") {
+                IconButton(systemName: "trash", size: 11, frame: 30, tint: .red, help: String(localized: "Очистить (кроме закреплённых)")) {
                     withAnimation { history.clear() }
                 }
             }
             .onChange(of: searchFocused) { _, f in vm.isTyping = f }
 
             if !settings.clipboardEnabled {
-                placeholder(icon: "eye.slash", text: "История буфера выключена в настройках")
+                placeholder(icon: "eye.slash", text: String(localized: "История буфера выключена в настройках"))
             } else if filtered.isEmpty {
-                placeholder(icon: "doc.on.clipboard", text: query.isEmpty ? "Скопируйте что-нибудь — оно появится здесь" : "Ничего не найдено")
+                placeholder(icon: "doc.on.clipboard", text: query.isEmpty ? String(localized: "Скопируйте что-нибудь — оно появится здесь") : String(localized: "Ничего не найдено"))
             } else {
                 ScrollView(.vertical, showsIndicators: false) {
                     LazyVStack(spacing: 2) {
@@ -76,7 +76,7 @@ struct ClipboardView: View {
                 }
                 Spacer(minLength: 4)
                 if copiedID == item.id {
-                    Label("Скопировано", systemImage: "checkmark").font(Theme.font(11, .semibold)).foregroundStyle(.green)
+                    Label(String(localized: "Скопировано"), systemImage: "checkmark").font(Theme.font(11, .semibold)).foregroundStyle(.green)
                         .transition(.scale.combined(with: .opacity))
                 }
                 IconButton(systemName: pinned ? "pin.fill" : "pin", size: 10, frame: 24, tint: pinned ? .orange : .white) {
@@ -88,16 +88,16 @@ struct ClipboardView: View {
         }
         .onTapGesture { copy(item) }
         .contextMenu {
-            Button("Копировать") { copy(item) }
+            Button(String(localized: "Копировать")) { copy(item) }
             if item.isLink, case .text(let s) = item.kind, let url = URL(string: s.trimmingCharacters(in: .whitespacesAndNewlines)) {
-                Button("Открыть ссылку") { NSWorkspace.shared.open(url) }
+                Button(String(localized: "Открыть ссылку")) { NSWorkspace.shared.open(url) }
             }
             if case .text(let s) = item.kind {
-                Button("Отправить в Obsidian") { _ = AppEnvironment.shared.obsidian.capture(s) }
+                Button(String(localized: "Отправить в Obsidian")) { _ = AppEnvironment.shared.obsidian.capture(s) }
             }
-            Button(pinned ? "Открепить" : "Закрепить") { history.togglePin(item) }
+            Button(pinned ? String(localized: "Открепить") : String(localized: "Закрепить")) { history.togglePin(item) }
             Divider()
-            Button("Удалить") { history.remove(item) }
+            Button(String(localized: "Удалить")) { history.remove(item) }
         }
     }
 
