@@ -1,143 +1,157 @@
 <p align="center">
-  <img src="docs/images/hero.png" alt="NotchMate: панель под вырезом MacBook с помощником, музыкой и ближайшей встречей" width="100%">
+  <img src="docs/images/hero-en.png" alt="NotchMate: a panel under the MacBook notch with a companion, music and the next meeting" width="100%">
 </p>
 
 <p align="center">
-  <a href="#установка"><img src="https://img.shields.io/badge/macOS-14%2B-000?logo=apple&logoColor=white" alt="macOS 14+"></a>
+  <a href="https://github.com/aleksandr-developer1/notchmate/releases"><img src="https://img.shields.io/github/v/release/aleksandr-developer1/notchmate?include_prereleases&label=release&color=FF9F0A" alt="Release"></a>
+  <a href="https://github.com/aleksandr-developer1/notchmate/releases"><img src="https://img.shields.io/github/downloads/aleksandr-developer1/notchmate/total?color=2fb3ff" alt="Downloads"></a>
+  <img src="https://img.shields.io/badge/macOS-14%2B-000?logo=apple&logoColor=white" alt="macOS 14+">
   <img src="https://img.shields.io/badge/Swift-5.10-F05138?logo=swift&logoColor=white" alt="Swift 5.10">
   <img src="https://img.shields.io/badge/Apple%20Silicon-arm64-555" alt="Apple Silicon">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3DA639" alt="MIT"></a>
-  <img src="https://img.shields.io/badge/status-beta-FF9F0A" alt="Beta">
+  <a href="https://github.com/aleksandr-developer1/notchmate/stargazers"><img src="https://img.shields.io/github/stars/aleksandr-developer1/notchmate?style=social" alt="Stars"></a>
 </p>
+
+<p align="center"><a href="README.ru.md">Русский</a> · <b>English</b></p>
 
 # NotchMate
 
 > [!WARNING]
-> **Бета-версия.** NotchMate работает каждый день, но ещё обкатывается: возможны ошибки, а интерфейс и настройки будут меняться. Если что-то пошло не так, заведите issue.
+> **Beta.** NotchMate is used every day, but it is still being polished: expect bugs, and the UI and settings will change. If something breaks, please open an issue.
 
-Умный помощник за вырезом камеры MacBook: музыка, заметки, задачи, встречи, созвоны и ИИ-чат в одной панели, которая выезжает из выреза.
-
-> 🇬🇧 **English summary.** NotchMate is a macOS notch companion: now playing, quick notes (Obsidian / Apple Notes), Jira, calendar, call recording with local transcription, focus timer, clipboard history, a file shelf and an AI chat (Claude Code, Codex, OpenAI or any OpenAI-compatible server). The UI is in Russian. Download the app from Releases or build with `./build.sh` (macOS 14+, Apple Silicon). MIT licensed. **Beta**: expect rough edges.
-
-## Помощник
-
-У NotchMate есть живая пиксельная мордочка. Она пританцовывает под музыку, сосредотачивается во время фокуса, реагирует на файлы и зарядку и напоминает попить воды. Всего у неё почти 40 анимаций, ниже настоящие кадры из приложения:
+**Turn the dead space around your MacBook notch into a living companion.** Hover the notch and a panel slides out with your music, notes, today's meetings, Jira tasks, call recording, health data and an AI chat — plus a tiny pixel pet that reacts to what you're doing. Free, open source, and your data stays on your Mac.
 
 <p align="center">
-  <img src="docs/images/companion.gif" alt="Анимации помощника: радость, музыка, любовь, фокус, сон, удивление, танец, дзен" width="720">
+  <a href="https://github.com/aleksandr-developer1/notchmate/releases/latest"><img src="https://img.shields.io/badge/Download_for_macOS-arm64-000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS"></a>
 </p>
 
-<a id="как-это-выглядит"></a>
-<img src="docs/images/section-look.png" alt="Как это выглядит" width="100%">
+> [!NOTE]
+> The app's interface is in **Russian** for now. English localization is planned — help with it is very welcome.
 
-Наведите курсор на вырез, и панель выедет вниз. Вкладки: Помощник, Музыка, Здоровье, Работа, Заметки и Полка.
+## Meet your companion
+
+NotchMate has a living pixel face. It dances to your music, gets serious while you focus, reacts to files and charging, and reminds you to drink water. Almost 40 animations — these are real frames from the app:
+
+<p align="center">
+  <img src="docs/images/companion.gif" alt="Companion animations: happy, music, love, focus, sleepy, surprised, dance, zen" width="720">
+</p>
+
+<a id="see-it-in-action"></a>
+<img src="docs/images/section-look-en.png" alt="See it in action" width="100%">
+
+Hover the notch and the panel slides down. Tabs: Companion, Music, Health, Work, Notes and Shelf.
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/images/assistant.png" alt="Вкладка «Помощник»: шкала дня, фраза помощника, дела и поле вопроса"><br><b>Помощник</b>: шкала дня со встречами и напоминаниями, что ждёт внимания, вопрос помощнику</td>
-    <td width="50%"><img src="docs/images/music.png" alt="Вкладка «Музыка»: обложка, перемотка, громкость, фокус и заметка дня"><br><b>Музыка</b>: плеер с перемоткой и громкостью, рядом фокус-таймер и заметка дня</td>
+    <td width="50%"><img src="docs/images/assistant.png" alt="Companion tab: day timeline, the companion's note, what needs attention and a question field"><br><b>Companion</b>: a timeline of meetings and reminders, what needs your attention, ask the companion about your day</td>
+    <td width="50%"><img src="docs/images/music.png" alt="Music tab: artwork, seeking, volume, focus timer and daily note"><br><b>Music</b>: player with seeking and volume, plus a focus timer and today's note</td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/images/notes.png" alt="Вкладка «Заметки»: быстрая запись, поиск, закреплённые и превью заметки"><br><b>Заметки</b>: быстрая запись, поиск, закреплённые и превью с чекбоксами</td>
-    <td width="50%"><img src="docs/images/work.png" alt="Вкладка «Работа → Jira»: задача в работе с таймером и список задач"><br><b>Работа</b>: задача в работе с таймером и списанием времени, список задач Jira</td>
+    <td width="50%"><img src="docs/images/notes.png" alt="Notes tab: quick capture, search, pinned notes and a preview"><br><b>Notes</b>: quick capture, search, pinned notes and a preview with checkboxes</td>
+    <td width="50%"><img src="docs/images/work.png" alt="Work → Jira tab: the issue in progress with a timer and the issue list"><br><b>Work</b>: the issue in progress with a timer and worklogs, your Jira issues</td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/images/health.png" alt="Вкладка «Здоровье»: Body Battery, стресс, график дня, сон и пульс"><br><b>Здоровье</b>: Body Battery, стресс, график дня и дыхание</td>
-    <td valign="middle" align="center"><sub>Иллюстрации повторяют раскладку приложения,<br>данные на них выдуманные.</sub></td>
+    <td width="50%"><img src="docs/images/health.png" alt="Health tab: Body Battery, stress, today's chart, sleep and heart rate"><br><b>Health</b>: Body Battery, stress, today's chart and breathing</td>
+    <td valign="middle" align="center"><sub>Illustrations follow the app's real layout;<br>the data in them is made up.</sub></td>
   </tr>
 </table>
 
-<a id="возможности"></a>
-<img src="docs/images/section-features.png" alt="Возможности" width="100%">
+<a id="features"></a>
+<img src="docs/images/section-features-en.png" alt="Features" width="100%">
 
-- **Помощник** — живая мордочка под вырезом (см. выше). Реагирует на музыку, фокус, заметки, файлы и зарядку, напоминает попить воды и размяться. Клик — взаимодействие, двойной клик — задачи на сегодня и статистика дня.
-- **Музыка** — Яндекс Музыка, Spotify, Apple Music и браузер через «Сейчас играет»: обложка, перемотка, громкость, цвет от обложки.
-- **Заметки** — быстрая запись в заметку дня, поиск, превью с чекбоксами, закреплённые заметки. Obsidian или Apple Notes.
-- **Календарь и напоминания** — ближайшие встречи и дела на сегодня.
-- **Созвоны** — запись, расшифровка на этом компьютере и протокол встречи.
-- **Jira** — задачи в работе, таймер и списание времени.
-- **Git** — состояние репозитория, в котором вы сейчас работаете.
-- **ИИ-чат** — Claude Code, Codex, OpenAI по ключу или свой OpenAI-совместимый сервер (например, Ollama).
-- **Агенты** — NotchMate показывает, когда Claude Code ждёт ответа, и даёт агентам свои инструменты через MCP.
-- **Здоровье** — стресс, Body Battery и сон из Garmin Connect, дыхательные упражнения.
-- **Полка**, **буфер обмена** (без паролей) и **фокус-таймер**.
+- **Companion** — a living face under the notch. Reacts to music, focus, notes, files and charging; reminds you to drink water and stretch. Click to interact, double-click for today's tasks and stats.
+- **Music** — Yandex Music, Spotify, Apple Music and the browser via Now Playing: artwork, seeking, volume, colors from the cover.
+- **Notes** — quick capture into your daily note, search, previews with checkboxes, pinned notes. Obsidian or Apple Notes.
+- **Calendar & reminders** — upcoming meetings and today's to-dos.
+- **Calls** — recording, on-device transcription and meeting minutes.
+- **Jira** — issues in progress, a timer and worklogs.
+- **Git** — the state of the repository you're working in.
+- **AI chat** — Claude Code, Codex, OpenAI with your key, or your own OpenAI-compatible server (e.g. Ollama).
+- **Agents** — see when Claude Code is waiting for you; agents get NotchMate's tools over MCP.
+- **Health** — stress, Body Battery and sleep from Garmin Connect, breathing exercises.
+- **Shelf** for files, **clipboard history** (no passwords) and a **focus timer**.
 
-Горячие клавиши: ⌃⌥N — открыть, ⌃⌥M — быстрая заметка, ⌘1–6 — вкладки, Esc — закрыть.
+Shortcuts: ⌃⌥N — open, ⌃⌥M — quick note, ⌘1–6 — tabs, Esc — close.
 
-<a id="установка"></a>
-<img src="docs/images/section-install.png" alt="Установка" width="100%">
+<a id="install"></a>
+<img src="docs/images/section-install-en.png" alt="Install" width="100%">
 
-1. Скачайте `NotchMate-…-arm64.zip` из [последнего релиза](https://github.com/aleksandr-developer1/notchmate/releases).
-2. Распакуйте архив и перетащите **NotchMate** в папку «Программы».
-3. При первом запуске macOS скажет, что не может проверить разработчика: приложение пока не нотаризовано Apple. Откройте «Системные настройки → Конфиденциальность и безопасность» и нажмите **«Всё равно открыть»** напротив NotchMate. То же самое одной командой в Терминале:
+1. Download `NotchMate-…-arm64.zip` from the [latest release](https://github.com/aleksandr-developer1/notchmate/releases).
+2. Unzip it and drag **NotchMate** into Applications.
+3. On first launch macOS will say it can't verify the developer — the app isn't notarized by Apple yet. Open **System Settings → Privacy & Security** and click **Open Anyway** next to NotchMate. Or run in Terminal:
    ```bash
    xattr -dr com.apple.quarantine /Applications/NotchMate.app
    ```
-4. Выдайте разрешения, которые попросит NotchMate: без них просто не работают отдельные функции.
+4. Grant the permissions NotchMate asks for — without them only the related feature is off.
 
-> После установки новой версии macOS может попросить выдать разрешения заново: релизы подписаны без сертификата разработчика.
+> After installing a new version macOS may ask for permissions again: releases are signed without a developer certificate.
 
-## Требования
+## Requirements
 
-- macOS 14 Sonoma или новее, Apple Silicon.
-- Xcode или Command Line Tools со Swift 5.10+.
-- MacBook с вырезом — желательно: на остальных Mac панель крепится к верху экрана.
+- macOS 14 Sonoma or later, Apple Silicon.
+- A MacBook with a notch is ideal; on other Macs the panel sits at the top of the screen.
+- To build: Xcode or Command Line Tools with Swift 5.10+.
 
-<a id="сборка"></a>
-<img src="docs/images/section-build.png" alt="Сборка" width="100%">
+<a id="build"></a>
+<img src="docs/images/section-build-en.png" alt="Build from source" width="100%">
 
 ```bash
 git clone --recursive https://github.com/aleksandr-developer1/notchmate.git
 cd notchmate
-./build.sh            # соберёт build/NotchMate.app
-./build.sh install    # и установит в /Applications, затем запустит
+./build.sh            # builds build/NotchMate.app
+./build.sh install    # and installs it to /Applications, then launches it
 ```
 
-Если клонировали без `--recursive`, `build.sh` сам подтянет подмодуль `Vendor/mediaremote-adapter`.
+If you cloned without `--recursive`, `build.sh` fetches the `Vendor/mediaremote-adapter` submodule itself.
 
-**Подпись.** macOS привязывает выданные разрешения (Универсальный доступ, Автоматизация, микрофон и другие) к подписи приложения. `build.sh` берёт первый сертификат Apple Development / Developer ID из связки ключей. Без сертификата используется ad-hoc подпись, и после каждой пересборки разрешения придётся выдавать заново. Задать сертификат явно: `SIGN_ID="<имя или SHA-1>" ./build.sh`.
+**Signing.** macOS ties granted permissions (Accessibility, Automation, microphone and others) to the app's signature. `build.sh` uses the first Apple Development / Developer ID certificate in your keychain; without one it signs ad hoc, and permissions have to be granted again after every rebuild. Pick a certificate explicitly with `SIGN_ID="<name or SHA-1>" ./build.sh`.
 
-## Разрешения
+## Permissions
 
-При первом запуске NotchMate покажет, какие разрешения нужны и зачем. Все они необязательны — без разрешения просто не работает соответствующая функция:
+On first launch NotchMate shows which permissions it needs and why. All of them are optional — without one, only the related feature is off:
 
-| Разрешение | Для чего |
+| Permission | Used for |
 |---|---|
-| Универсальный доступ | горячие клавиши, текущее окно и репозиторий |
-| Автоматизация | «Заметки», вкладки браузера, плеер |
-| Микрофон и запись экрана | запись созвонов |
-| Распознавание речи | расшифровка на устройстве |
-| Календари, Напоминания | встречи и дела на сегодня |
+| Accessibility | hotkeys, the current window and repository |
+| Automation | Notes, browser tabs, the player |
+| Microphone & screen recording | recording calls |
+| Speech recognition | on-device transcription |
+| Calendars, Reminders | today's meetings and to-dos |
 
-<a id="приватность"></a>
-<img src="docs/images/section-privacy.png" alt="Приватность" width="100%">
+<a id="privacy"></a>
+<img src="docs/images/section-privacy-en.png" alt="Privacy" width="100%">
 
-- Все данные хранятся локально: `~/Library/Application Support/NotchMate` и настройки macOS.
-- Токены Jira и ключи ИИ хранятся в `~/Library/Application Support/NotchMate/secrets.json`, доступном только вашей учётной записи (права 600). Системная Связка ключей не используется, чтобы macOS не спрашивала доступ при каждой пересборке.
-- Расшифровка созвонов выполняется на этом Mac.
-- Запросы в ИИ уходят только к тому провайдеру, которого вы выбрали в настройках.
-- Буфер обмена не сохраняет пароли и содержимое, помеченное как конфиденциальное.
+- All data stays local: `~/Library/Application Support/NotchMate` and macOS preferences.
+- Jira tokens and AI keys are stored in `~/Library/Application Support/NotchMate/secrets.json`, readable only by your user account (mode 600). The system Keychain isn't used so macOS doesn't prompt for access after every rebuild.
+- Calls are transcribed on your Mac.
+- AI requests go only to the provider you pick in the settings.
+- Clipboard history skips passwords and content marked as confidential.
 
 <a id="claude-code"></a>
-<img src="docs/images/section-agents.png" alt="Claude Code и Codex" width="100%">
+<img src="docs/images/section-agents-en.png" alt="Claude Code and Codex" width="100%">
 
-NotchMate работает как MCP-сервер для Claude Code и Codex и принимает их хуки, чтобы показывать, что агент ждёт ответа. Всё подключается одной кнопкой в «Настройки → Интеграции». Вручную MCP добавляется так:
+NotchMate works as an MCP server for Claude Code and Codex and receives their hooks to show when an agent is waiting for you. Connect everything with one button in **Settings → Integrations**, or add the MCP server by hand:
 
 ```bash
 claude mcp add --scope user notchmate -- /Applications/NotchMate.app/Contents/MacOS/NotchMate --mcp
 ```
 
-## Структура
+## Project layout
 
 ```
-Sources/NotchMate/  исходный код, по папке на функцию (Media, Jira, Calls, AI…)
-Resources/          Info.plist, иконка, анимации помощника, скрипт синхронизации Garmin
-Vendor/             mediaremote-adapter (git-подмодуль)
-docs/images/        картинки для README
+Sources/NotchMate/  source code, one folder per feature (Media, Jira, Calls, AI…)
+Resources/          Info.plist, icon, companion animations, Garmin sync script
+Vendor/             mediaremote-adapter (git submodule)
+docs/images/        README images
 ```
 
-## Лицензия
+## License
 
-[MIT](LICENSE). Сторонние компоненты и их лицензии — в [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+[MIT](LICENSE). Third-party components and their licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-NotchMate использует закрытый системный фреймворк MediaRemote, поэтому её нельзя публиковать в Mac App Store, а обновление macOS может сломать блок «Музыка».
+NotchMate uses the private MediaRemote framework, so it can't ship on the Mac App Store, and a macOS update may break the Music block.
+
+---
+
+<p align="center">If NotchMate makes your day a little nicer, please ⭐ star the repo — it really helps the project grow.<br>
+Bugs and ideas go to <a href="https://github.com/aleksandr-developer1/notchmate/issues">issues</a>, questions to <a href="https://github.com/aleksandr-developer1/notchmate/discussions">discussions</a>. Want to help with code? See <a href="CONTRIBUTING.md">CONTRIBUTING</a>.</p>

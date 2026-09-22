@@ -1,0 +1,16 @@
+name: Feature request
+description: Suggest an idea for NotchMate
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like NotchMate to do?
+      description: Describe the situation and how NotchMate could help.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Anything else?
+      description: Apps that already do something similar, sketches, links.
