@@ -1,0 +1,33 @@
+# SwiftPM / build output
+.build/
+build/
+.swiftpm/
+*.xcodeproj/
+xcuserdata/
+DerivedData/
+
+# Python helpers
+tools/.venv/
+__pycache__/
+*.pyc
+
+# macOS and editors
+.DS_Store
+.vscode/
+.idea/
+.claude/
+*.code-workspace
+
+# Local tooling, design mockups and backups — not part of the app
+design/
+tools/
+*.orig
+*.bak
+*backup*
+
+# Local secrets, just in case
+.env
+*.p12
+*.mobileprovision
+Resources/AppIcon-source.png
+IDEAS.md

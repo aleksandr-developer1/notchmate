@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key><string>ru</string>
+    <key>CFBundleExecutable</key><string>NotchMate</string>
+    <key>CFBundleIdentifier</key><string>com.aleksandrkezikov.notchmate</string>
+    <key>CFBundleName</key><string>NotchMate</string>
+    <key>CFBundleDisplayName</key><string>NotchMate</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>0.9.0</string>
+    <key>CFBundleVersion</key><string>1</string>
+    <key>CFBundleIconFile</key><string>AppIcon</string>
+    <key>LSMinimumSystemVersion</key><string>14.0</string>
+    <key>LSUIElement</key><true/>
+    <key>NSHighResolutionCapable</key><true/>
+    <key>NSSupportsAutomaticGraphicsSwitching</key><true/>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key><true/>
+        <key>NSAllowsLocalNetworking</key><true/>
+    </dict>
+    <key>NSMicrophoneUsageDescription</key><string>NotchMate записывает созвон, чтобы сделать расшифровку и протокол на этом компьютере.</string>
+    <key>NSSpeechRecognitionUsageDescription</key><string>Расшифровка созвона выполняется на этом компьютере.</string>
+    <key>NSCalendarsFullAccessUsageDescription</key><string>NotchMate показывает ближайшие встречи в вырезе и напоминает о них.</string>
+    <key>NSCalendarsUsageDescription</key><string>NotchMate показывает ближайшие встречи в вырезе и напоминает о них.</string>
+    <key>NSRemindersFullAccessUsageDescription</key><string>Помощник показывает напоминания на сегодня на шкале дня и отмечает их выполненными.</string>
+    <key>NSRemindersUsageDescription</key><string>Помощник показывает напоминания на сегодня на шкале дня и отмечает их выполненными.</string>
+    <key>NSAppleEventsUsageDescription</key><string>NotchMate показывает и записывает ваши заметки из «Заметок» и проверяет открытый сайт в браузере, чтобы замечать отвлечения во время фокуса.</string>
+    <key>NSLocalNetworkUsageDescription</key><string>NotchMate подключается к вашему ИИ-серверу в локальной сети.</string>
+</dict>
+</plist>
