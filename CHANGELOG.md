@@ -6,7 +6,6 @@ User-visible changes are recorded here. Pending changes stay in `Unreleased` unt
 
 ## 0.9.1 - 2026-10-20
 
-
 ### Added
 
 - A plugin catalog in Settings with searchable cards, categories, connection status, configuration, and persistent switches for all built-in modules and integrations, including AI chat, Jira, Git, music, notes, calendar, calls, and health.
