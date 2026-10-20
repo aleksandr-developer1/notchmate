@@ -61,9 +61,9 @@ final class TempoService: ObservableObject {
         let energy = EnergyPolicy.shared.state
         let env = AppEnvironment.shared
         let settings = env.settings
-        let visible = settings.showFace || (settings.showMusicActivity && settings.notchGlowMode == .artwork)
+        let visible = (settings.pluginEnabled(.companion) && settings.showFace) || (settings.showMusicActivity && settings.notchGlowMode == .artwork)
             || env.disco.isOn || env.notchIsOpen(on: .home)
-        if energy.suspended || energy.reducedEffects || !visible {
+        if !settings.pluginEnabled(.music) || energy.suspended || energy.reducedEffects || !visible {
             audio.suspend()
         } else {
             audio.follow(player?.track)

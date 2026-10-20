@@ -120,6 +120,7 @@ final class ObsidianService: NotesStore {
 
     /// Rescans the vault in the background. Cheap enough to call on every open.
     func refresh(force: Bool = false) {
+        guard Settings.shared.pluginEnabled(.obsidian) else { return }
         guard let vault else { notes = []; return }
         guard force || Date().timeIntervalSince(lastScan) > 3 else { return }
         lastScan = Date()
@@ -180,6 +181,7 @@ final class ObsidianService: NotesStore {
     // MARK: Search
 
     func search(_ query: String) async -> [NoteSearchHit] {
+        guard Settings.shared.pluginEnabled(.obsidian) else { return [] }
         let q = query.trimmingCharacters(in: .whitespaces).lowercased()
         guard !q.isEmpty else { return [] }
         let snapshot = notes
@@ -245,6 +247,7 @@ final class ObsidianService: NotesStore {
 
     @discardableResult
     func capture(_ text: String) -> Bool {
+        guard Settings.shared.pluginEnabled(.obsidian) else { return false }
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, let vault else { return false }
         let root = URL(fileURLWithPath: vault.path)
@@ -276,6 +279,7 @@ final class ObsidianService: NotesStore {
 
     /// Creates a new note; returns it.
     func createNote(title: String, body: String = "") -> NoteItem? {
+        guard settings.pluginEnabled(.obsidian) else { return nil }
         guard let vault else { return nil }
         let clean = title.trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
@@ -296,6 +300,7 @@ final class ObsidianService: NotesStore {
     }
 
     func openDailyNote() {
+        guard settings.pluginEnabled(.obsidian) else { return }
         guard let vault else { return }
         let root = URL(fileURLWithPath: vault.path)
         let rel = dailyNoteRelativePath(vault: root)

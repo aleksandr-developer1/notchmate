@@ -14,7 +14,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         case .assistant: return String(localized: "Помощник")
         case .work: return String(localized: "Фокус и время")
         case .calls: return String(localized: "Созвоны")
-        case .integrations: return String(localized: "Интеграции")
+        case .integrations: return String(localized: "Каталог плагинов")
         case .permissions: return String(localized: "Разрешения")
         case .about: return String(localized: "О программе")
         }
@@ -134,12 +134,13 @@ struct GeneralSettings: View {
                 Picker(String(localized: "Подсветка панели"), selection: $settings.notchGlowMode) {
                     ForEach(NotchGlowMode.allCases) { Text($0.title).tag($0) }
                 }
-                Toggle(String(localized: "Дискотека сама включается, если мак не трогают под музыку"), isOn: $settings.autoDisco)
                 Toggle(String(localized: "Показывать название нового трека"), isOn: $settings.sneakPeek)
                 Toggle(String(localized: "Индикатор зарядки при подключении питания"), isOn: $settings.chargingHUD)
             }
             Section(String(localized: "Буфер обмена")) {
-                Toggle(String(localized: "Вести историю буфера"), isOn: $settings.clipboardEnabled)
+                Toggle(String(localized: "Вести историю буфера"), isOn: Binding(
+                    get: { settings.pluginEnabled(.clipboard) },
+                    set: { _ = AppEnvironment.shared.setPlugin(.clipboard, enabled: $0) }))
                 Text(String(localized: "Пароли из менеджеров паролей (помеченные как скрытые) не сохраняются. История хранится только в памяти."))
                     .font(.caption).foregroundStyle(.secondary)
             }
@@ -181,8 +182,6 @@ struct AssistantSettings: View {
                     ForEach(FacePalette.allCases) { Text($0.title).tag($0) }
                 }
                 Toggle(String(localized: "Следит взглядом за курсором"), isOn: $settings.followCursor)
-                Text(String(localized: "Если быстро потрясти курсором, у мордочки закружится голова."))
-                    .font(.caption).foregroundStyle(.secondary)
             }
             ReactionSettings()
             Section(String(localized: "Характер")) {
@@ -206,161 +205,8 @@ struct AssistantSettings: View {
 
 // MARK: - Интеграции
 
-/// Everything that connects NotchMate to something outside it. New services get a
-/// row here instead of a new tab in the window.
-enum Integration: String, CaseIterable, Identifiable {
-    case obsidian, jira, git, ai, agents, calendar, reminders, health
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .obsidian: return "Obsidian"
-        case .jira: return "Jira"
-        case .git: return String(localized: "Git и GitHub")
-        case .ai: return String(localized: "ИИ")
-        case .agents: return String(localized: "ИИ-агенты и MCP")
-        case .calendar: return String(localized: "Календарь")
-        case .reminders: return String(localized: "Напоминания")
-        case .health: return String(localized: "Здоровье")
-        }
-    }
-
-    var subtitle: String {
-        switch self {
-        case .obsidian: return String(localized: "Заметки, быстрая запись, протоколы созвонов")
-        case .jira: return String(localized: "Задачи, время в работе, списание")
-        case .git: return String(localized: "Репозиторий из терминала, CI и PR, сообщения коммитов")
-        case .ai: return String(localized: "Аккаунты ChatGPT и Claude, ключи API, своя модель")
-        case .agents: return String(localized: "Claude Code и Codex: статус работы и инструменты NotchMate")
-        case .calendar: return String(localized: "Встречи на шкале дня и в вырезе")
-        case .reminders: return String(localized: "Дела из «Напоминаний» на шкале дня")
-        case .health: return String(localized: "Garmin Connect и Apple Health: стресс, Body Battery, сон, пульс")
-        }
-    }
-
-    var icon: String {
-        switch self {
-        case .obsidian: return "text.book.closed"
-        case .jira: return "briefcase"
-        case .git: return "arrow.triangle.branch"
-        case .ai: return "sparkles"
-        case .agents: return "terminal"
-        case .calendar: return "calendar"
-        case .reminders: return "checklist"
-        case .health: return "heart.text.square"
-        }
-    }
-}
-
 struct IntegrationsSettings: View {
-    @EnvironmentObject var env: AppEnvironment
-    @ObservedObject var settings = Settings.shared
-    @ObservedObject var agents = AppEnvironment.shared.agents
-    @ObservedObject var calendar = AppEnvironment.shared.calendar
-    @ObservedObject var reminders = AppEnvironment.shared.reminders
-
-    @State private var opened: Integration?
-
-    var body: some View {
-        // A plain state switch instead of NavigationStack: inside a split-view
-        // detail the automatic back button lands in the (transparent) titlebar
-        // and is easy to miss, so the header below carries it.
-        if let opened {
-            VStack(spacing: 0) {
-                HStack(spacing: 8) {
-                    Button {
-                        self.opened = nil
-                    } label: {
-                        Label(String(localized: "Интеграции"), systemImage: "chevron.left")
-                    }
-                    .buttonStyle(.accessoryBar)
-                    Divider().frame(height: 14)
-                    Image(systemName: opened.icon).foregroundStyle(.secondary)
-                    Text(opened.title).font(.headline)
-                    Spacer()
-                }
-                .padding(.horizontal, 14).padding(.vertical, 10)
-                Divider()
-                page(opened)
-            }
-        } else {
-            List {
-                Section {
-                    ForEach(Integration.allCases) { item in
-                        Button { opened = item } label: { row(item) }
-                            .buttonStyle(.plain)
-                            .contentShape(Rectangle())
-                    }
-                } footer: {
-                    Text(String(localized: "Дальше здесь появятся другие сервисы. Все ключи и токены остаются на этом компьютере."))
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-            }
-            .onAppear { agents.refreshInstallState() }
-        }
-    }
-
-    private func row(_ item: Integration) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: item.icon)
-                .font(.system(size: 16))
-                .frame(width: 30, height: 30)
-                .background(RoundedRectangle(cornerRadius: 8).fill(.quaternary))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(item.title).font(.body.weight(.medium))
-                Text(item.subtitle).font(.caption).foregroundStyle(.secondary)
-            }
-            Spacer()
-            let s = state(item)
-            HStack(spacing: 5) {
-                Circle().fill(s.on ? Color.green : Color.secondary.opacity(0.4)).frame(width: 7, height: 7)
-                Text(s.text).font(.caption).foregroundStyle(.secondary)
-            }
-            Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
-        }
-        .padding(.vertical, 3)
-    }
-
-    @ViewBuilder private func page(_ item: Integration) -> some View {
-        switch item {
-        case .obsidian: ObsidianSettings()
-        case .jira: JiraSettings()
-        case .git: GitSettings()
-        case .ai: AISettings()
-        case .agents: AgentSettings()
-        case .calendar: Form { CalendarSettings() }.formStyle(.grouped)
-        case .reminders: RemindersSettings()
-        case .health: HealthSettings()
-        }
-    }
-
-    private func state(_ item: Integration) -> (on: Bool, text: String) {
-        switch item {
-        case .obsidian:
-            if let v = env.obsidian.vault { return (true, v.name) }
-            return (false, String(localized: "не найдено"))
-        case .jira:
-            let ready = !settings.jiraURL.isEmpty && !(Keychain.get(JiraService.tokenAccount) ?? "").isEmpty
-            return (ready, ready ? String(localized: "подключено") : String(localized: "не настроено"))
-        case .git:
-            if !settings.gitEnabled { return (false, String(localized: "выключено")) }
-            return (true, env.git.ghAvailable ? String(localized: "GitHub CLI найден") : String(localized: "без CI"))
-        case .ai:
-            return (true, settings.aiProvider.title)
-        case .agents:
-            let n = [agents.claudeHooksInstalled, agents.codexHooksInstalled].filter { $0 }.count
-            return (n > 0, n > 0 ? String(localized: "подключено: \(n)") : String(localized: "не подключено"))
-        case .calendar:
-            if !settings.calendarEnabled { return (false, String(localized: "выключен")) }
-            return (calendar.hasAccess, calendar.hasAccess ? String(localized: "есть доступ") : String(localized: "нет доступа"))
-        case .reminders:
-            if !settings.remindersEnabled { return (false, String(localized: "выключены")) }
-            return (reminders.hasAccess, reminders.hasAccess ? String(localized: "есть доступ") : String(localized: "нет доступа"))
-        case .health:
-            let on = [settings.garminEnabled ? "Garmin" : nil, settings.appleHealthEnabled ? "Apple Health" : nil].compactMap { $0 }
-            return (!on.isEmpty, on.isEmpty ? String(localized: "не подключено") : on.joined(separator: " + "))
-        }
-    }
+    var body: some View { PluginCatalogView() }
 }
 
 // MARK: - Obsidian

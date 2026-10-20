@@ -22,7 +22,7 @@ final class DistractionGuard: ObservableObject {
     ]
 
     func start() {
-        timer = EnergyTimer(interval: { EnergyPolicy.shared.state.reducedEffects ? 9 : 3 },
+        timer = EnergyTimer(interval: { Settings.shared.pluginEnabled(.focus) ? (EnergyPolicy.shared.state.reducedEffects ? 9 : 3) : nil },
                             action: { [weak self] in self?.check() })
     }
 

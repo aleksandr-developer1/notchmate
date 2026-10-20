@@ -62,6 +62,7 @@ struct NotchRootView: View {
             .onDrop(of: [.fileURL, .image, .plainText], isTargeted: Binding(
                 get: { vm.isDropTargeted },
                 set: { t in
+                    guard Settings.shared.pluginEnabled(.shelf) else { return }
                     vm.isDropTargeted = t
                     if t && !vm.isOpen { vm.open(tab: .shelf, reason: .drag) }
                     if t && vm.tab != .shelf { vm.select(NotchTab.shelf) }
@@ -591,17 +592,30 @@ struct ExpandedView: View {
 
     @ViewBuilder private var content: some View {
         ZStack(alignment: .top) {
-            switch vm.tab {
-            case .assistant: CompanionView().transition(.tabSwitch)
-            case .ai: AIChatView().transition(.tabSwitch)
-            case .home: MediaView(ns: ns).transition(.tabSwitch)
-            case .health: HealthView().transition(.tabSwitch)
-            case .jira: JiraView().transition(.tabSwitch)
-            case .git: GitView().transition(.tabSwitch)
-            case .notes: NotesView().transition(.tabSwitch)
-            case .shelf: ShelfView().transition(.tabSwitch)
-            case .clipboard: ClipboardView().transition(.tabSwitch)
-            case .focus: FocusView().transition(.tabSwitch)
+            if vm.tab.isAvailable {
+                switch vm.tab {
+                case .assistant: CompanionView().transition(.tabSwitch)
+                case .ai: AIChatView().transition(.tabSwitch)
+                case .home: MediaView(ns: ns).transition(.tabSwitch)
+                case .health: HealthView().transition(.tabSwitch)
+                case .jira: JiraView().transition(.tabSwitch)
+                case .git: GitView().transition(.tabSwitch)
+                case .notes: NotesView(source: .apple).transition(.tabSwitch)
+                case .obsidian: NotesView(source: .obsidian).transition(.tabSwitch)
+                case .shelf: ShelfView().transition(.tabSwitch)
+                case .clipboard: ClipboardView().transition(.tabSwitch)
+                case .focus: FocusView().transition(.tabSwitch)
+                }
+            } else {
+                VStack(spacing: 10) {
+                    Image(systemName: "puzzlepiece.extension").font(.system(size: 26)).foregroundStyle(.secondary)
+                    Text(String(localized: "Нет включённых плагинов")).font(.headline)
+                    Text(String(localized: "Выберите нужные функции в настройках.")).font(.callout).foregroundStyle(.secondary)
+                    Button(String(localized: "Настройки…")) {
+                        NotificationCenter.default.post(name: .notchMateOpenSettings, object: nil)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
     }
@@ -616,6 +630,7 @@ extension AnyTransition {
 
 struct TabBar: View {
     @EnvironmentObject var vm: NotchViewModel
+    @ObservedObject private var settings = Settings.shared
     @Namespace private var tabNS
 
     var body: some View {
@@ -662,6 +677,7 @@ private struct TabButton: View {
 /// Switches pages inside a group (Помощник / Чат ИИ, Jira / Git / Фокус, Полка / Буфер).
 struct PageSwitcher: View {
     @EnvironmentObject var vm: NotchViewModel
+    @ObservedObject private var settings = Settings.shared
     @Namespace private var pageNS
 
     var body: some View {

@@ -31,7 +31,7 @@ final class DiscoMode: ObservableObject {
     func start(env: AppEnvironment) {
         self.env = env
         idleTimer = EnergyTimer(interval: { [weak self] in
-            guard let self, let env = self.env, !EnergyPolicy.shared.state.reducedEffects else { return nil }
+            guard let self, let env = self.env, env.settings.discoAvailable, !EnergyPolicy.shared.state.reducedEffects else { return nil }
             if self.isOn { return 0.5 }
             return env.settings.autoDisco && env.nowPlaying.track?.isPlaying == true ? 2 : nil
         }, action: { [weak self] in self?.checkIdle() })
@@ -64,13 +64,13 @@ final class DiscoMode: ObservableObject {
     }
 
     func turnOn() {
-        guard !isOn, !EnergyPolicy.shared.state.suspended, !EnergyPolicy.shared.state.reducedEffects else { return }
+        guard Settings.shared.discoAvailable, !isOn, !EnergyPolicy.shared.state.suspended, !EnergyPolicy.shared.state.reducedEffects else { return }
         hideWork?.cancel()
         hideWork = nil
         if windows.isEmpty { showWindows() }
         // Next runloop: the glow view must appear collapsed first so the spread animates.
         DispatchQueue.main.async {
-            guard !EnergyPolicy.shared.state.suspended, !EnergyPolicy.shared.state.reducedEffects else {
+            guard Settings.shared.discoAvailable, !EnergyPolicy.shared.state.suspended, !EnergyPolicy.shared.state.reducedEffects else {
                 self.closeWindows()
                 return
             }
@@ -93,7 +93,7 @@ final class DiscoMode: ObservableObject {
 
     private func checkIdle() {
         let idle = CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: CGEventType(rawValue: ~0)!)
-        guard let env else { return }
+        guard let env, env.settings.discoAvailable else { return }
         let track = env.nowPlaying.track
         let playing = track?.isPlaying == true
 

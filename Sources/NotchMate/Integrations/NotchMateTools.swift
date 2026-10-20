@@ -53,6 +53,16 @@ enum NotchMateToolCatalog {
 @MainActor
 enum NotchMateToolRunner {
     static func run(_ name: String, _ args: [String: Any], env: AppEnvironment) async -> (text: String, isError: Bool) {
+        let modules: [String: PluginID] = [
+            "add_note": env.settings.activeNotesSource == .obsidian ? .obsidian : .notes,
+            "search_notes": env.settings.activeNotesSource == .obsidian ? .obsidian : .notes,
+            "start_focus": .focus, "stop_focus": .focus,
+            "jira_log_time": .jira, "calendar_events": .calendar, "media_control": .music,
+            "call_recording": .calls, "show_message": .agents,
+        ]
+        if let plugin = modules[name], !env.settings.pluginEnabled(plugin) {
+            return (String(localized: "Плагин «\(plugin.title)» выключен. Включите его в каталоге плагинов."), true)
+        }
         switch name {
         case "get_today":
             return (todaySummary(env: env), false)
@@ -138,8 +148,8 @@ enum NotchMateToolRunner {
         let others = env.jira.issues.filter { $0.key != env.jira.activeIssue?.key }.prefix(8)
         if !others.isEmpty { out.append(String(localized: "Мои задачи Jira:\n") + others.map { "• \($0.key) \($0.summary) [\($0.status)]" }.joined(separator: "\n")) }
         let events = env.calendar.describe(days: 1)
-        out.append(events)
-        out.append(env.reminders.describe())
+        if env.settings.pluginEnabled(.calendar) { out.append(events) }
+        if env.settings.pluginEnabled(.reminders) { out.append(env.reminders.describe()) }
         if let t = env.nowPlaying.track, t.isPlaying { out.append(String(localized: "Играет: \(t.artist) — \(t.title)")) }
         let agents = env.agents.sessions.values.filter { $0.state == .working }
         if !agents.isEmpty { out.append(String(localized: "ИИ-агенты работают: ") + agents.map { "\($0.agent.title) (\($0.project))" }.joined(separator: ", ")) }

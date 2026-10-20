@@ -2,16 +2,32 @@ import AppKit
 import SwiftUI
 
 enum NotchTab: String, CaseIterable, Identifiable {
-    case assistant, ai, home, health, jira, git, notes, shelf, clipboard, focus
+    case assistant, ai, home, health, jira, git, notes, obsidian, shelf, clipboard, focus
     var id: String { rawValue }
 
-    /// Pages that are actually available (Git and Health can be turned off in the settings).
-    @MainActor var isAvailable: Bool {
+    var plugin: PluginID? {
         switch self {
-        case .git: return Settings.shared.gitEnabled
-        case .health: return Settings.shared.garminEnabled || Settings.shared.appleHealthEnabled
-        default: return true
+        case .assistant: return .companion
+        case .ai: return .ai
+        case .home: return .music
+        case .health: return nil
+        case .jira: return .jira
+        case .git: return .git
+        case .notes: return .notes
+        case .obsidian: return .obsidian
+        case .shelf: return .shelf
+        case .clipboard: return .clipboard
+        case .focus: return .focus
         }
+    }
+
+    @MainActor var isAvailable: Bool {
+        isAvailable(settings: .shared)
+    }
+
+    @MainActor func isAvailable(settings: Settings) -> Bool {
+        if self == .health { return settings.healthEnabled }
+        return plugin.map { settings.pluginEnabled($0) } ?? true
     }
 
     var group: NotchGroup {
@@ -21,6 +37,7 @@ enum NotchTab: String, CaseIterable, Identifiable {
         case .health: return .health
         case .jira, .git, .focus: return .work
         case .notes: return .notes
+        case .obsidian: return .notes
         case .shelf, .clipboard: return .shelf
         }
     }
@@ -33,7 +50,8 @@ enum NotchTab: String, CaseIterable, Identifiable {
         case .health: return "heart.fill"
         case .jira: return "briefcase.fill"
         case .git: return "arrow.triangle.branch"
-        case .notes: return "text.book.closed.fill"
+        case .notes: return "note.text"
+        case .obsidian: return "text.book.closed"
         case .shelf: return "tray.full.fill"
         case .clipboard: return "doc.on.clipboard.fill"
         case .focus: return "timer"
@@ -48,7 +66,8 @@ enum NotchTab: String, CaseIterable, Identifiable {
         case .health: return String(localized: "Здоровье")
         case .jira: return "Jira"
         case .git: return "Git"
-        case .notes: return String(localized: "Заметки")
+        case .notes: return "Apple Notes"
+        case .obsidian: return "Obsidian"
         case .shelf: return String(localized: "Полка")
         case .clipboard: return String(localized: "Буфер")
         case .focus: return String(localized: "Фокус")
@@ -64,6 +83,7 @@ enum NotchTab: String, CaseIterable, Identifiable {
         case .jira: return 236
         case .git: return 236
         case .notes: return 340
+        case .obsidian: return 340
         case .shelf: return 150
         case .clipboard: return 300
         case .focus: return 176
@@ -88,7 +108,7 @@ enum NotchGroup: String, CaseIterable, Identifiable {
         case .home: return "music.note"
         case .health: return "heart.fill"
         case .work: return "briefcase.fill"
-        case .notes: return "text.book.closed.fill"
+        case .notes: return "note.text"
         case .shelf: return "tray.full.fill"
         }
     }
@@ -138,6 +158,7 @@ final class NotchViewModel: ObservableObject {
 
     init(env: AppEnvironment) {
         self.env = env
+        ensureAvailableTab()
     }
 
     /// Concave top "ears" of the collapsed shape; they sit on the menu bar, outside the visible body.
@@ -185,7 +206,7 @@ final class NotchViewModel: ObservableObject {
 
     /// Left side: music whenever it plays.
     var musicActive: Bool {
-        Settings.shared.showMusicActivity && (env.nowPlaying.track?.isPlaying ?? false)
+        Settings.shared.pluginEnabled(.music) && Settings.shared.showMusicActivity && (env.nowPlaying.track?.isPlaying ?? false)
     }
 
     /// Right side: the most important work item.
@@ -200,7 +221,7 @@ final class NotchViewModel: ObservableObject {
 
     enum LiveActivity { case music, focus, jira, meeting, agent, call }
 
-    var showsFace: Bool { Settings.shared.showFace }
+    var showsFace: Bool { Settings.shared.pluginEnabled(.companion) && Settings.shared.showFace }
 
     /// Activity data sits next to the face instead of widening the notch.
     var activityBesideFace: Bool { showsFace && Settings.shared.activityLayout == .besideFace }
@@ -278,6 +299,7 @@ final class NotchViewModel: ObservableObject {
 
     func open(tab: NotchTab? = nil, reason: OpenReason) {
         if let tab { self.tab = tab }
+        ensureAvailableTab()
         guard !isOpen else {
             if reason == .hotkey { onRequestKey?(true) }
             return
@@ -289,7 +311,8 @@ final class NotchViewModel: ObservableObject {
             NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
         }
         withAnimation(Self.spring) { isOpen = true }
-        env.obsidian.refresh()
+        if self.tab == .notes { env.appleNotes.refresh(force: false) }
+        if self.tab == .obsidian { env.obsidian.refresh(force: false) }
         onRequestKey?(reason == .hotkey)
     }
 
@@ -301,7 +324,16 @@ final class NotchViewModel: ObservableObject {
     }
 
     func select(_ tab: NotchTab) {
+        guard tab.isAvailable else { ensureAvailableTab(); return }
+        if tab == .notes { env.settings.notesSource = .apple }
+        if tab == .obsidian { env.settings.notesSource = .obsidian }
         withAnimation(Self.spring) { self.tab = tab }
+    }
+
+    func ensureAvailableTab() {
+        if !tab.isAvailable {
+            tab = tab.group.pages.first ?? NotchTab.allCases.first(where: { $0.isAvailable }) ?? .assistant
+        }
     }
 
     /// Last page opened in each group, so the bar button returns to it.
@@ -310,7 +342,13 @@ final class NotchViewModel: ObservableObject {
     func select(_ group: NotchGroup) {
         let pages = group.pages
         guard !pages.isEmpty else { return }
-        if let last = lastPage[group], pages.contains(last) { select(last) } else { select(pages[0]) }
+        if let last = lastPage[group], pages.contains(last) {
+            select(last)
+        } else if group == .notes, env.settings.activeNotesSource == .obsidian {
+            select(NotchTab.obsidian)
+        } else {
+            select(pages[0])
+        }
     }
 
     /// Hooks wired by the window controller.

@@ -6,10 +6,16 @@ User-visible changes are recorded here. Pending changes stay in `Unreleased` unt
 
 ### Added
 
+- A plugin catalog in Settings with searchable cards, categories, connection status, configuration, and persistent switches for all built-in modules and integrations, including AI chat, Jira, Git, music, notes, calendar, calls, and health.
+- Plugin controls are available only in Settings → Plugin catalog, with no catalog tab or menu-bar item. Disabled modules leave navigation and stop optional background work without deleting accounts, settings, notes, or files. Dependent modules switch off with their parent, and active recordings, AI responses, focus sessions, and unlogged Jira sessions are protected against interruption.
+- Call transcripts remain available with AI disabled; completed protocols stay beside the local recording when the Obsidian integration is disabled.
 - Configurable one-hour lunch deduction from Jira working time and a breakdown of the counted time for each work-status period.
 - Retry failed call processing from the companion's context menu, reusing an existing transcript when available.
 
 ### Changed
+
+- Disco is a setting within Music instead of a separate catalog plugin. Disabling it hides the player button and stops both manual and automatic effects; existing disabled preferences are preserved.
+- Garmin Connect and Apple Health have independent catalog cards, switches, setup, and synchronization. Their data remains on the shared Health tab; Apple Notes and Obsidian share one Notes tab with an internal source selector.
 
 - Optional background checks and decorative animations pause when the screen is locked or asleep, or the user session is inactive. UI drafts and scroll positions are preserved.
 - Low Power Mode and serious thermal pressure reduce polling and animation rates and disable decorative audio capture and disco effects. Active call-recording checks continue.
@@ -20,4 +26,8 @@ User-visible changes are recorded here. Pending changes stay in `Unreleased` unt
 
 ### Fixed
 
+- Remove the dizzy reaction to rapid cursor movement and bursts of notifications.
+- Keep Apple Notes and Obsidian independent: each has its own switch and backend selector within the shared Notes tab, and enabling either no longer changes the selected quick-capture backend or requires the other.
+- Restore Apple Notes access when an old preference still points at disabled Obsidian. Surface creation and index errors, support retry after granting Automation access, and preserve recent notes when plaintext is unavailable or a note is created during an index scan.
+- Hide AI commit-message controls and their settings hint when the AI plugin is disabled; keep manual commits available and reject generation before reading the diff.
 - Prevent a pending audio-capture startup from remaining active after capture is suspended or the playback source changes.

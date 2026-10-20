@@ -24,7 +24,7 @@ final class RemindersService: ObservableObject {
     private static let excludedKey = "remindersExcludedIDs"
 
     private let store = EKEventStore()
-    private var timer: Timer?
+    private var timer: EnergyTimer?
 
     var hasAccess: Bool { status == .fullAccess }
 
@@ -42,9 +42,8 @@ final class RemindersService: ObservableObject {
             MainActor.assumeIsolated { self?.refresh() }
         }
         // A new day brings a new set of reminders.
-        timer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.refresh() }
-        }
+        timer = EnergyTimer(interval: { Settings.shared.pluginEnabled(.reminders) ? 300 : nil },
+                            action: { [weak self] in self?.refresh() })
     }
 
     func requestAccess() async {
@@ -56,6 +55,7 @@ final class RemindersService: ObservableObject {
     }
 
     func refresh() {
+        guard Settings.shared.pluginEnabled(.reminders) else { items = []; return }
         status = EKEventStore.authorizationStatus(for: .reminder)
         guard hasAccess else { items = []; lists = []; return }
         let all = store.calendars(for: .reminder)
@@ -75,7 +75,10 @@ final class RemindersService: ObservableObject {
                                     color: Color(nsColor: r.calendar?.color ?? .systemOrange))
             }
             .sorted { $0.due < $1.due }
-            Task { @MainActor in self?.items = mapped }
+            Task { @MainActor in
+                guard Settings.shared.pluginEnabled(.reminders) else { return }
+                self?.items = mapped
+            }
         }
     }
 

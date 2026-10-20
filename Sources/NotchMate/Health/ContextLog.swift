@@ -38,9 +38,9 @@ final class ContextLog {
     /// minute → what was in front: a site for browsers (`youtube.com`), otherwise the app name.
     private(set) var activities: [Int: String] = [:]
     private var sampleCounts: [String: Int] = [:]
-    private var sampler: Timer?
+    private var sampler: EnergyTimer?
     private var dirtyDays: Set<String> = []
-    private var timer: Timer?
+    private var timer: EnergyTimer?
     private weak var env: AppEnvironment?
     private let keepDays = 30
 
@@ -52,13 +52,11 @@ final class ContextLog {
     func start(env: AppEnvironment) {
         self.env = env
         load()
-        timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.record() }
-        }
+        timer = EnergyTimer(interval: { Settings.shared.healthEnabled ? 60 : nil },
+                            action: { [weak self] in self?.record() })
         // The front app changes within a minute; sample it and keep the most frequent.
-        sampler = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.sampleActivity() }
-        }
+        sampler = EnergyTimer(interval: { Settings.shared.healthEnabled ? 10 : nil },
+                              action: { [weak self] in self?.sampleActivity() })
         record()
     }
 
@@ -100,6 +98,7 @@ final class ContextLog {
     }
 
     private func record() {
+        guard Settings.shared.healthEnabled else { return }
         guard let env else { return }
         var c: MacContext = []
         if isPresent() { c.insert(.atMac) }

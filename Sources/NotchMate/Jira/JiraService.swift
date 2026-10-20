@@ -66,12 +66,13 @@ final class JiraService: ObservableObject {
 
     private let settings = Settings.shared
     private let d = UserDefaults.standard
-    private var timer: Timer?
+    private var timer: EnergyTimer?
+    private var refreshTask: Task<Void, Never>?
     var onLogged: (() -> Void)?
     var onIssuesLoaded: (([String]) -> Void)?
     var onOverrun: ((JiraIssue) -> Void)?
     private var overrunNotified: Set<String> = []
-    private var overrunTimer: Timer?
+    private var overrunTimer: EnergyTimer?
     private var statusCategoryByID: [String: String] = [:]
     private var statusNameByID: [String: String] = [:]
     private var myIDs: Set<String> = []
@@ -93,12 +94,10 @@ final class JiraService: ObservableObject {
 
     func start() {
         refresh()
-        timer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.refresh() }
-        }
-        overrunTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.checkOverrun() }
-        }
+        timer = EnergyTimer(interval: { Settings.shared.pluginEnabled(.jira) ? 300 : nil },
+                            action: { [weak self] in self?.refresh() })
+        overrunTimer = EnergyTimer(interval: { Settings.shared.pluginEnabled(.jira) ? 60 : nil },
+                                   action: { [weak self] in self?.checkOverrun() })
     }
 
     // MARK: Active issue
@@ -201,9 +200,15 @@ final class JiraService: ObservableObject {
     // MARK: Loading
 
     func refresh() {
+        guard settings.pluginEnabled(.jira) else {
+            refreshTask?.cancel()
+            issues = []; error = nil
+            return
+        }
         guard isConfigured else { issues = []; error = nil; return }
+        guard !isLoading else { return }
         isLoading = true
-        Task {
+        refreshTask = Task {
             defer { isLoading = false }
             do {
                 if myIDs.isEmpty, let json = try await request("/rest/api/2/myself") as? [String: Any] {
@@ -226,6 +231,7 @@ final class JiraService: ObservableObject {
                     URLQueryItem(name: "fields", value: "summary,status,assignee,issuetype,priority,project,created,updated,timeoriginalestimate,timeestimate,timespent"),
                 ]
                 let json = try await request("/rest/api/2/search?" + (comps.percentEncodedQuery ?? "")) as? [String: Any]
+                guard !Task.isCancelled, settings.pluginEnabled(.jira) else { return }
                 let raw = json?["issues"] as? [[String: Any]] ?? []
                 let rules = WorkRules(categories: statusCategoryByID, names: statusNameByID, me: myIDs,
                                       allowedStatuses: Set(settings.jiraWorkStatuses.map { $0.lowercased() }))
@@ -240,7 +246,7 @@ final class JiraService: ObservableObject {
                 lastUpdated = Date()
                 onIssuesLoaded?(issues.map(\.key))
             } catch {
-                self.error = error.localizedDescription
+                if !Task.isCancelled, settings.pluginEnabled(.jira) { self.error = error.localizedDescription }
             }
         }
     }

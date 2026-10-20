@@ -43,7 +43,7 @@ struct CompanionView: View {
             }
             .frame(maxHeight: .infinity, alignment: .top)
 
-            inputRow
+            if settings.pluginEnabled(.ai) { inputRow }
         }
         .onChange(of: inputFocused) { _, f in vm.isTyping = f }
     }
@@ -99,7 +99,7 @@ struct CompanionView: View {
 
     private var chips: some View {
         FlowLayout(spacing: 5) {
-            if settings.remindersEnabled, reminders.status != .fullAccess {
+            if settings.pluginEnabled(.reminders), reminders.status != .fullAccess {
                 Button {
                     Task { await PermissionCenter.shared.request(.reminders); reminders.refresh() }
                 } label: {

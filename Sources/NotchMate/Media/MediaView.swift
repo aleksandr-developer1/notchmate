@@ -5,6 +5,7 @@ struct MediaView: View {
     let ns: Namespace.ID
     @EnvironmentObject var player: NowPlayingService
     @EnvironmentObject var vm: NotchViewModel
+    @ObservedObject private var settings = Settings.shared
 
     var body: some View {
         HStack(spacing: 12) {
@@ -13,7 +14,7 @@ struct MediaView: View {
             } else {
                 EmptyPlayerCard()
             }
-            WidgetColumn().frame(width: 132)
+            if settings.pluginEnabled(.focus) || settings.activeNotesSource != nil { WidgetColumn().frame(width: 132) }
         }
     }
 }
@@ -23,6 +24,7 @@ private struct PlayerCard: View {
     @EnvironmentObject var player: NowPlayingService
     @EnvironmentObject var volume: SystemVolume
     @EnvironmentObject var tempo: TempoService
+    @ObservedObject private var settings = Settings.shared
     @State private var scrubPreview: Double?
     @State private var artHover = false
 
@@ -63,8 +65,9 @@ private struct PlayerCard: View {
                             .lineLimit(1)
                     }
                     Spacer(minLength: 0)
-                    DiscoButton()
-                        .padding(.top, 1)
+                    if settings.discoAvailable {
+                        DiscoButton().padding(.top, 1)
+                    }
                     TapTempoButton()
                         .padding(.top, 1)
                     if track.isLiked == true {
@@ -327,41 +330,46 @@ private struct WidgetColumn: View {
     @EnvironmentObject var focus: FocusTimer
     @EnvironmentObject var obsidian: ObsidianService
     @EnvironmentObject var vm: NotchViewModel
+    @ObservedObject private var settings = Settings.shared
 
     var body: some View {
         VStack(spacing: 8) {
-            WidgetTile(action: {
-                if focus.phase == .idle { focus.start(minutes: 25) } else { vm.select(NotchTab.focus) }
-            }) {
-                HStack(spacing: 10) {
-                    ZStack {
-                        Ring(progress: focus.isActive ? focus.progress : 0, tint: .orange, lineWidth: 3)
-                        Image(systemName: focus.phase == .running ? "pause.fill" : "timer")
-                            .font(.system(size: 11, weight: .bold)).foregroundStyle(.orange)
+            if settings.pluginEnabled(.focus) {
+                WidgetTile(action: {
+                    if focus.phase == .idle { focus.start(minutes: 25) } else { vm.select(NotchTab.focus) }
+                }) {
+                    HStack(spacing: 10) {
+                        ZStack {
+                            Ring(progress: focus.isActive ? focus.progress : 0, tint: .orange, lineWidth: 3)
+                            Image(systemName: focus.phase == .running ? "pause.fill" : "timer")
+                                .font(.system(size: 11, weight: .bold)).foregroundStyle(.orange)
+                        }
+                        .frame(width: 30, height: 30)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(focus.isActive ? FocusTimer.format(focus.remaining) : "25:00")
+                                .font(Theme.font(15, .bold)).monospacedDigit().foregroundStyle(.white)
+                                .contentTransition(.numericText(countsDown: true))
+                            Text(focus.isActive ? focus.label : String(localized: "Фокус")).font(Theme.font(10, .medium)).foregroundStyle(Theme.secondary)
+                        }
+                        Spacer(minLength: 0)
                     }
-                    .frame(width: 30, height: 30)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(focus.isActive ? FocusTimer.format(focus.remaining) : "25:00")
-                            .font(Theme.font(15, .bold)).monospacedDigit().foregroundStyle(.white)
-                            .contentTransition(.numericText(countsDown: true))
-                        Text(focus.isActive ? focus.label : String(localized: "Фокус")).font(Theme.font(10, .medium)).foregroundStyle(Theme.secondary)
-                    }
-                    Spacer(minLength: 0)
                 }
             }
-            WidgetTile(action: { obsidian.openDailyNote() }) {
-                HStack(spacing: 10) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Theme.obsidian.opacity(0.22))
-                        Text(Date(), format: .dateTime.day()).font(Theme.font(14, .bold)).foregroundStyle(Theme.obsidian)
+            if settings.activeNotesSource != nil {
+                WidgetTile(action: { vm.select(settings.activeNotesSource == .obsidian ? NotchTab.obsidian : .notes) }) {
+                    HStack(spacing: 10) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Theme.obsidian.opacity(0.22))
+                            Text(Date(), format: .dateTime.day()).font(Theme.font(14, .bold)).foregroundStyle(Theme.obsidian)
+                        }
+                        .frame(width: 30, height: 30)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(Date(), format: .dateTime.weekday(.wide).locale(AppLanguage.locale))
+                                .font(Theme.font(13, .bold)).foregroundStyle(.white).lineLimit(1)
+                            Text(String(localized: "Заметка дня")).font(Theme.font(10, .medium)).foregroundStyle(Theme.secondary)
+                        }
+                        Spacer(minLength: 0)
                     }
-                    .frame(width: 30, height: 30)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(Date(), format: .dateTime.weekday(.wide).locale(AppLanguage.locale))
-                            .font(Theme.font(13, .bold)).foregroundStyle(.white).lineLimit(1)
-                        Text(String(localized: "Заметка дня")).font(Theme.font(10, .medium)).foregroundStyle(Theme.secondary)
-                    }
-                    Spacer(minLength: 0)
                 }
             }
         }

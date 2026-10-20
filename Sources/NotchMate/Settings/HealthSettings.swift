@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 
 struct HealthSettings: View {
+    let source: HealthSource
     @ObservedObject var settings = Settings.shared
     @ObservedObject var health = AppEnvironment.shared.health
     @ObservedObject var breathing = AppEnvironment.shared.breathing
@@ -13,14 +14,8 @@ struct HealthSettings: View {
                     .font(.callout).foregroundStyle(.secondary)
             }
 
+            if source == .garmin {
             Section {
-                Toggle(isOn: Binding(get: { settings.garminEnabled }, set: { on in
-                    settings.garminEnabled = on
-                    if on, !health.garminLoggedIn { health.connectGarmin() } else { health.refresh(force: true) }
-                })) {
-                    Label("Garmin Connect", systemImage: HealthSource.garmin.icon)
-                }
-                if settings.garminEnabled {
                     LabeledContent(String(localized: "Состояние")) {
                         HStack(spacing: 6) {
                             if health.garminState == .syncing { ProgressView().controlSize(.mini) }
@@ -34,7 +29,6 @@ struct HealthSettings: View {
                         Spacer()
                         Button(String(localized: "Отключить"), role: .destructive) { health.disconnectGarmin() }
                     }
-                }
             } header: {
                 Text("Garmin")
             } footer: {
@@ -42,11 +36,10 @@ struct HealthSettings: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
 
+            }
+
+            if source == .appleHealth {
             Section {
-                Toggle(isOn: $settings.appleHealthEnabled.onChange { health.refresh() }) {
-                    Label("Apple Health", systemImage: HealthSource.appleHealth.icon)
-                }
-                if settings.appleHealthEnabled {
                     LabeledContent(String(localized: "Состояние")) {
                         Text(health.appleState.text).foregroundStyle(health.appleState.isReady ? .green : .secondary)
                     }
@@ -67,9 +60,9 @@ struct HealthSettings: View {
                         }
                         .padding(.vertical, 4)
                     }
-                }
             } header: {
                 Text("Apple Health")
+            }
             }
 
             Section(String(localized: "Помощник")) {
@@ -125,11 +118,5 @@ struct HealthSettings: View {
             settings.appleHealthFolder = url.path
             health.refresh()
         }
-    }
-}
-
-private extension Binding {
-    func onChange(_ action: @escaping () -> Void) -> Binding<Value> {
-        Binding(get: { wrappedValue }, set: { wrappedValue = $0; action() })
     }
 }

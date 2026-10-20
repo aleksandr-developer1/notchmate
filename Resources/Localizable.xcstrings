@@ -3989,6 +3989,26 @@
       }
     },
     "Apple Health": {},
+    "Apple Notes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Notes"
+          }
+        }
+      }
+    },
+    "Apple Notes доступны без настройки. Для Markdown включите плагин Obsidian.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Notes works without setup. Enable the Obsidian plugin for Markdown."
+          }
+        }
+      }
+    },
     "BB": {},
     "Base URL": {},
     "Body Battery": {},
@@ -4356,6 +4376,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "ChatGPT — 个人账号"
+          }
+        }
+      }
+    },
+    "ChatGPT, Claude и свои модели — разговор прямо в вырезе.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ChatGPT, Claude, and your own models, right in the notch."
           }
         }
       }
@@ -4864,6 +4894,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Garmin Connect 和 Apple Health：压力、Body Battery、睡眠、心率"
+          }
+        }
+      }
+    },
+    "Garmin и Apple Health: стресс, сон, пульс и дыхание.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garmin and Apple Health: stress, sleep, heart rate, and breathing."
           }
         }
       }
@@ -5655,6 +5695,16 @@
       }
     },
     "Now Playing: ungive/mediaremote-adapter (BSD-3)": {},
+    "Obsidian": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obsidian"
+          }
+        }
+      }
+    },
     "OpenAI API — ключ": {
       "localizations": {
         "de": {
@@ -6169,6 +6219,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "“进行中”是计时器正在运行的任务——你选择的，或第一个 In Progress 状态的任务。“登记”按钮会创建工作日志，Jira 会自动重新计算剩余预估。"
+          }
+        }
+      }
+    },
+    "«Заметки» не ответили вовремя. Откройте приложение и повторите попытку.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Notes did not respond in time. Open the app and try again."
           }
         }
       }
@@ -6911,6 +6971,16 @@
         }
       }
     },
+    "Ближайшие встречи и ссылки на звонки на шкале дня.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upcoming meetings and call links on your daily timeline."
+          }
+        }
+      }
+    },
     "Буфер": {
       "localizations": {
         "de": {
@@ -7183,6 +7253,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "快速记录"
+          }
+        }
+      }
+    },
+    "Быстрая запись, поиск и закреплённые заметки Apple Notes.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick capture, search, and pinned notes from Apple Notes."
           }
         }
       }
@@ -7463,6 +7543,16 @@
         }
       }
     },
+    "Ваше хранилище Markdown, ежедневные заметки и поиск.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Markdown vault, daily notes, and search."
+          }
+        }
+      }
+    },
     "Ввод текста": {
       "localizations": {
         "de": {
@@ -7693,6 +7783,16 @@
         }
       }
     },
+    "Включено: %lld из %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enabled: %lld of %lld"
+          }
+        }
+      }
+    },
     "Включилась камера — тихо слушает созвон": {
       "localizations": {
         "de": {
@@ -7827,6 +7927,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "开启"
+          }
+        }
+      }
+    },
+    "Включить плагин": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable plugin"
+          }
+        }
+      }
+    },
+    "Включён": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enabled"
+          }
+        }
+      }
+    },
+    "Включённые": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enabled"
           }
         }
       }
@@ -8429,6 +8559,16 @@
         }
       }
     },
+    "Все": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All"
+          }
+        }
+      }
+    },
     "Вставьте ключ Anthropic API в настройках": {
       "localizations": {
         "de": {
@@ -8701,6 +8841,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "日程时间线和刘海中的会议"
+          }
+        }
+      }
+    },
+    "Встроенные плагины NotchMate. Отключение сохраняет ваши настройки и аккаунты.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Built-in NotchMate plugins. Disabling keeps your settings and accounts."
           }
         }
       }
@@ -9211,6 +9361,16 @@
         }
       }
     },
+    "Выберите нужные функции в настройках.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose the features you need in Settings."
+          }
+        }
+      }
+    },
     "Выбран вручную — переключится, когда вы откроете другой терминал или редактор": {
       "localizations": {
         "de": {
@@ -9621,6 +9781,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "退出 NotchMate"
+          }
+        }
+      }
+    },
+    "Выключен": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disabled"
           }
         }
       }
@@ -10683,6 +10853,16 @@
         }
       }
     },
+    "Дела из приложения «Напоминания» на вашей шкале дня.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tasks from Reminders on your daily timeline."
+          }
+        }
+      }
+    },
     "Дела из приложения «Напоминания» появятся на шкале дня": {
       "localizations": {
         "de": {
@@ -10817,6 +10997,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "迪斯科"
+          }
+        }
+      }
+    },
+    "Дискотека": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disco"
           }
         }
       }
@@ -11277,6 +11467,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "API 密钥和自有 AI 使用内置工具。ChatGPT 和 Claude 账号请连接 NotchMate MCP 服务器：集成 → AI 代理和 MCP。"
+          }
+        }
+      }
+    },
+    "Для себя": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wellbeing"
           }
         }
       }
@@ -12105,6 +12305,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "晚上好！%@ 在这儿 🌙"
+          }
+        }
+      }
+    },
+    "Дождитесь завершения записи и обработки созвона.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wait for call recording and processing to finish."
+          }
+        }
+      }
+    },
+    "Дождитесь завершения операции Git.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wait for the Git operation to finish."
           }
         }
       }
@@ -13029,6 +13249,16 @@
         }
       }
     },
+    "Живой персонаж, события дня и заботливые напоминания.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A lively companion, daily events, and gentle reminders."
+          }
+        }
+      }
+    },
     "Живые активности": {
       "localizations": {
         "de": {
@@ -13439,6 +13669,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "任务、进行时间、工时登记"
+          }
+        }
+      }
+    },
+    "Задачи, рабочее время и списание без переключения окон.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Issues, working time, and worklogs without switching windows."
           }
         }
       }
@@ -14823,6 +15063,16 @@
         }
       }
     },
+    "Запись созвонов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Call recording"
+          }
+        }
+      }
+    },
     "Запись экрана и звука": {
       "localizations": {
         "de": {
@@ -15835,6 +16085,16 @@
         }
       }
     },
+    "Изменения в репозитории, pull request и состояние CI.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repository changes, pull requests, and CI status."
+          }
+        }
+      }
+    },
     "Изображение": {
       "localizations": {
         "de": {
@@ -16249,6 +16509,16 @@
         }
       }
     },
+    "Использует: ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uses: "
+          }
+        }
+      }
+    },
     "История буфера выключена в настройках": {
       "localizations": {
         "de": {
@@ -16291,6 +16561,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "剪贴板历史已在设置中关闭"
+          }
+        }
+      }
+    },
+    "История скопированного текста, изображений и файлов.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A history of copied text, images, and files."
           }
         }
       }
@@ -16751,6 +17031,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "日历：无事件"
+          }
+        }
+      }
+    },
+    "Каталог плагинов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plugin catalog"
           }
         }
       }
@@ -17767,6 +18057,16 @@
         }
       }
     },
+    "Локальная запись звука, расшифровка и протокол созвона.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local audio recording, transcription, and meeting notes."
+          }
+        }
+      }
+    },
     "Лучшее время для сложных задач — %lld:00–%lld:00": {
       "localizations": {
         "de": {
@@ -18549,6 +18849,16 @@
         }
       }
     },
+    "Музыка и файлы": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music & files"
+          }
+        }
+      }
+    },
     "Музыка, таймеры, Jira и зарядка: по бокам от мордочки — вырез не расширяется; слева и справа от камеры — вырез становится шире.": {
       "localizations": {
         "de": {
@@ -19005,6 +19315,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "上一首"
+          }
+        }
+      }
+    },
+    "Найти плагин": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find a plugin"
           }
         }
       }
@@ -19511,6 +19831,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "根据身体状态的情绪（早晨精力、压力、疲劳）"
+          }
+        }
+      }
+    },
+    "Настроить": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configure"
           }
         }
       }
@@ -20067,6 +20397,16 @@
         }
       }
     },
+    "Не удалось загрузить заметки: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to load notes: %@"
+          }
+        }
+      }
+    },
     "Не удалось записать": {
       "localizations": {
         "de": {
@@ -20109,6 +20449,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "保存失败"
+          }
+        }
+      }
+    },
+    "Не удалось изменить плагин": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to change plugin"
           }
         }
       }
@@ -20293,6 +20643,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "无法转写：“%@”不支持设备端识别。请在“系统设置 → 键盘 → 听写”中开启该语言，或安装 whisper 模型。"
+          }
+        }
+      }
+    },
+    "Не удалось сохранить заметку. Попробуйте ещё раз.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to save the note. Please try again."
           }
         }
       }
@@ -21075,6 +21435,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "没有 PR 或 CI 运行"
+          }
+        }
+      }
+    },
+    "Нет включённых плагинов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No plugins enabled"
           }
         }
       }
@@ -21949,6 +22319,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "需要“辅助功能”权限"
+          }
+        }
+      }
+    },
+    "Нужна настройка": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Setup needed"
           }
         }
       }
@@ -24897,6 +25277,16 @@
         }
       }
     },
+    "Очистить поиск": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear search"
+          }
+        }
+      }
+    },
     "Очистить полку": {
       "localizations": {
         "de": {
@@ -25445,6 +25835,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "来自密码管理器（标记为隐藏）的密码不会被保存。历史只保存在内存中。"
+          }
+        }
+      }
+    },
+    "Пароли из менеджеров паролей не сохраняются. История хранится только в памяти.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passwords marked by password managers are excluded. History stays in memory."
           }
         }
       }
@@ -26047,6 +26447,16 @@
         }
       }
     },
+    "Перетащите файлы, изображения или ссылки в вырез. Отключение плагина не удаляет файлы.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drop files, images, or links onto the notch. Disabling the plugin keeps your files."
+          }
+        }
+      }
+    },
     "Перетащите файлы, картинки или текст на вырез": {
       "localizations": {
         "de": {
@@ -26319,6 +26729,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "皮克西"
+          }
+        }
+      }
+    },
+    "Плагин «%@» выключен. Включите его в каталоге плагинов.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The “%@” plugin is disabled. Enable it in the plugin catalog."
+          }
+        }
+      }
+    },
+    "Плагин включён": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plugin enabled"
+          }
+        }
+      }
+    },
+    "Плагины": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plugins"
           }
         }
       }
@@ -27335,6 +27775,16 @@
         }
       }
     },
+    "Подсветка экрана и танцы в ритме любимой музыки.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screen lighting and dancing to your favorite music."
+          }
+        }
+      }
+    },
     "Подсказать": {
       "localizations": {
         "de": {
@@ -27423,6 +27873,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "会议提示——问什么、答什么、代码里有什么（⌃⌥H）"
+          }
+        }
+      }
+    },
+    "Подсказки, вопросы и контекст кода во время встречи.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hints, questions, and code context during meetings."
           }
         }
       }
@@ -27653,6 +28113,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "搜索剪贴板历史"
+          }
+        }
+      }
+    },
+    "Поиск плагинов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search plugins"
           }
         }
       }
@@ -28715,6 +29185,16 @@
         }
       }
     },
+    "Помидоры, перерывы и защита от отвлекающих приложений.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pomodoro sessions, breaks, and distraction protection."
+          }
+        }
+      }
+    },
     "Помоги спланировать рабочий день: предложи структуру с блоками фокуса и перерывами.": {
       "localizations": {
         "de": {
@@ -29037,6 +29517,16 @@
         }
       }
     },
+    "Понятно": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Got it"
+          }
+        }
+      }
+    },
     "Попей воды 💧": {
       "localizations": {
         "de": {
@@ -29171,6 +29661,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "重试"
+          }
+        }
+      }
+    },
+    "Попробуйте другой запрос или выберите все категории.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try a different search or select all categories."
           }
         }
       }
@@ -30091,6 +30591,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "纪要"
+          }
+        }
+      }
+    },
+    "Протокол ИИ отключён. Расшифровка созвона сохранена ниже.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI meeting notes are disabled. The call transcript is saved below."
           }
         }
       }
@@ -33775,6 +34285,36 @@
         }
       }
     },
+    "Сначала включите плагин «%@».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable the “%@” plugin first."
+          }
+        }
+      }
+    },
+    "Сначала дождитесь ответа ИИ или остановите его.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wait for the AI response to finish or stop it first."
+          }
+        }
+      }
+    },
+    "Сначала завершите дыхательную практику.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish the breathing session first."
+          }
+        }
+      }
+    },
     "Сначала завершите таймер по %@": {
       "localizations": {
         "de": {
@@ -33817,6 +34357,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "请先结束 %@ 的计时"
+          }
+        }
+      }
+    },
+    "Сначала завершите таймер фокуса.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish the focus session first."
+          }
+        }
+      }
+    },
+    "Сначала сохраните или завершите таймер Jira.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save or finish the Jira timer first."
+          }
+        }
+      }
+    },
+    "Соберите свой NotchMate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Make NotchMate yours"
           }
         }
       }
@@ -35753,6 +36323,16 @@
         }
       }
     },
+    "Статусы Claude Code и Codex, уведомления и инструменты MCP.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Code and Codex status, notifications, and MCP tools."
+          }
+        }
+      }
+    },
     "Столько уведомлений…": {
       "localizations": {
         "de": {
@@ -36443,6 +37023,16 @@
         }
       }
     },
+    "Текущий трек, обложка, громкость и управление плеером.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Now playing, artwork, volume, and playback controls."
+          }
+        }
+      }
+    },
     "Темп %lld BPM. Стучи в такт, чтобы поправить": {
       "localizations": {
         "de": {
@@ -36669,6 +37259,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "令牌"
+          }
+        }
+      }
+    },
+    "Только те возможности, которые нужны вам.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Just the features you need."
           }
         }
       }
@@ -37593,6 +38193,16 @@
         }
       }
     },
+    "Файлы и ссылки под рукой: перетащите их в вырез.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep files and links handy: drop them onto the notch."
+          }
+        }
+      }
+    },
     "Фокус": {
       "localizations": {
         "de": {
@@ -38141,6 +38751,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "未找到 Obsidian 仓库"
+          }
+        }
+      }
+    },
+    "Хранилище заметок": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notes storage"
           }
         }
       }
@@ -39199,6 +39819,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "这不是 git 仓库"
+          }
+        }
+      }
+    },
+    "Этот плагин работает с приложением Apple «Заметки». Obsidian подключается отдельно.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This plugin works with Apple Notes. Obsidian is a separate integration."
           }
         }
       }
@@ -45091,6 +45721,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "✗ 需要 Python 3：请安装 Xcode Command Line Tools（xcode-select --install）"
+          }
+        }
+      }
+    },
+    "Данные Garmin: стресс, сон, пульс и Body Battery.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garmin data: stress, sleep, heart rate, and Body Battery."
+          }
+        }
+      }
+    },
+    "Данные Apple «Здоровье» с iPhone через экспорт в iCloud.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Health data from iPhone through iCloud exports."
           }
         }
       }

@@ -102,7 +102,7 @@ final class MeetingCopilot: ObservableObject {
     }
 
     func activate() {
-        guard let env else { return }
+        guard Settings.shared.pluginEnabled(.meetingAssistant), let env else { return }
         isActive = true
         lastError = nil
         onVisibilityChanged?(true)
@@ -194,6 +194,7 @@ final class MeetingCopilot: ObservableObject {
     }
 
     func refreshModels() {
+        guard settings.pluginEnabled(.ai) else { return }
         guard let env else { return }
         let ai = env.ai
         var list: [FastModel] = [

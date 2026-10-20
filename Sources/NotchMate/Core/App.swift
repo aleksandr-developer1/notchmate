@@ -100,9 +100,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let menu = NSMenu()
         menu.addItem(withTitle: String(localized: "Открыть панель"), action: #selector(toggleNotch), keyEquivalent: "")
-        menu.addItem(withTitle: String(localized: "Быстрая заметка"), action: #selector(quickCapture), keyEquivalent: "")
-        menu.addItem(withTitle: String(localized: "Чат ИИ"), action: #selector(openAIChat), keyEquivalent: "")
-        menu.addItem(withTitle: String(localized: "Помощник на встрече"), action: #selector(meetingAssistant), keyEquivalent: "")
+        if Settings.shared.activeNotesSource != nil {
+            menu.addItem(withTitle: String(localized: "Быстрая заметка"), action: #selector(quickCapture), keyEquivalent: "")
+        }
+        if Settings.shared.pluginEnabled(.ai) {
+            menu.addItem(withTitle: String(localized: "Чат ИИ"), action: #selector(openAIChat), keyEquivalent: "")
+        }
+        if Settings.shared.pluginEnabled(.meetingAssistant) {
+            menu.addItem(withTitle: String(localized: "Помощник на встрече"), action: #selector(meetingAssistant), keyEquivalent: "")
+        }
         menu.addItem(.separator())
         menu.addItem(withTitle: String(localized: "Настройки…"), action: #selector(openSettingsAction), keyEquivalent: ",")
         let perms = NSMenuItem(title: String(localized: "Разрешения…"), action: #selector(openPermissions), keyEquivalent: "")
@@ -124,12 +130,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.toggleNotch()
             }
         }
-        if s.hotKeyMeetingEnabled {
+        if s.hotKeyMeetingEnabled, s.pluginEnabled(.meetingAssistant) {
             hotKeys.register(keyCode: HotKeyCenter.kVK_ANSI_H, modifiers: [.control, .option]) { [weak self] in
                 self?.meetingAssistant()
             }
         }
-        if s.hotKeyCaptureEnabled {
+        if s.hotKeyCaptureEnabled, s.activeNotesSource != nil {
             hotKeys.register(keyCode: HotKeyCenter.kVK_ANSI_M, modifiers: [.control, .option]) { [weak self] in
                 self?.quickCapture()
             }
@@ -146,7 +152,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func quickCapture() {
-        notchController.viewModel.open(tab: .notes, reason: .hotkey)
+        guard let source = Settings.shared.activeNotesSource else { return }
+        notchController.viewModel.open(tab: source == .apple ? .notes : .obsidian, reason: .hotkey)
         NotificationCenter.default.post(name: .notchMateFocusCapture, object: nil)
     }
 

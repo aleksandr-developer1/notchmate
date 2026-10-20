@@ -34,12 +34,12 @@ final class SystemEvents: ObservableObject {
         watchNetwork()
         watchWorkspace()
         pollTimer = EnergyTimer(interval: {
-            EnergyPolicy.shared.state.reducedEffects ? 15 : 6
+            Settings.shared.pluginEnabled(.companion) ? (EnergyPolicy.shared.state.reducedEffects ? 15 : 6) : nil
         }, action: { [weak self] in self?.slowPoll() })
         // Accessibility has no reliable notification for new Notification Center banners.
         // Its view tree is comparatively expensive to walk, so don't do it at animation speed.
         fastTimer = EnergyTimer(interval: {
-            Settings.shared.reactNotifications ? (EnergyPolicy.shared.state.reducedEffects ? 20 : 8) : nil
+            Settings.shared.pluginEnabled(.companion) && Settings.shared.reactNotifications ? (EnergyPolicy.shared.state.reducedEffects ? 20 : 8) : nil
         }, action: { [weak self] in self?.fastPoll() })
         NotificationCenter.default.addObserver(forName: .notchMateSettingsChanged, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.refreshScreenshotWatcher() }
@@ -61,7 +61,7 @@ final class SystemEvents: ObservableObject {
 
     private func networkChanged(_ ok: Bool) {
         defer { lastPathSatisfied = ok }
-        guard settings.reactNetwork, let previous = lastPathSatisfied, previous != ok else { return }
+        guard settings.pluginEnabled(.companion), settings.reactNetwork, let previous = lastPathSatisfied, previous != ok else { return }
         if ok {
             companion?.notify(.happy, badge: .init(symbol: "wifi", image: nil, tint: .green), seconds: 2.5)
         } else {
@@ -225,7 +225,7 @@ final class SystemEvents: ObservableObject {
     private func refreshScreenshotWatcher() {
         screenshotSource?.cancel()
         screenshotSource = nil
-        guard settings.reactScreenshots else { return }
+        guard settings.pluginEnabled(.companion), settings.reactScreenshots else { return }
         let custom = UserDefaults(suiteName: "com.apple.screencapture")?.string(forKey: "location")
         let dir = URL(fileURLWithPath: (custom as NSString?)?.expandingTildeInPath ?? (NSHomeDirectory() + "/Desktop"))
         screenshotDir = dir

@@ -40,7 +40,7 @@ final class ClipboardHistory: ObservableObject {
 
     func start() {
         timer = EnergyTimer(interval: {
-            Settings.shared.clipboardEnabled ? (EnergyPolicy.shared.state.reducedEffects ? 2 : 1) : nil
+            Settings.shared.pluginEnabled(.clipboard) ? (EnergyPolicy.shared.state.reducedEffects ? 2 : 1) : nil
         }, action: { [weak self] in self?.poll() })
     }
 

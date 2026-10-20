@@ -46,6 +46,7 @@ final class FocusTimer: ObservableObject {
     // MARK: Control
 
     func start(minutes: Double? = nil, label: String = String(localized: "Помидор"), task: String? = nil) {
+        guard settings.pluginEnabled(.focus) else { return }
         autoWork?.cancel()
         kind = .work
         self.label = label
@@ -54,6 +55,7 @@ final class FocusTimer: ObservableObject {
     }
 
     func startBreak(_ k: Kind? = nil) {
+        guard settings.pluginEnabled(.focus) else { return }
         autoWork?.cancel()
         kind = k ?? nextBreakAfterCompletion()
         begin(seconds: (kind == .longBreak ? settings.pomoLong : settings.pomoShort) * 60)

@@ -35,7 +35,11 @@ enum NotchGlowMode: String, CaseIterable, Identifiable {
 @MainActor
 final class Settings: ObservableObject {
     static let shared = Settings()
-    private let d = UserDefaults.standard
+    private let d: UserDefaults
+
+    @Published var disabledPlugins: Set<String> = [] {
+        didSet { d.set(disabledPlugins.sorted(), forKey: "disabledPlugins"); changed() }
+    }
 
     @Published var openTrigger: OpenTrigger { didSet { d.set(openTrigger.rawValue, forKey: "openTrigger") } }
     @Published var hoverDelay: Double { didSet { d.set(hoverDelay, forKey: "hoverDelay") } }
@@ -89,6 +93,7 @@ final class Settings: ObservableObject {
     @Published var aiToolsEnabled: Bool { didSet { d.set(aiToolsEnabled, forKey: "aiToolsEnabled") } }
     @Published var activityMoods: Bool { didSet { d.set(activityMoods, forKey: "activityMoods") } }
     @Published var idleScenes: Bool { didSet { d.set(idleScenes, forKey: "idleScenes") } }
+    @Published var discoEnabled: Bool { didSet { d.set(discoEnabled, forKey: "discoEnabled"); changed() } }
     @Published var autoDisco: Bool { didSet { d.set(autoDisco, forKey: "autoDisco") } }
     @Published var notchGlowMode: NotchGlowMode { didSet { d.set(notchGlowMode.rawValue, forKey: "notchGlowMode") } }
     @Published var callsAppIDs: [String] { didSet { d.set(callsAppIDs, forKey: "callsAppIDs") } }
@@ -157,7 +162,8 @@ final class Settings: ObservableObject {
         }
     }
 
-    private init() {
+    init(defaults: UserDefaults = .standard) {
+        d = defaults
         d.register(defaults: [
             "openTrigger": OpenTrigger.hover.rawValue,
             "hoverDelay": 0.15,
@@ -315,6 +321,7 @@ final class Settings: ObservableObject {
         aiToolsEnabled = d.bool(forKey: "aiToolsEnabled")
         activityMoods = d.bool(forKey: "activityMoods")
         idleScenes = d.bool(forKey: "idleScenes")
+        discoEnabled = (d.object(forKey: "discoEnabled") as? Bool) ?? !(d.stringArray(forKey: "disabledPlugins") ?? []).contains("disco")
         autoDisco = d.bool(forKey: "autoDisco")
         let savedGlowMode = d.string(forKey: "notchGlowMode") ?? ""
         // The removed experimental live mode should not silently turn into a colored glow.
@@ -369,9 +376,42 @@ final class Settings: ObservableObject {
         breathPattern = d.string(forKey: "breathPattern") ?? "calm"
         breathMinutes = d.double(forKey: "breathMinutes")
         launchAtLogin = SMAppService.mainApp.status == .enabled
+        if let saved = d.stringArray(forKey: "disabledPlugins") {
+            var migrated = Set(saved)
+            if migrated.remove("health") != nil {
+                migrated.formUnion([PluginID.garmin.rawValue, PluginID.appleHealth.rawValue])
+            }
+            migrated.remove("disco")
+            disabledPlugins = migrated
+        } else {
+            // Preserve the availability of existing installations on the first catalog launch.
+            disabledPlugins = Set([
+                gitEnabled ? nil : PluginID.git.rawValue,
+                calendarEnabled ? nil : PluginID.calendar.rawValue,
+                remindersEnabled ? nil : PluginID.reminders.rawValue,
+                clipboardEnabled ? nil : PluginID.clipboard.rawValue,
+                garminEnabled ? nil : PluginID.garmin.rawValue,
+                appleHealthEnabled ? nil : PluginID.appleHealth.rawValue,
+                notesSource == .obsidian ? nil : PluginID.obsidian.rawValue,
+            ].compactMap { $0 })
+        }
+        // Commit the migration together so disabled disco cannot reappear after another preference changes.
+        d.set(discoEnabled, forKey: "discoEnabled")
+        d.set(disabledPlugins.sorted(), forKey: "disabledPlugins")
     }
 
     private func changed() {
         NotificationCenter.default.post(name: .notchMateSettingsChanged, object: nil)
+    }
+
+    var discoAvailable: Bool { discoEnabled && pluginEnabled(.music) }
+    var healthEnabled: Bool { pluginEnabled(.garmin) || pluginEnabled(.appleHealth) }
+
+    /// Quick capture may fall back only to another enabled notes integration.
+    var activeNotesSource: NotesSource? {
+        if notesSource == .obsidian, pluginEnabled(.obsidian) { return .obsidian }
+        if pluginEnabled(.notes) { return .apple }
+        if pluginEnabled(.obsidian) { return .obsidian }
+        return nil
     }
 }

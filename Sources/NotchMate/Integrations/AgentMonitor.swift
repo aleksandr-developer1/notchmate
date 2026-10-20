@@ -39,7 +39,7 @@ final class AgentMonitor: ObservableObject {
     var onWaiting: ((AgentSession) -> Void)?
     var onFinished: ((AgentSession) -> Void)?
 
-    private var cleanup: Timer?
+    private var cleanup: EnergyTimer?
 
     struct Group: Identifiable {
         let agent: AgentKind
@@ -65,14 +65,19 @@ final class AgentMonitor: ObservableObject {
 
     func start() {
         refreshInstallState()
-        cleanup = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.dropStale() }
-        }
+        cleanup = EnergyTimer(interval: { Settings.shared.pluginEnabled(.agents) ? 60 : nil },
+                              action: { [weak self] in self?.dropStale() })
+    }
+
+    func pluginAvailabilityChanged() {
+        if Settings.shared.pluginEnabled(.agents) { refreshInstallState() }
+        else { sessions.removeAll() }
     }
 
     // MARK: Events
 
     func handle(_ payload: [String: Any]) {
+        guard Settings.shared.pluginEnabled(.agents) else { return }
         guard Settings.shared.agentStatusEnabled else { return }
         let agent = AgentKind(rawValue: payload["agent"] as? String ?? "") ?? .claude
         let event = payload["hook_event_name"] as? String ?? ""

@@ -42,7 +42,7 @@ final class HealthService: ObservableObject {
 
     private var garminDays: [String: HealthDay] = [:]
     private var appleDays: [String: HealthDay] = [:]
-    private var timer: Timer?
+    private var timer: EnergyTimer?
     private var loginPoll: Timer?
     private var appleFingerprint = ""
     private var garminProcess: Process?
@@ -70,7 +70,7 @@ final class HealthService: ObservableObject {
         URL(fileURLWithPath: (Settings.shared.appleHealthFolder as NSString).expandingTildeInPath, isDirectory: true)
     }
 
-    var isEnabled: Bool { Settings.shared.garminEnabled || Settings.shared.appleHealthEnabled }
+    var isEnabled: Bool { Settings.shared.healthEnabled }
     var hasData: Bool { days.values.contains { $0.hasData } }
 
     // MARK: Lifecycle
@@ -79,20 +79,22 @@ final class HealthService: ObservableObject {
         contextLog.start(env: env)
         loadGarminCache()
         refresh()
-        timer = Timer.scheduledTimer(withTimeInterval: 5 * 60, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.refresh() }
-        }
+        timer = EnergyTimer(interval: { Settings.shared.healthEnabled ? 300 : nil },
+                            action: { [weak self] in self?.refresh() })
     }
 
     /// Cheap to call often: Apple Health re-reads only changed files, Garmin syncs at most every 15 min.
     func refresh(force: Bool = false) {
         refreshApple()
-        if Settings.shared.garminEnabled {
+        if Settings.shared.pluginEnabled(.garmin) {
             if force || Date().timeIntervalSince(lastGarminSync) > 15 * 60 { syncGarmin() }
         } else {
+            garminProcess?.terminate()
+            loginPoll?.invalidate()
             garminState = .off
-            if !garminDays.isEmpty { garminDays = [:]; merge() }
+            if !garminDays.isEmpty { garminDays = [:] }
         }
+        merge()
     }
 
     // MARK: Garmin
@@ -104,6 +106,7 @@ final class HealthService: ObservableObject {
     /// Opens Terminal: installs the helper into its own venv (first time) and asks for the login there.
     /// The password is typed into Garmin's login by the user and never passes through NotchMate.
     func connectGarmin() {
+        guard Settings.shared.pluginEnabled(.garmin) else { return }
         guard let script = scriptURL else { garminState = .error(String(localized: "нет скрипта синхронизации")); return }
         let fm = FileManager.default
         try? fm.createDirectory(at: Self.supportURL, withIntermediateDirectories: true)
@@ -150,6 +153,7 @@ final class HealthService: ObservableObject {
         loginPoll = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] t in
             MainActor.assumeIsolated {
                 guard let self else { t.invalidate(); return }
+                guard Settings.shared.pluginEnabled(.garmin) else { t.invalidate(); return }
                 if self.garminLoggedIn {
                     t.invalidate()
                     self.syncGarmin()
@@ -173,6 +177,7 @@ final class HealthService: ObservableObject {
     }
 
     func syncGarmin() {
+        guard Settings.shared.pluginEnabled(.garmin) else { return }
         guard garminProcess == nil else { return }
         guard FileManager.default.isExecutableFile(atPath: Self.venvPython.path) else {
             garminState = .setupNeeded(String(localized: "нужно подключить аккаунт")); return
@@ -211,6 +216,7 @@ final class HealthService: ObservableObject {
 
     private func garminFinished(output: Data, code: Int32) {
         garminProcess = nil
+        guard Settings.shared.pluginEnabled(.garmin) else { return }
         let line = String(data: output, encoding: .utf8)?.split(separator: "\n").last.map(String.init) ?? ""
         let json = (try? JSONSerialization.jsonObject(with: Data(line.utf8))) as? [String: Any]
         if json?["ok"] as? Bool == true {
@@ -242,14 +248,15 @@ final class HealthService: ObservableObject {
             garminName = p["fullName"] as? String ?? ""
         }
         garminDays = result
-        if Settings.shared.garminEnabled, garminState == .off, !result.isEmpty { garminState = .ok(nil) }
+        if Settings.shared.pluginEnabled(.garmin), garminState == .off, !result.isEmpty { garminState = .ok(nil) }
         merge()
     }
 
     // MARK: Apple Health
 
     private func refreshApple() {
-        guard Settings.shared.appleHealthEnabled else {
+        guard Settings.shared.pluginEnabled(.appleHealth) else {
+            appleFingerprint = ""
             appleState = .off
             if !appleDays.isEmpty { appleDays = [:]; merge() }
             return
@@ -275,6 +282,7 @@ final class HealthService: ObservableObject {
         Task.detached(priority: .utility) {
             let parsed = AppleHealthParser.parse(files: paths.compactMap { try? Data(contentsOf: $0) })
             await MainActor.run {
+                guard Settings.shared.pluginEnabled(.appleHealth), self.appleFingerprint == fingerprint else { return }
                 self.appleDays = parsed
                 self.appleState = parsed.isEmpty ? .error(String(localized: "файлы не похожи на экспорт Health Auto Export")) : .ok(newest)
                 self.merge()
@@ -291,8 +299,10 @@ final class HealthService: ObservableObject {
 
     private func merge() {
         var result: [String: HealthDay] = [:]
-        for key in Set(garminDays.keys).union(appleDays.keys) {
-            switch (garminDays[key], appleDays[key]) {
+        let garmin = Settings.shared.pluginEnabled(.garmin) ? garminDays : [:]
+        let apple = Settings.shared.pluginEnabled(.appleHealth) ? appleDays : [:]
+        for key in Set(garmin.keys).union(apple.keys) {
+            switch (garmin[key], apple[key]) {
             case let (g?, a?): result[key] = g.filled(from: a)
             case let (g?, nil): result[key] = g
             case let (nil, a?): result[key] = a
@@ -320,8 +330,8 @@ final class HealthService: ObservableObject {
 
     /// Primary source currently feeding the notch (for small labels).
     var primarySource: HealthSource? {
-        if Settings.shared.garminEnabled, !garminDays.isEmpty { return .garmin }
-        if Settings.shared.appleHealthEnabled, !appleDays.isEmpty { return .appleHealth }
+        if Settings.shared.pluginEnabled(.garmin), !garminDays.isEmpty { return .garmin }
+        if Settings.shared.pluginEnabled(.appleHealth), !appleDays.isEmpty { return .appleHealth }
         return nil
     }
 }

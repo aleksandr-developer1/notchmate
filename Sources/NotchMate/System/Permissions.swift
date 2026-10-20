@@ -65,12 +65,12 @@ enum Permission: String, CaseIterable, Identifiable {
     @MainActor var isNeeded: Bool {
         let s = Settings.shared
         switch self {
-        case .microphone, .screenRecording: return s.callsAutoRecord || s.reactCamera
-        case .speech: return s.callsAutoRecord
-        case .calendar: return s.calendarEnabled
-        case .reminders: return s.remindersEnabled
-        case .accessibility: return s.reactNotifications || s.reactMessages
-        case .automation: return s.distractionBrowsers || s.callsAutoRecord
+        case .microphone, .speech: return s.pluginEnabled(.calls) && s.callsAutoRecord
+        case .screenRecording: return (s.pluginEnabled(.calls) && s.callsAutoRecord) || s.pluginEnabled(.music)
+        case .calendar: return s.pluginEnabled(.calendar)
+        case .reminders: return s.pluginEnabled(.reminders)
+        case .accessibility: return s.pluginEnabled(.companion) && (s.reactNotifications || s.reactMessages)
+        case .automation: return (s.pluginEnabled(.focus) && s.distractionBrowsers) || (s.pluginEnabled(.calls) && s.callsAutoRecord)
         }
     }
 

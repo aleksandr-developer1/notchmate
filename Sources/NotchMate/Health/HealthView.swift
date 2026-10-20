@@ -41,10 +41,10 @@ struct HealthView: View {
     /// Status of the source that's actually on: Garmin first (also while it syncs or errors), then Apple Health.
     private var statusText: String {
         let settings = Settings.shared
-        if settings.garminEnabled, !(settings.appleHealthEnabled && !health.garminState.isReady && health.appleState.isReady) {
+        if settings.pluginEnabled(.garmin), !(settings.pluginEnabled(.appleHealth) && !health.garminState.isReady && health.appleState.isReady) {
             return health.garminState.text
         }
-        return settings.appleHealthEnabled ? health.appleState.text : ""
+        return settings.pluginEnabled(.appleHealth) ? health.appleState.text : ""
     }
 
     private var header: some View {
@@ -678,7 +678,7 @@ private struct HealthEmptyState: View {
                 Text(health.isEnabled ? String(localized: "Жду данные") : String(localized: "Подключите Garmin или Apple Health"))
                     .font(Theme.font(16, .bold)).foregroundStyle(.white)
                 Text(health.isEnabled
-                     ? "Garmin: \(Settings.shared.garminEnabled ? health.garminState.text : String(localized: "выключен")) · Apple Health: \(Settings.shared.appleHealthEnabled ? health.appleState.text : String(localized: "выключен"))"
+                     ? "Garmin: \(Settings.shared.pluginEnabled(.garmin) ? health.garminState.text : String(localized: "выключен")) · Apple Health: \(Settings.shared.pluginEnabled(.appleHealth) ? health.appleState.text : String(localized: "выключен"))"
                      : String(localized: "Стресс, Body Battery, сон и пульс — и как на них влияют созвоны, фокус и встречи."))
                     .font(Theme.font(12)).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 8) {

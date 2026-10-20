@@ -11,10 +11,28 @@ final class AppleNotesService: NotesStore {
 
     let source = NotesSource.apple
 
-    private let settings = Settings.shared
+    enum Operation: Sendable { case list, append, create, show }
+    typealias ScriptRunner = @Sendable (Operation, [String]) -> Result<String, NotesError>
+    private let settings: Settings
+    private let runScript: ScriptRunner
     private var texts: [String: String] = [:]
     private var lastScan = Date.distantPast
     private var loading: Task<Void, Never>?
+    private var reloadRequested = false
+
+    init(settings: Settings? = nil, runScript: ScriptRunner? = nil) {
+        self.settings = settings ?? .shared
+        self.runScript = runScript ?? { operation, args in
+            let script: String
+            switch operation {
+            case .list: script = Self.listScript
+            case .append: script = Self.appendScript
+            case .create: script = Self.createScript
+            case .show: script = Self.showScript
+            }
+            return Self.jxa(script, args)
+        }
+    }
 
     var recent: [NoteItem] { Array(notes.prefix(12)) }
 
@@ -36,6 +54,11 @@ final class AppleNotesService: NotesStore {
     // MARK: Loading
 
     func refresh(force: Bool = false) {
+        guard settings.pluginEnabled(.notes) else { return }
+        if loading != nil {
+            if force { reloadRequested = true }
+            return
+        }
         guard force || Date().timeIntervalSince(lastScan) > 15 else { return }
         lastScan = Date()
         _ = load()
@@ -45,10 +68,24 @@ final class AppleNotesService: NotesStore {
     private func load() -> Task<Void, Never> {
         if let loading { return loading }
         let task = Task {
-            let result = await Task.detached(priority: .utility) { Self.jxa(Self.listScript) }.value
+            defer {
+                loading = nil
+                if reloadRequested, settings.pluginEnabled(.notes) {
+                    reloadRequested = false
+                    _ = load()
+                }
+            }
+            let runner = runScript
+            let result = await Task.detached(priority: .utility) { runner(.list, []) }.value
+            guard settings.pluginEnabled(.notes) else { return }
             switch result {
             case .success(let json):
-                let raw = (try? JSONDecoder().decode([RawNote].self, from: Data(json.utf8))) ?? []
+                let raw: [RawNote]
+                do { raw = try JSONDecoder().decode([RawNote].self, from: Data(json.utf8)) }
+                catch {
+                    unavailableMessage = String(localized: "Не удалось загрузить заметки: \(error.localizedDescription)")
+                    return
+                }
                 var seen = Set<String>()
                 let unique = raw.filter { seen.insert($0.id).inserted }
                 notes = unique
@@ -56,11 +93,10 @@ final class AppleNotesService: NotesStore {
                     .sorted { $0.modified > $1.modified }
                 texts = Dictionary(unique.map { ($0.id, $0.text) }, uniquingKeysWith: { a, _ in a })
                 unavailableMessage = nil
+                isLoaded = true
             case .failure(let error):
                 unavailableMessage = error.message
             }
-            isLoaded = true
-            loading = nil
         }
         loading = task
         return task
@@ -69,11 +105,21 @@ final class AppleNotesService: NotesStore {
     private struct RawNote: Decodable {
         let id, title, folder, text: String
         let modified: Double
+        private enum CodingKeys: String, CodingKey { case id, title, folder, text, modified }
+        init(from decoder: Decoder) throws {
+            let data = try decoder.container(keyedBy: CodingKeys.self)
+            id = try data.decode(String.self, forKey: .id)
+            title = try data.decodeIfPresent(String.self, forKey: .title) ?? ""
+            folder = try data.decodeIfPresent(String.self, forKey: .folder) ?? ""
+            text = try data.decodeIfPresent(String.self, forKey: .text) ?? ""
+            modified = try data.decodeIfPresent(Double.self, forKey: .modified) ?? 0
+        }
     }
 
     // MARK: Search / reading
 
     func search(_ query: String) async -> [NoteSearchHit] {
+        guard settings.pluginEnabled(.notes) else { return [] }
         let q = query.trimmingCharacters(in: .whitespaces).lowercased()
         guard !q.isEmpty else { return [] }
         if !isLoaded { await load().value }
@@ -113,6 +159,7 @@ final class AppleNotesService: NotesStore {
     /// Appends to today's note ("2026-09-16") or to «Входящие», creating it when missing.
     @discardableResult
     func capture(_ text: String) -> Bool {
+        guard settings.pluginEnabled(.notes) else { return false }
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return false }
         let title: String
@@ -132,9 +179,9 @@ final class AppleNotesService: NotesStore {
 
         let result: Result<String, NotesError>
         if let existing = notes.first(where: { $0.title == title }) {
-            result = Self.jxa(Self.appendScript, [existing.id, html])
+            result = runScript(.append, [existing.id, html])
         } else {
-            result = Self.jxa(Self.createScript, ["<div><h1>\(Self.escape(title))</h1></div>" + html])
+            result = runScript(.create, ["<div><h1>\(Self.escape(title))</h1></div>" + html])
         }
         switch result {
         case .success:
@@ -143,44 +190,66 @@ final class AppleNotesService: NotesStore {
             return true
         case .failure(let error):
             lastCaptureMessage = String(localized: "Не удалось сохранить: \(error.message)")
+            if error.accessDenied { unavailableMessage = error.message }
             return false
         }
     }
 
     func createNote(title: String, body: String = "") -> NoteItem? {
+        guard settings.pluginEnabled(.notes) else { return nil }
         let clean = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return nil }
         let html = "<div><h1>\(Self.escape(clean))</h1></div>"
             + body.components(separatedBy: "\n").map { "<div>\($0.isEmpty ? "<br>" : Self.escape($0))</div>" }.joined()
-        guard case .success(let json) = Self.jxa(Self.createScript, [html]),
-              let obj = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: String],
-              let id = obj["id"] else { return nil }
+        let json: String
+        switch runScript(.create, [html]) {
+        case .success(let result): json = result
+        case .failure(let error):
+            lastCaptureMessage = String(localized: "Не удалось сохранить: \(error.message)")
+            if error.accessDenied { unavailableMessage = error.message }
+            return nil
+        }
+        guard let obj = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: String],
+              let id = obj["id"] else {
+            lastCaptureMessage = String(localized: "Не удалось сохранить заметку. Попробуйте ещё раз.")
+            return nil
+        }
         let note = NoteItem(id: id, title: clean, folder: obj["folder"] ?? "", modified: Date())
         notes.insert(note, at: 0)
         texts[id] = clean + "\n" + body
+        lastCaptureMessage = String(localized: "Сохранено в «\(clean)»")
         refresh(force: true)
         return note
     }
 
     func open(_ note: NoteItem) {
         let id = note.id
-        Task.detached(priority: .userInitiated) { _ = Self.jxa(Self.showScript, [id]) }
+        let runner = runScript
+        Task.detached(priority: .userInitiated) { _ = runner(.show, [id]) }
     }
 
     // MARK: JXA
 
     struct NotesError: Error {
         let message: String
+        var accessDenied = false
     }
 
     nonisolated private static let listScript = """
     function run() {
       const N = Application('Notes'); const out = [];
       N.folders().forEach(f => {
-        const name = f.name(), ids = f.notes.id(), titles = f.notes.name(),
-              dates = f.notes.modificationDate(), texts = f.notes.plaintext();
-        for (let i = 0; i < ids.length; i++)
-          out.push({id: ids[i], title: titles[i], folder: name, modified: dates[i].getTime() / 1000, text: texts[i]});
+        const name = f.name(), ids = f.notes.id(), titles = f.notes.name(), dates = f.notes.modificationDate();
+        let texts = [];
+        try { texts = f.notes.plaintext() || []; } catch (_) {}
+        for (let i = 0; i < ids.length; i++) {
+          let text = texts[i];
+          if (typeof text !== 'string') {
+            try { text = f.notes[i].plaintext(); } catch (_) { text = ''; }
+          }
+          const modified = dates[i] ? dates[i].getTime() / 1000 : 0;
+          out.push({id: ids[i], title: titles[i] || '', folder: name, modified: isFinite(modified) ? modified : 0, text: text});
+        }
       });
       return JSON.stringify(out);
     }
@@ -220,6 +289,9 @@ final class AppleNotesService: NotesStore {
         p.standardOutput = out
         p.standardError = err
         do { try p.run() } catch { return .failure(NotesError(message: error.localizedDescription)) }
+        let timeout = DispatchWorkItem { if p.isRunning { p.terminate() } }
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 30, execute: timeout)
+        defer { timeout.cancel() }
         // Drain stderr in parallel: reading the pipes one after another deadlocks once
         // the unread one fills its 64 KB buffer.
         nonisolated(unsafe) var errData = Data()
@@ -229,10 +301,13 @@ final class AppleNotesService: NotesStore {
         let data = out.fileHandleForReading.readAll()
         errRead.wait()
         p.waitUntilExit()
+        if p.terminationReason == .uncaughtSignal, p.terminationStatus == SIGTERM {
+            return .failure(NotesError(message: String(localized: "«Заметки» не ответили вовремя. Откройте приложение и повторите попытку.")))
+        }
         guard p.terminationStatus == 0 else {
             let text = String(decoding: errData, as: UTF8.self)
             if text.contains("-1743") || text.contains("Not authorized") {
-                return .failure(NotesError(message: String(localized: "Нет доступа к «Заметкам» — разрешите в Автоматизации")))
+                return .failure(NotesError(message: String(localized: "Нет доступа к «Заметкам» — разрешите в Автоматизации"), accessDenied: true))
             }
             return .failure(NotesError(message: text.trimmingCharacters(in: .whitespacesAndNewlines)))
         }

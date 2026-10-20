@@ -222,11 +222,16 @@ final class AttentionCenter: ObservableObject {
                                      actionTitle: String(localized: "Открыть"), action: .openGit, dismissable: true, priority: 80))
         }
 
-        return out.filter { !dismissed.contains($0.id) }.sorted { $0.priority > $1.priority }
+        return out.filter {
+            !dismissed.contains($0.id)
+                && ($0.action.plugin.map { env.settings.pluginEnabled($0) } ?? true)
+                && (!$0.id.hasPrefix("call") || env.settings.pluginEnabled(.calls))
+        }.sorted { $0.priority > $1.priority }
     }
 
     func perform(_ item: AttentionItem) {
         guard let env else { return }
+        if let plugin = item.action.plugin, !env.settings.pluginEnabled(plugin) { return }
         switch item.action {
         case .openAgent(let agent, let host):
             for id in [host].compactMap({ $0 }) + agent.appBundleIDs {
@@ -239,7 +244,8 @@ final class AttentionCenter: ObservableObject {
             if let issue = env.jira.issues.first(where: { $0.key == key }) { env.jira.open(issue) }
             if item.id.hasPrefix("new-") { dismiss(item) }
         case .openNote(let rel):
-            env.obsidian.open(relativePath: rel)
+            if rel.hasPrefix("/") { NSWorkspace.shared.open(URL(fileURLWithPath: rel)) }
+            else { env.obsidian.open(relativePath: rel) }
             dismiss(item)
         case .meetingAssistant:
             env.copilot.activate()
@@ -268,5 +274,22 @@ final class AttentionCenter: ObservableObject {
     private static func ago(_ date: Date) -> String {
         let m = Int(Date().timeIntervalSince(date) / 60)
         return m < 1 ? String(localized: "только что") : String(localized: "\(m) мин назад")
+    }
+}
+
+extension AttentionItem.Action {
+    var plugin: PluginID? {
+        switch self {
+        case .openAgent: return .agents
+        case .joinMeeting: return .calendar
+        case .openJira: return .jira
+        case .openNote(let path): return path.hasPrefix("/") ? .calls : .obsidian
+        case .startBreak: return .focus
+        case .meetingAssistant: return .meetingAssistant
+        case .stopCall, .startCall, .processCalls, .retryCall: return .calls
+        case .openGit: return .git
+        case .completeReminder: return .reminders
+        case .none: return nil
+        }
     }
 }

@@ -44,6 +44,7 @@ final class CallRecorder: NSObject, ObservableObject {
         timer = EnergyTimer(runsWhenSuspended: true, interval: { [weak self] in
             guard let self else { return nil }
             if self.stage == .recording { return 3 }
+            guard Settings.shared.pluginEnabled(.calls) else { return nil }
             let energy = EnergyPolicy.shared.state
             return energy.suspended || energy.reducedEffects ? 15 : 5
         }, action: { [weak self] in self?.poll() })
@@ -52,6 +53,7 @@ final class CallRecorder: NSObject, ObservableObject {
     // MARK: Detection
 
     private func poll() {
+        guard settings.pluginEnabled(.calls) || stage == .recording else { return }
         let holders = Self.microphoneHolders()
         let active = !holders.isEmpty
         if micActive != active { micActive = active }
@@ -170,7 +172,7 @@ final class CallRecorder: NSObject, ObservableObject {
     // MARK: Recording
 
     func beginRecording() async {
-        guard stage == .idle else { return }
+        guard settings.pluginEnabled(.calls), stage == .idle else { return }
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
             guard let display = content.displays.first else { throw AIError.message(String(localized: "Нет экрана для захвата звука")) }
@@ -287,7 +289,7 @@ final class CallRecorder: NSObject, ObservableObject {
 
     /// Finishes a recording whose audio is already on disk (NotchMate restarted mid-call).
     func processExisting(folder dir: URL, title: String? = nil) async {
-        guard stage == .idle else { return }
+        guard settings.pluginEnabled(.calls), stage == .idle else { return }
         self.folder = dir
         self.title = title ?? String(localized: "Созвон")
         let seconds = Self.durationOfFiles(in: dir)
@@ -472,6 +474,9 @@ final class CallRecorder: NSObject, ObservableObject {
 
     private func summarize(_ transcript: String, duration: TimeInterval) async throws -> String {
         guard let env else { throw AIError.message(String(localized: "Нет окружения")) }
+        guard settings.pluginEnabled(.ai) else {
+            return String(localized: "Протокол ИИ отключён. Расшифровка созвона сохранена ниже.")
+        }
         let prompt = """
         Ниже расшифровка рабочего созвона (распознавание речи, возможны ошибки). Сделай краткий протокол в Markdown. \(AppLanguage.replyInstruction) Заголовки разделов пиши на том же языке:
 
@@ -490,13 +495,16 @@ final class CallRecorder: NSObject, ObservableObject {
     }
 
     private func writeNote(summary: String, transcript: String, duration: TimeInterval, folder: URL) -> String {
-        guard let env, let vault = env.obsidian.vault else { return "" }
+        guard let env else { return "" }
+        let vault = settings.pluginEnabled(.obsidian) ? env.obsidian.vault : nil
         let df = DateFormatter(); df.locale = Locale(identifier: "en_US_POSIX"); df.dateFormat = "yyyy-MM-dd HH-mm"
         let human = DateFormatter(); human.locale = AppLanguage.locale; human.setLocalizedDateFormatFromTemplate("dMMMMHHmm")
         let started = startedAt ?? Date().addingTimeInterval(-duration)
         let safeTitle = title.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
         let rel = "\(settings.callsFolder)/\(df.string(from: started)) \(safeTitle).md"
-        let url = URL(fileURLWithPath: vault.path).appendingPathComponent(rel)
+        // Keep the finished protocol locally when the notes integration is disabled.
+        let url = vault.map { URL(fileURLWithPath: $0.path).appendingPathComponent(rel) }
+            ?? folder.appendingPathComponent("summary.md")
         let attendees = env.calendar.events.first { $0.start <= started && $0.end >= started }.map { String(localized: "\n**Событие:** \($0.title)") } ?? ""
         let body = """
         ---
@@ -523,9 +531,11 @@ final class CallRecorder: NSObject, ObservableObject {
         do {
             try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
             try body.write(to: url, atomically: true, encoding: .utf8)
-            _ = env.obsidian.capture(String(localized: "Созвон «\(title)» (\(Int(duration / 60)) мин) — [[\((rel as NSString).lastPathComponent.replacingOccurrences(of: ".md", with: ""))]]"))
-            env.obsidian.refresh(force: true)
-            return rel
+            if vault != nil {
+                _ = env.obsidian.capture(String(localized: "Созвон «\(title)» (\(Int(duration / 60)) мин) — [[\((rel as NSString).lastPathComponent.replacingOccurrences(of: ".md", with: ""))]]"))
+                env.obsidian.refresh(force: true)
+            }
+            return vault != nil ? rel : url.path
         } catch {
             lastError = String(localized: "Заметка не сохранилась: \(error.localizedDescription)")
             return ""

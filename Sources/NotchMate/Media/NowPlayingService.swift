@@ -59,18 +59,25 @@ final class NowPlayingService: ObservableObject {
     }
 
     func start() {
+        guard Settings.shared.pluginEnabled(.music), process == nil else { return }
         stopped = false
         launchStream()
     }
 
     func stop() {
         stopped = true
+        clearWorkItem?.cancel()
+        lastArtworkString = nil
         process?.terminate()
         process = nil
+        track = nil
+        artwork = nil
+        buffer.removeAll()
     }
 
     private func launchStream() {
-        guard !stopped, let script = scriptURL, let framework = frameworkURL else {
+        guard process == nil else { return }
+        guard !stopped, Settings.shared.pluginEnabled(.music), let script = scriptURL, let framework = frameworkURL else {
             isAvailable = false
             return
         }
@@ -88,11 +95,12 @@ final class NowPlayingService: ObservableObject {
                 MainActor.assumeIsolated { self?.consume(chunk) }
             }
         }
-        p.terminationHandler = { [weak self] _ in
+        p.terminationHandler = { [weak self] ended in
             out.fileHandleForReading.readabilityHandler = nil
             DispatchQueue.main.async {
                 MainActor.assumeIsolated {
-                    guard let self, !self.stopped else { return }
+                    guard let self, self.process === ended, !self.stopped else { return }
+                    self.process = nil
                     let delay = self.restartDelay
                     self.restartDelay = min(self.restartDelay * 2, 30)
                     DispatchQueue.main.asyncAfter(deadline: .now() + delay) { self.launchStream() }
@@ -120,6 +128,7 @@ final class NowPlayingService: ObservableObject {
     }
 
     private func consume(_ chunk: Data) {
+        guard !stopped, Settings.shared.pluginEnabled(.music) else { return }
         buffer.append(chunk)
         while let nl = buffer.firstIndex(of: 0x0A) {
             let line = buffer[buffer.startIndex..<nl]
@@ -185,6 +194,7 @@ final class NowPlayingService: ObservableObject {
     // MARK: Commands
 
     func send(_ command: MediaCommand) {
+        guard Settings.shared.pluginEnabled(.music) else { return }
         // Optimistic UI for play/pause.
         if var t = track {
             let now = Date()

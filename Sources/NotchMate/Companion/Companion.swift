@@ -4,7 +4,7 @@ import SwiftUI
 
 enum Mood: String, Equatable {
     case idle, startup, happy, love, sleepy, focused, excited, surprised, tired, music, eating, wink
-    case alert, message, shutter, call, sad, proud, dizzy, nod
+    case alert, message, shutter, call, sad, proud, nod
     case agent, ready, disappointed, relax, flow, bored, fishing, basketball, watch
     case breathe, stressed, zen, charged, drained
 
@@ -29,7 +29,6 @@ enum Mood: String, Equatable {
         case .call: return String(localized: "\(n) тихо слушает созвон")
         case .sad: return String(localized: "\(n) грустит")
         case .proud: return String(localized: "Готово! \(n) гордится")
-        case .dizzy: return String(localized: "Столько уведомлений…")
         case .nod: return String(localized: "\(n) кивает")
         case .agent: return String(localized: "\(n) смотрит, как работает агент")
         case .ready: return String(localized: "Ответ готов!")
@@ -96,14 +95,8 @@ final class Companion: ObservableObject {
     private var reaction: (mood: Mood, until: Date)?
     private var tickTimer: EnergyTimer?
     private var lastPointerMove = Date()
-    private var lastPointer: CGVector?
-    private var shake = ShakeDetector()
-    private var dizzyUntil = Date.distantPast
-    private var lastDizzy = Date.distantPast
-    private var dizzyStreak = 0
     private var lastWater = Date()
     private var lastStretch = Date()
-    private var alertTimes: [Date] = []
     private var idleMoodSince = Date()
     private var lastScene = Date()
     private var badgeWork: DispatchWorkItem?
@@ -121,7 +114,7 @@ final class Companion: ObservableObject {
 
     func start(env: AppEnvironment) {
         self.env = env
-        tickTimer = EnergyTimer(interval: { EnergyPolicy.shared.state.reducedEffects ? 3 : 1 },
+        tickTimer = EnergyTimer(interval: { Settings.shared.pluginEnabled(.companion) ? (EnergyPolicy.shared.state.reducedEffects ? 3 : 1) : nil },
                                 action: { [weak self] in self?.tick() })
         react(.startup, for: 8)
     }
@@ -129,11 +122,13 @@ final class Companion: ObservableObject {
     // MARK: Reactions
 
     func react(_ mood: Mood, for seconds: TimeInterval = 2) {
+        guard Settings.shared.pluginEnabled(.companion) else { return }
         reaction = (mood, Date().addingTimeInterval(seconds))
         withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) { self.mood = mood }
     }
 
     func say(_ text: String, mood: Mood? = nil, force: Bool = false) {
+        guard Settings.shared.pluginEnabled(.companion) else { return }
         if let mood { react(mood, for: 3) }
         if force || !(env?.isDoNotDisturb ?? false) { onSpeak?(text) }
     }
@@ -144,16 +139,9 @@ final class Companion: ObservableObject {
         react(mood, for: seconds)
     }
 
-    /// Notification-like events; several in a row make the assistant dizzy.
+    /// Notification-like events.
     func notify(_ mood: Mood, badge: CompanionBadge?, seconds: TimeInterval = 3) {
-        let now = Date()
-        alertTimes = alertTimes.filter { now.timeIntervalSince($0) < 30 } + [now]
-        if alertTimes.count >= 4 {
-            react(.dizzy, for: 3.5)
-            alertTimes.removeAll()
-        } else {
-            react(mood, for: seconds)
-        }
+        react(mood, for: seconds)
         if let badge { show(badge, for: seconds) }
     }
 
@@ -182,15 +170,6 @@ final class Companion: ObservableObject {
         let now = Date()
         lastPointerMove = now
         guard Settings.shared.followCursor else { return }
-        defer { lastPointer = vector }
-
-        if let last = lastPointer, shake.add(dx: vector.dx - last.dx, dy: vector.dy - last.dy, at: now) {
-            getDizzy(now)
-            return
-        }
-        // Spinning spiral eyes don't look anywhere.
-        guard now >= dizzyUntil else { return }
-
         // Eyes reach their limit ~300 pt away and ease in closer; looking up is limited by the bezel.
         let dist = max(hypot(vector.dx, vector.dy), 1)
         let reach = 1 - exp(-dist / 140)
@@ -202,29 +181,6 @@ final class Companion: ObservableObject {
         }
         if mood == .sleepy {
             react(.surprised, for: 1.0)
-        }
-    }
-
-    private func getDizzy(_ now: Date) {
-        guard now >= dizzyUntil else { return }
-        dizzyStreak = now.timeIntervalSince(lastDizzy) < 45 ? dizzyStreak + 1 : 0
-        lastDizzy = now
-        dizzyUntil = now.addingTimeInterval(3.2)
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { look = .zero }
-        react(.dizzy, for: 3.2)
-        if Settings.shared.haptics {
-            NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
-        }
-        let phrases: [[String]] = [
-            [String(localized: "Ой-ой, голова кружится 😵‍💫"), String(localized: "Уф… всё плывёт 🌀"), String(localized: "Эй, не тряси меня! 😵")],
-            [String(localized: "Опять?! Меня сейчас укачает 🤢"), String(localized: "Пощади… 🌀🌀")],
-            [String(localized: "Всё, я в домике 🙈"), String(localized: "Я жалуюсь в поддержку 😤")],
-        ]
-        let line = phrases[min(dizzyStreak, phrases.count - 1)].randomElement()!
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in self?.say(line) }
-        // Recovering: a slightly offended look after repeated shaking.
-        if dizzyStreak >= 2 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.3) { [weak self] in self?.react(.sad, for: 2.5) }
         }
     }
 
@@ -319,6 +275,7 @@ final class Companion: ObservableObject {
 
     /// Fresh stress / Body Battery turned into a resting mood.
     private func bodyMood(env: AppEnvironment, now: Date) -> Mood? {
+        guard env.settings.healthEnabled else { return nil }
         let health = env.health
         if let s = health.latestStress, now.timeIntervalSince(s.t) < 30 * 60, s.v >= Settings.shared.healthStressThreshold + 10 {
             return .stressed
@@ -328,6 +285,7 @@ final class Companion: ObservableObject {
     }
 
     private func checkBody(env: AppEnvironment, now: Date) {
+        guard env.settings.healthEnabled else { return }
         let settings = Settings.shared
         let health = env.health
         guard health.isEnabled else { return }
@@ -385,39 +343,5 @@ final class Companion: ObservableObject {
         case 18..<23: return String(localized: "Добрый вечер! \(n) тут 🌙")
         default: return String(localized: "Не спится? \(n) с тобой 🌙")
         }
-    }
-}
-
-/// Recognizes a quick back-and-forth shake of the pointer: several sharp direction flips in about a second.
-struct ShakeDetector {
-    /// One axis: current direction and how far the pointer has travelled in it.
-    private struct Axis {
-        var dir: CGFloat = 0, leg: CGFloat = 0
-
-        /// True when the direction flips after a leg long enough to be deliberate (not trackpad jitter).
-        mutating func flipped(_ delta: CGFloat) -> Bool {
-            guard abs(delta) > 0.5 else { return false }
-            let sign: CGFloat = delta > 0 ? 1 : -1
-            if sign == dir { leg += abs(delta); return false }
-            let flip = dir != 0 && leg > 70
-            dir = sign
-            leg = abs(delta)
-            return flip
-        }
-    }
-
-    private var x = Axis(), y = Axis()
-    private var flips: [Date] = []
-    private var lastFire = Date.distantPast
-
-    /// Returns true once per shake.
-    mutating func add(dx: CGFloat, dy: CGFloat, at now: Date) -> Bool {
-        if x.flipped(dx) { flips.append(now) }
-        if y.flipped(dy) { flips.append(now) }
-        flips.removeAll { now.timeIntervalSince($0) > 1.1 }
-        guard flips.count >= 6, now.timeIntervalSince(lastFire) > 4 else { return false }
-        flips.removeAll()
-        lastFire = now
-        return true
     }
 }

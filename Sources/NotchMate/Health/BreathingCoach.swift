@@ -78,6 +78,7 @@ final class BreathingCoach: ObservableObject {
     }
 
     func start(_ pattern: BreathPattern? = nil, minutes: Double? = nil) {
+        guard Settings.shared.healthEnabled else { return }
         if isActive { stop(completed: false) }
         self.pattern = pattern ?? BreathPattern(rawValue: Settings.shared.breathPattern) ?? .calm
         // Whole cycles only, so the session ends on an exhale.

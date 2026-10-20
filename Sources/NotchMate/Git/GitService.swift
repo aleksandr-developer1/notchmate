@@ -95,14 +95,14 @@ final class GitService: ObservableObject {
         // Git status can be costly in large working trees. Refresh promptly while its tab is
         // visible, but keep the background watcher deliberately quiet.
         timer = EnergyTimer(interval: {
-            Settings.shared.gitEnabled ? (EnergyPolicy.shared.state.reducedEffects ? 15 : 5) : nil
+            Settings.shared.pluginEnabled(.git) ? (EnergyPolicy.shared.state.reducedEffects ? 15 : 5) : nil
         }, action: { [weak self] in self?.tick() })
         if let first = recent.first { select(first, pin: false) }
         detect()
     }
 
     private func tick() {
-        guard Settings.shared.gitEnabled, let env else { return }
+        guard Settings.shared.pluginEnabled(.git), let env else { return }
         tickCount += 1
         let front = NSWorkspace.shared.frontmostApplication
         let devFront = RepoDetector.isDevApp(front?.bundleIdentifier)
@@ -120,7 +120,7 @@ final class GitService: ObservableObject {
     // MARK: Repository
 
     func detect() {
-        guard Settings.shared.gitEnabled, !detecting,
+        guard Settings.shared.pluginEnabled(.git), !detecting,
               let app = NSWorkspace.shared.frontmostApplication, RepoDetector.isDevApp(app.bundleIdentifier) else { return }
         detecting = true
         let pid = app.processIdentifier, bundleID = app.bundleIdentifier ?? ""
@@ -137,7 +137,7 @@ final class GitService: ObservableObject {
 
     /// Agents report their working directory through hooks — a good hint when no terminal is in front.
     func noteAgentDirectory(_ dir: String) {
-        guard Settings.shared.gitEnabled, let root = RepoDetector.gitRoot(dir) else { return }
+        guard Settings.shared.pluginEnabled(.git), let root = RepoDetector.gitRoot(dir) else { return }
         if recent.first != root { remember(root) }
         if status == nil { select(root, pin: false) }
     }
@@ -170,12 +170,13 @@ final class GitService: ObservableObject {
     // MARK: Status
 
     func refresh() {
+        guard Settings.shared.pluginEnabled(.git) else { return }
         guard let root, !refreshing else { return }
         refreshing = true
         Task {
             let next = await Git.status(root)
             refreshing = false
-            guard let next, next.root == self.root else { return }
+            guard Settings.shared.pluginEnabled(.git), let next, next.root == self.root else { return }
             if let old = status, !old.branch.isEmpty, old.root == next.root, old.branch != next.branch {
                 branchChanged(to: next.branch)
             }
@@ -193,10 +194,12 @@ final class GitService: ObservableObject {
     // MARK: CI
 
     func refreshCI() {
+        guard Settings.shared.pluginEnabled(.git) else { return }
         guard Settings.shared.gitCIEnabled, ghAvailable, let s = status, s.isGitHub, !s.branch.isEmpty, !s.detached else { return }
         let branch = s.branch
         Task {
-            guard let next = await Git.ci(root: s.root, branch: branch), self.root == s.root, self.status?.branch == branch else { return }
+            guard let next = await Git.ci(root: s.root, branch: branch), Settings.shared.pluginEnabled(.git),
+                  self.root == s.root, self.status?.branch == branch else { return }
             let old = ci
             if next != old { withAnimation(.spring(response: 0.35)) { ci = next } }
             react(old: old, new: next, repo: s.name)
@@ -231,6 +234,7 @@ final class GitService: ObservableObject {
     // MARK: Actions
 
     func generateMessage() {
+        guard Settings.shared.pluginEnabled(.git), Settings.shared.pluginEnabled(.ai) else { return }
         guard let env, let s = status, !generating else { return }
         guard env.ai.isReady(env.ai.provider) else {
             lastError = String(localized: "Подключите ИИ в настройках")

@@ -2,39 +2,15 @@ import AppKit
 import SwiftUI
 
 struct NotesView: View {
-    @EnvironmentObject var env: AppEnvironment
-    @EnvironmentObject var obsidian: ObsidianService
-    @EnvironmentObject var settings: Settings
+    let source: NotesSource
+    @EnvironmentObject private var env: AppEnvironment
 
     var body: some View {
-        // Apple Notes by default; the Standard/Obsidian switcher appears only once a vault is connected.
-        let source: NotesSource = obsidian.isConnected ? settings.notesSource : .apple
-        VStack(spacing: 8) {
-            if obsidian.isConnected {
-                HStack(spacing: 4) {
-                    ForEach(NotesSource.allCases) { sourceTab($0, selected: $0 == source) }
-                    Spacer()
-                }
-            }
-            if source == .obsidian {
-                NotesPane(store: obsidian).id(NotesSource.obsidian)
-            } else {
-                NotesPane(store: env.appleNotes).id(NotesSource.apple)
-            }
+        if source == .obsidian {
+            NotesPane(store: env.obsidian).id(NotesSource.obsidian)
+        } else {
+            NotesPane(store: env.appleNotes).id(NotesSource.apple)
         }
-    }
-
-    private func sourceTab(_ s: NotesSource, selected: Bool) -> some View {
-        Button {
-            withAnimation(.easeOut(duration: 0.15)) { settings.notesSource = s }
-        } label: {
-            Label(s.title, systemImage: s == .apple ? "note.text" : "text.book.closed")
-                .font(Theme.font(11, .semibold))
-                .foregroundStyle(selected ? .white : Theme.secondary)
-                .padding(.horizontal, 10).padding(.vertical, 4)
-                .background(Capsule().fill(Color.white.opacity(selected ? 0.14 : 0.0001)))
-        }
-        .buttonStyle(.plain)
     }
 }
 
@@ -48,6 +24,7 @@ private struct NotesPane<Store: NotesStore>: View {
     @State private var hits: [NoteSearchHit] = []
     @State private var selected: NoteItem?
     @State private var savedFlash = false
+    @State private var operationError: String?
     @FocusState private var captureFocused: Bool
     @FocusState private var searchFocused: Bool
 
@@ -57,10 +34,13 @@ private struct NotesPane<Store: NotesStore>: View {
     var body: some View {
         Group {
             if let message = store.unavailableMessage {
-                UnavailableView(source: store.source, message: message)
+                UnavailableView(source: store.source, message: message, retry: { store.refresh(force: true) })
             } else {
                 VStack(spacing: 10) {
                     captureBar
+                    if let operationError {
+                        Text(operationError).font(Theme.font(11)).foregroundStyle(.orange).textSelection(.enabled)
+                    }
                     HStack(alignment: .top, spacing: 10) {
                         listColumn.frame(width: 232)
                         NotePreview(store: store, note: selected ?? store.pinned.first ?? store.recent.first, tint: tint)
@@ -78,7 +58,7 @@ private struct NotesPane<Store: NotesStore>: View {
                 }
             }
         }
-        .onAppear { store.refresh(force: false) }
+        .onAppear { store.refresh(force: store.unavailableMessage != nil) }
     }
 
     // MARK: Capture
@@ -125,7 +105,11 @@ private struct NotesPane<Store: NotesStore>: View {
     }
 
     private func save() {
-        guard store.capture(captureText) else { return }
+        guard store.capture(captureText) else {
+            operationError = store.lastCaptureMessage ?? String(localized: "Не удалось сохранить заметку. Попробуйте ещё раз.")
+            return
+        }
+        operationError = nil
         captureText = ""
         flash()
         NotificationCenter.default.post(name: .notchMateCaptureSaved, object: store.lastCaptureMessage)
@@ -136,10 +120,13 @@ private struct NotesPane<Store: NotesStore>: View {
         guard let title = lines.first.map(String.init), !title.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         let body = lines.count > 1 ? String(lines[1]) : ""
         if let note = store.createNote(title: title, body: body) {
+            operationError = nil
             captureText = ""
             selected = note
             flash()
             store.open(note)
+        } else {
+            operationError = store.lastCaptureMessage ?? String(localized: "Не удалось сохранить заметку. Попробуйте ещё раз.")
         }
     }
 
@@ -170,7 +157,11 @@ private struct NotesPane<Store: NotesStore>: View {
                         VStack(spacing: 8) {
                             Text(String(localized: "Ничего не найдено")).font(Theme.font(12)).foregroundStyle(Theme.secondary)
                             PillButton(title: String(localized: "Создать «\(query)»"), icon: "plus") {
-                                if let n = store.createNote(title: query, body: "") { selected = n; query = "" }
+                                if let n = store.createNote(title: query, body: "") {
+                                    operationError = nil; selected = n; query = ""
+                                } else {
+                                    operationError = store.lastCaptureMessage ?? String(localized: "Не удалось сохранить заметку. Попробуйте ещё раз.")
+                                }
                             }
                         }
                         .frame(maxWidth: .infinity).padding(.top, 20)
@@ -392,12 +383,14 @@ struct MarkdownBody: View {
 private struct UnavailableView: View {
     let source: NotesSource
     let message: String
+    let retry: () -> Void
 
     var body: some View {
         VStack(spacing: 10) {
             Image(systemName: source == .obsidian ? "text.book.closed.fill" : "note.text")
                 .font(.system(size: 34)).foregroundStyle(source == .obsidian ? Theme.obsidian : .yellow)
             Text(message).font(Theme.font(15, .bold)).foregroundStyle(.white).multilineTextAlignment(.center)
+            PillButton(title: String(localized: "Попробовать снова"), icon: "arrow.clockwise", tint: .yellow, prominent: true, action: retry)
             if source == .obsidian {
                 Text(String(localized: "Откройте хранилище в Obsidian или выберите папку в настройках"))
                     .font(Theme.font(12)).foregroundStyle(Theme.secondary)

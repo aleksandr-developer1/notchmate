@@ -90,7 +90,7 @@ final class NotchWindowController {
         wireViewModel()
         wireInteractivity()
         coverageTimer = EnergyTimer(interval: {
-            Settings.shared.dockFaceWhenCovered && Settings.shared.showFace
+            Settings.shared.pluginEnabled(.companion) && Settings.shared.dockFaceWhenCovered && Settings.shared.showFace
                 ? (EnergyPolicy.shared.state.reducedEffects ? 6 : 3) : nil
         }, action: { [weak self] in self?.checkFaceCovered() })
         wireEvents()
@@ -457,6 +457,7 @@ final class NotchWindowController {
 
     /// Opens the shelf when a file drag approaches the notch.
     private func handleDrag(at point: NSPoint) -> Bool {
+        guard Settings.shared.pluginEnabled(.shelf) else { return false }
         let pb = NSPasteboard(name: .drag)
         guard pb.changeCount != dragChangeCount else { return false }
         let types = pb.types ?? []

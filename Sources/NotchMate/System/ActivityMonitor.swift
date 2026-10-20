@@ -15,7 +15,7 @@ final class ActivityMonitor: ObservableObject {
     private var timer: EnergyTimer?
 
     func start() {
-        timer = EnergyTimer(interval: { EnergyPolicy.shared.state.reducedEffects ? 15 : 5 },
+        timer = EnergyTimer(interval: { Settings.shared.pluginEnabled(.companion) || Settings.shared.healthEnabled ? (EnergyPolicy.shared.state.reducedEffects ? 15 : 5) : nil },
                             action: { [weak self] in self?.sample() })
     }
 

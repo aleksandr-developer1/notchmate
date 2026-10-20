@@ -82,6 +82,7 @@ final class AIChatService: ObservableObject {
     }
 
     func start() {
+        guard settings.pluginEnabled(.ai) else { return }
         Task { await claude.refreshStatus() }
         if codex.isInstalled { Task { await codex.refreshAccount() } }
     }
@@ -125,7 +126,20 @@ final class AIChatService: ObservableObject {
         if isResponding { setResponding(false) }
     }
 
+    /// Disconnect helpers without logging out or removing conversation history.
+    func suspendPlugin() {
+        stop()
+        stopTaby()
+        cancelQuick()
+        auxClaude.cancel()
+        codex.stop()
+        tabyCodex.stop()
+        quickCodex.stop()
+        auxCodex.stop()
+    }
+
     func send(_ raw: String? = nil) {
+        guard settings.pluginEnabled(.ai) else { return }
         let text = (raw ?? draft).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, !isResponding else { return }
         draft = ""
@@ -221,6 +235,7 @@ final class AIChatService: ObservableObject {
     }
 
     func askTaby(_ raw: String) {
+        guard settings.pluginEnabled(.ai) else { return }
         let question = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !question.isEmpty else { return }
         tabyTask?.cancel()
@@ -265,6 +280,7 @@ final class AIChatService: ObservableObject {
 
     /// One-off request used by features (call summaries). `preferLocal` routes to the user's own server when configured.
     func oneShot(prompt: String, system: String, preferLocal: Bool = false) async throws -> String {
+        guard settings.pluginEnabled(.ai) else { throw PluginError.disabled(.ai) }
         var provider = self.provider
         if preferLocal, isReady(.customOpenAI) { provider = .customOpenAI }
         let codex = CodexAppServer()
@@ -289,6 +305,7 @@ final class AIChatService: ObservableObject {
     /// Streams a single request without chat history to an explicit provider and model.
     func quick(prompt: String, system: String, provider: AIProvider, model: String, aux: Bool = false,
                onDelta: @escaping @Sendable (String) -> Void) async throws {
+        guard settings.pluginEnabled(.ai) else { throw PluginError.disabled(.ai) }
         let codex = aux ? auxCodex : quickCodex
         let claude = aux ? auxClaude : quickClaude
         codex.resetThread()

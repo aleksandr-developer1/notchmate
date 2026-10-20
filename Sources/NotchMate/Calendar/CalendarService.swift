@@ -36,7 +36,7 @@ final class CalendarService: ObservableObject {
     var onStart: ((CalendarEvent) -> Void)?
 
     private let store = EKEventStore()
-    private var timer: Timer?
+    private var timer: EnergyTimer?
     private var notifiedSoon: Set<String> = []
     private var notifiedStart: Set<String> = []
     /// Occurrences the user has swiped away: key → when it stops mattering.
@@ -86,14 +86,12 @@ final class CalendarService: ObservableObject {
     var next: CalendarEvent? { events.first { $0.end > Date() } }
 
     func start() {
-        guard Settings.shared.calendarEnabled else { return }
         if hasAccess { refresh() }
         NotificationCenter.default.addObserver(forName: .EKEventStoreChanged, object: store, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.refresh() }
         }
-        timer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.tick() }
-        }
+        timer = EnergyTimer(interval: { Settings.shared.pluginEnabled(.calendar) ? 20 : nil },
+                            action: { [weak self] in self?.tick() })
     }
 
     func requestAccess() async {
@@ -105,6 +103,7 @@ final class CalendarService: ObservableObject {
     }
 
     func refresh() {
+        guard Settings.shared.pluginEnabled(.calendar) else { events = []; return }
         guard hasAccess else { events = []; return }
         let startOfDay = Calendar.current.startOfDay(for: Date())
         let end = Calendar.current.date(byAdding: .day, value: 7, to: startOfDay)!

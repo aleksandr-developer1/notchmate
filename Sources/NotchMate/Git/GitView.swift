@@ -278,6 +278,7 @@ private struct ChangesCard: View {
     @EnvironmentObject var git: GitService
     @EnvironmentObject var ai: AIChatService
     @EnvironmentObject var vm: NotchViewModel
+    @ObservedObject private var settings = Settings.shared
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -348,22 +349,24 @@ private struct ChangesCard: View {
             .card(radius: 12, fill: Color.white.opacity(focused ? 0.1 : 0.06))
 
             HStack(spacing: 6) {
-                Button { git.generateMessage() } label: {
-                    HStack(spacing: 4) {
-                        if git.generating {
-                            ProgressView().controlSize(.mini)
-                        } else {
-                            Image(systemName: "sparkles").font(.system(size: 10, weight: .bold))
+                if settings.pluginEnabled(.ai) {
+                    Button { git.generateMessage() } label: {
+                        HStack(spacing: 4) {
+                            if git.generating {
+                                ProgressView().controlSize(.mini)
+                            } else {
+                                Image(systemName: "sparkles").font(.system(size: 10, weight: .bold))
+                            }
+                            Text(git.commitMessage.isEmpty ? String(localized: "Написать с ИИ") : String(localized: "Ещё вариант")).font(Theme.font(11, .semibold))
                         }
-                        Text(git.commitMessage.isEmpty ? String(localized: "Написать с ИИ") : String(localized: "Ещё вариант")).font(Theme.font(11, .semibold))
+                        .foregroundStyle(ai.provider.tint)
+                        .padding(.horizontal, 9).frame(height: 24)
+                        .background(Capsule().fill(ai.provider.tint.opacity(0.15)))
                     }
-                    .foregroundStyle(ai.provider.tint)
-                    .padding(.horizontal, 9).frame(height: 24)
-                    .background(Capsule().fill(ai.provider.tint.opacity(0.15)))
+                    .buttonStyle(PressableStyle())
+                    .disabled(git.generating)
+                    .help(String(localized: "Сгенерировать сообщение по diff (\(ai.provider.title))"))
                 }
-                .buttonStyle(PressableStyle())
-                .disabled(git.generating)
-                .help(String(localized: "Сгенерировать сообщение по diff (\(ai.provider.title))"))
 
                 Spacer()
 
@@ -482,9 +485,11 @@ struct GitSettings: View {
                 }
                 Button(String(localized: "Добавить папку…")) { Self.chooseFolder() }
             }
-            Section {
-                Text(String(localized: "Сообщения коммитов пишет выбранный в настройках ИИ: ему уходит diff изменений."))
-                    .font(.caption).foregroundStyle(.secondary)
+            if settings.pluginEnabled(.ai) {
+                Section {
+                    Text(String(localized: "Сообщения коммитов пишет выбранный в настройках ИИ: ему уходит diff изменений."))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
         }
         .formStyle(.grouped)
