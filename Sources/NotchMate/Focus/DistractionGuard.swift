@@ -9,7 +9,7 @@ final class DistractionGuard: ObservableObject {
     var isFocusing: () -> Bool = { false }
     var onNudge: ((String) -> Void)?
 
-    private var timer: Timer?
+    private var timer: EnergyTimer?
     private var distractedSince: Date?
     private var lastNudge: Date?
     private var lastSource: String?
@@ -22,9 +22,8 @@ final class DistractionGuard: ObservableObject {
     ]
 
     func start() {
-        timer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.check() }
-        }
+        timer = EnergyTimer(interval: { EnergyPolicy.shared.state.reducedEffects ? 9 : 3 },
+                            action: { [weak self] in self?.check() })
     }
 
     func resetSession() {

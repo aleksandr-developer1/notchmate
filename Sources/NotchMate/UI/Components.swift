@@ -165,7 +165,7 @@ struct EqualizerBars: View {
 
     var body: some View {
         // These bars are also used in the collapsed notch; a lower cadence is enough there.
-        TimelineView(.animation(minimumInterval: 1 / 12, paused: !isPlaying)) { ctx in
+        EnergyAnimation(minimumInterval: 1 / 12, paused: !isPlaying) { ctx in
             let t = ctx.date.timeIntervalSinceReferenceDate
             HStack(alignment: .center, spacing: 2) {
                 ForEach(0..<bars, id: \.self) { i in

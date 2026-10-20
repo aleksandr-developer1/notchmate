@@ -13,6 +13,7 @@ let package = Package(
             dependencies: [.product(name: "OpenAI", package: "OpenAI")],
             path: "Sources/NotchMate",
             swiftSettings: [.unsafeFlags(["-Onone"], .when(configuration: .debug))]
-        )
+        ),
+        .testTarget(name: "NotchMateTests", dependencies: ["NotchMate"], path: "Tests/NotchMateTests")
     ]
 )

@@ -72,7 +72,7 @@ final class GitService: ObservableObject {
     @Published private(set) var lastResult: String?
 
     private weak var env: AppEnvironment?
-    private var timer: Timer?
+    private var timer: EnergyTimer?
     private var tickCount = 0
     private var detecting = false
     private var refreshing = false
@@ -94,9 +94,9 @@ final class GitService: ObservableObject {
         }
         // Git status can be costly in large working trees. Refresh promptly while its tab is
         // visible, but keep the background watcher deliberately quiet.
-        timer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.tick() }
-        }
+        timer = EnergyTimer(interval: {
+            Settings.shared.gitEnabled ? (EnergyPolicy.shared.state.reducedEffects ? 15 : 5) : nil
+        }, action: { [weak self] in self?.tick() })
         if let first = recent.first { select(first, pin: false) }
         detect()
     }

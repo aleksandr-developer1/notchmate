@@ -27,7 +27,7 @@ final class ClipboardHistory: ObservableObject {
     @Published private(set) var items: [ClipItem] = []
     @Published var pinned: Set<UUID> = []
 
-    private var timer: Timer?
+    private var timer: EnergyTimer?
     var onNewItem: (() -> Void)?
     private var lastChange = NSPasteboard.general.changeCount
     private var ignoreNextChange = false
@@ -39,9 +39,9 @@ final class ClipboardHistory: ObservableObject {
     ]
 
     func start() {
-        timer = Timer.scheduledTimer(withTimeInterval: 0.6, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.poll() }
-        }
+        timer = EnergyTimer(interval: {
+            Settings.shared.clipboardEnabled ? (EnergyPolicy.shared.state.reducedEffects ? 2 : 1) : nil
+        }, action: { [weak self] in self?.poll() })
     }
 
     private func poll() {

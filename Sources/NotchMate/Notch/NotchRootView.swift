@@ -6,6 +6,7 @@ struct NotchRootView: View {
     @EnvironmentObject var settings: Settings
     @EnvironmentObject var player: NowPlayingService
     @EnvironmentObject var shelf: ShelfStore
+    @ObservedObject private var energy = EnergyPolicy.shared
     @Namespace private var ns
 
     var body: some View {
@@ -13,7 +14,7 @@ struct NotchRootView: View {
         let open = vm.isOpen
         VStack(spacing: 0) {
             ZStack(alignment: .top) {
-                if !open && vm.musicActive && settings.notchGlowMode == .artwork {
+                if !open && vm.musicActive && settings.notchGlowMode == .artwork && !energy.state.suspended && !energy.state.reducedEffects {
                     NotchMusicGlow(
                         bottomRadius: vm.hud != nil || vm.showsFace ? 16 : 11,
                         tint: player.accent
@@ -370,7 +371,7 @@ private struct AgentRow: View {
             if group.isWaiting {
                 Circle().fill(Color.orange).frame(width: 5, height: 5).offset(x: 5, y: -5)
             } else if group.isWorking {
-                TimelineView(.periodic(from: .now, by: 1 / 12)) { ctx in
+                EnergyAnimation(minimumInterval: 1 / 12) { ctx in
                     Circle()
                         .trim(from: 0, to: 0.3)
                         .stroke(group.agent.tint, style: StrokeStyle(lineWidth: 1.4, lineCap: .round))
@@ -401,7 +402,7 @@ private struct AssistantStatusOverlay: View {
     @EnvironmentObject var ai: AIChatService
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1 / 12)) { context in
+        EnergyAnimation(minimumInterval: 1 / 12) { context in
             let t = context.date.timeIntervalSinceReferenceDate
             HStack(spacing: 8) {
                 ZStack {

@@ -7,12 +7,57 @@ import Foundation
 final class SystemVolume: ObservableObject {
     @Published var volume: Float = 0.5
     @Published private(set) var isMuted = false
-    private var timer: Timer?
+    private var listener: AudioObjectPropertyListenerBlock?
+    private var observedDevice = AudioDeviceID(0)
+
+    nonisolated private static var defaultDeviceAddress: AudioObjectPropertyAddress {
+        .init(mSelector: kAudioHardwarePropertyDefaultOutputDevice, mScope: kAudioObjectPropertyScopeGlobal,
+              mElement: kAudioObjectPropertyElementMain)
+    }
+
+    nonisolated private static func outputAddress(_ selector: AudioObjectPropertySelector) -> AudioObjectPropertyAddress {
+        .init(mSelector: selector, mScope: kAudioDevicePropertyScopeOutput, mElement: kAudioObjectPropertyElementMain)
+    }
 
     func start() {
+        guard listener == nil else { return }
+        let block: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
+            MainActor.assumeIsolated {
+                self?.observeDevice()
+                self?.read()
+            }
+        }
+        listener = block
+        var address = Self.defaultDeviceAddress
+        AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, .main, block)
+        observeDevice()
         read()
-        timer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.read() }
+    }
+
+    private func observeDevice() {
+        let next = device
+        guard next != observedDevice, let listener else { return }
+        for selector in [kAudioHardwareServiceDeviceProperty_VirtualMainVolume, kAudioDevicePropertyMute] {
+            var address = Self.outputAddress(selector)
+            if observedDevice != 0 {
+                AudioObjectRemovePropertyListenerBlock(observedDevice, &address, .main, listener)
+            }
+            if next != 0 {
+                AudioObjectAddPropertyListenerBlock(next, &address, .main, listener)
+            }
+        }
+        observedDevice = next
+    }
+
+    deinit {
+        guard let listener else { return }
+        var address = Self.defaultDeviceAddress
+        AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, .main, listener)
+        if observedDevice != 0 {
+            for selector in [kAudioHardwareServiceDeviceProperty_VirtualMainVolume, kAudioDevicePropertyMute] {
+                var output = Self.outputAddress(selector)
+                AudioObjectRemovePropertyListenerBlock(observedDevice, &output, .main, listener)
+            }
         }
     }
 
@@ -39,7 +84,8 @@ final class SystemVolume: ObservableObject {
         size = UInt32(MemoryLayout<UInt32>.size)
         addr.mSelector = kAudioDevicePropertyMute
         if AudioObjectGetPropertyData(device, &addr, 0, nil, &size, &mute) == noErr {
-            isMuted = mute != 0
+            let muted = mute != 0
+            if isMuted != muted { isMuted = muted }
         }
     }
 

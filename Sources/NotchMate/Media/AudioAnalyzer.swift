@@ -5,7 +5,7 @@ import ScreenCaptureKit
 /// Listens to the player's audio (ScreenCaptureKit, same permission as call recording) the whole time
 /// a track plays: live band levels and kick strength for the equalizer, face and glow, plus a
 /// sliding-window beat tracker so tempo changes inside a track are followed.
-/// Cost: ~47 small FFTs per second on 12 kHz mono — well under 1% CPU.
+/// ~47 small FFTs per second on 12 kHz mono, plus the system audio capture overhead.
 @MainActor
 final class AudioAnalyzer {
     struct Grid: Equatable {
@@ -21,6 +21,7 @@ final class AudioAnalyzer {
     private var stream: SCStream?
     private var bundleID: String?
     private var starting = false
+    private var generation = 0
     private var stopWork: DispatchWorkItem?
 
     init() {
@@ -47,7 +48,8 @@ final class AudioAnalyzer {
     /// Starts listening while `track` plays, stops shortly after a pause.
     func follow(_ track: NowPlayingTrack?) {
         guard let track, track.isPlaying, !track.bundleID.isEmpty else {
-            guard stream != nil, stopWork == nil else { return }
+            guard stream != nil || starting else { return }
+            guard stopWork == nil else { return }
             // Short pauses and track switches shouldn't restart the capture.
             let work = DispatchWorkItem { [weak self] in MainActor.assumeIsolated { self?.stop() } }
             stopWork = work
@@ -64,14 +66,19 @@ final class AudioAnalyzer {
     /// Forget the beat history (new track), keep the stream running.
     func resetTempo() { meter.resetTempo() }
 
+    /// Power/visibility changes stop capture immediately, including a pending asynchronous start.
+    func suspend() { stop() }
+
     private func start(bundleID: String) {
+        generation += 1
+        let request = generation
         starting = true
         self.bundleID = bundleID
         let meter = self.meter
         Task {
-            defer { starting = false }
+            defer { if generation == request { starting = false } }
             guard let content = try? await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false),
-                  let display = content.displays.first, self.bundleID == bundleID else { return }
+                  let display = content.displays.first, generation == request else { return }
             let filter: SCContentFilter
             if let app = content.applications.first(where: { $0.bundleIdentifier == bundleID }) {
                 filter = SCContentFilter(display: display, including: [app], exceptingWindows: [])
@@ -93,12 +100,14 @@ final class AudioAnalyzer {
             } catch {
                 return
             }
-            guard self.bundleID == bundleID else { try? await stream.stopCapture(); return }
+            guard generation == request else { try? await stream.stopCapture(); return }
             self.stream = stream
         }
     }
 
     private func stop() {
+        generation += 1
+        starting = false
         stopWork?.cancel()
         stopWork = nil
         bundleID = nil

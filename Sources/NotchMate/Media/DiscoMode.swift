@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 /// Disco mode: a glow in the cover's color runs out of the notch along the whole screen frame and pulses with the music.
@@ -22,15 +23,31 @@ final class DiscoMode: ObservableObject {
     private var windows: [NSPanel] = []
     private var hideWork: DispatchWorkItem?
     private weak var env: AppEnvironment?
-    private var idleTimer: Timer?
+    private var idleTimer: EnergyTimer?
+    private var energyPlayback: AnyCancellable?
     /// Turned on by idleness rather than the button: goes away together with the party.
     private var autoStarted = false
 
     func start(env: AppEnvironment) {
         self.env = env
-        idleTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.checkIdle() }
-        }
+        idleTimer = EnergyTimer(interval: { [weak self] in
+            guard let self, let env = self.env, !EnergyPolicy.shared.state.reducedEffects else { return nil }
+            if self.isOn { return 0.5 }
+            return env.settings.autoDisco && env.nowPlaying.track?.isPlaying == true ? 2 : nil
+        }, action: { [weak self] in self?.checkIdle() })
+        energyPlayback = env.nowPlaying.$track.combineLatest(EnergyPolicy.shared.$state)
+            .receive(on: RunLoop.main).sink { [weak self] _ in
+                guard let self else { return }
+                let energy = EnergyPolicy.shared.state
+                if energy.suspended || energy.reducedEffects {
+                    self.hideWork?.cancel()
+                    self.isOn = false
+                    self.party = false
+                    self.autoStarted = false
+                    self.closeWindows()
+                }
+                self.idleTimer?.reschedule()
+            }
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification,
                                                object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
@@ -47,18 +64,26 @@ final class DiscoMode: ObservableObject {
     }
 
     func turnOn() {
-        guard !isOn else { return }
+        guard !isOn, !EnergyPolicy.shared.state.suspended, !EnergyPolicy.shared.state.reducedEffects else { return }
         hideWork?.cancel()
         hideWork = nil
         if windows.isEmpty { showWindows() }
         // Next runloop: the glow view must appear collapsed first so the spread animates.
-        DispatchQueue.main.async { self.isOn = true }
+        DispatchQueue.main.async {
+            guard !EnergyPolicy.shared.state.suspended, !EnergyPolicy.shared.state.reducedEffects else {
+                self.closeWindows()
+                return
+            }
+            self.isOn = true
+            self.idleTimer?.reschedule()
+        }
     }
 
     func turnOff() {
         guard isOn else { return }
         isOn = false
         party = false
+        idleTimer?.reschedule()
         let work = DispatchWorkItem { [weak self] in MainActor.assumeIsolated { self?.closeWindows() } }
         hideWork = work
         // Let the ball go back up too.
@@ -196,7 +221,7 @@ struct DiscoGlowView: View {
 
     private var frameGlow: some View {
         let playing = player.track?.isPlaying == true
-        return TimelineView(.animation(minimumInterval: 1 / 30, paused: !disco.isOn && progress == 0)) { ctx in
+        return EnergyAnimation(minimumInterval: 1 / 30, paused: !disco.isOn && progress == 0) { ctx in
             let t = ctx.date.timeIntervalSinceReferenceDate
             let pulse = tempo.beatPulse(at: ctx.date, playing: playing)
             let rotation = Angle.degrees((t * (playing ? 60 : 20)).truncatingRemainder(dividingBy: 360))
@@ -272,7 +297,7 @@ private struct PartyScene: View {
     @State private var changedAt = Date.distantPast
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1 / 30, paused: target == 0 && appear(at: .now) == 0)) { ctx in
+        EnergyAnimation(minimumInterval: 1 / 30, paused: target == 0 && appear(at: .now) == 0) { ctx in
             let now = ctx.date
             let a = appear(at: now)
             if a > 0 {

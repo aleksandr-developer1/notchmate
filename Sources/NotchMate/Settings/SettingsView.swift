@@ -474,6 +474,11 @@ struct JiraSettings: View {
                 if settings.jiraWorkHoursOnly {
                     Stepper(String(localized: "Начало дня: \(settings.jiraDayStart):00"), value: $settings.jiraDayStart, in: 0...23)
                     Stepper(String(localized: "Конец дня: \(settings.jiraDayEnd):00"), value: $settings.jiraDayEnd, in: 1...24)
+                    Toggle(String(localized: "Вычитать час на обед"), isOn: $settings.jiraLunch)
+                    if settings.jiraLunch {
+                        Stepper(String(localized: "Обед: \(settings.jiraLunchStart):00–\(settings.jiraLunchStart + 1):00"),
+                                value: $settings.jiraLunchStart, in: 0...23)
+                    }
                 }
                 Text(String(localized: "«Прошло» — сколько задача была в рабочих статусах, пока была назначена на вас (время тестировщика и других не считается). «Осталось» — исходная оценка минус это время."))
                     .font(.caption).foregroundStyle(.secondary)

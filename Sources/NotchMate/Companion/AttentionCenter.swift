@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 struct AttentionItem: Identifiable, Equatable {
-    enum Action: Equatable { case openAgent(AgentKind, host: String?), joinMeeting(String), openJira(String), openNote(String), startBreak, meetingAssistant, stopCall, startCall, processCalls, openGit, completeReminder(String), none }
+    enum Action: Equatable { case openAgent(AgentKind, host: String?), joinMeeting(String), openJira(String), openNote(String), startBreak, meetingAssistant, stopCall, startCall, processCalls, retryCall, openGit, completeReminder(String), none }
 
     let id: String
     let icon: String
@@ -202,7 +202,9 @@ final class AttentionCenter: ObservableObject {
         }
         if let err = env.calls.lastError, !dismissed.contains("callerr-\(err)") {
             out.append(AttentionItem(id: "callerr-\(err)", icon: "exclamationmark.triangle.fill", appIcon: nil, tint: .orange,
-                                     title: String(localized: "Запись созвона"), subtitle: err, actionTitle: nil, action: .none, dismissable: true, priority: 117))
+                                     title: String(localized: "Запись созвона"), subtitle: err,
+                                     actionTitle: env.calls.failedFolder == nil ? nil : String(localized: "Попробовать снова"),
+                                     action: env.calls.failedFolder == nil ? .none : .retryCall, dismissable: true, priority: 117))
         }
 
         for (id, f) in finished {
@@ -249,6 +251,8 @@ final class AttentionCenter: ObservableObject {
             if let first = CallRecorder.pendingRecordings().first {
                 Task { await env.calls.processExisting(folder: first) }
             }
+        case .retryCall:
+            Task { await env.calls.retryFailed() }
         case .startBreak:
             if env.focus.kind == .work { env.focus.startBreak() } else { env.focus.start(label: env.focus.label) }
         case .openGit:

@@ -68,6 +68,8 @@ final class Settings: ObservableObject {
     @Published var jiraWorkHoursOnly: Bool { didSet { d.set(jiraWorkHoursOnly, forKey: "jiraWorkHoursOnly") } }
     @Published var jiraDayStart: Int { didSet { d.set(jiraDayStart, forKey: "jiraDayStart") } }
     @Published var jiraDayEnd: Int { didSet { d.set(jiraDayEnd, forKey: "jiraDayEnd") } }
+    @Published var jiraLunch: Bool { didSet { d.set(jiraLunch, forKey: "jiraLunch") } }
+    @Published var jiraLunchStart: Int { didSet { d.set(jiraLunchStart, forKey: "jiraLunchStart") } }
     @Published var pomoWork: Double { didSet { d.set(pomoWork, forKey: "pomoWork") } }
     @Published var pomoShort: Double { didSet { d.set(pomoShort, forKey: "pomoShort") } }
     @Published var pomoLong: Double { didSet { d.set(pomoLong, forKey: "pomoLong") } }
@@ -189,6 +191,8 @@ final class Settings: ObservableObject {
             "jiraWorkHoursOnly": true,
             "jiraDayStart": 10,
             "jiraDayEnd": 19,
+            "jiraLunch": true,
+            "jiraLunchStart": 13,
             "showFace": true,
             "activityLayout": ActivityLayout.besideFace.rawValue,
             "dockFaceWhenCovered": true,
@@ -289,6 +293,8 @@ final class Settings: ObservableObject {
         jiraWorkHoursOnly = d.bool(forKey: "jiraWorkHoursOnly")
         jiraDayStart = d.integer(forKey: "jiraDayStart")
         jiraDayEnd = d.integer(forKey: "jiraDayEnd")
+        jiraLunch = d.bool(forKey: "jiraLunch")
+        jiraLunchStart = d.integer(forKey: "jiraLunchStart")
         showFace = d.bool(forKey: "showFace")
         pomoWork = d.double(forKey: "pomoWork")
         pomoShort = d.double(forKey: "pomoShort")

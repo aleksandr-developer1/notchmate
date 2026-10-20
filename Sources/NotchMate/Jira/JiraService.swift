@@ -35,11 +35,15 @@ struct JiraIssue: Identifiable, Hashable {
 
     /// Time spent in work according to the status history.
     @MainActor func timeInWork(at now: Date = Date()) -> Int {
+        progressPeriods.reduce(0) { $0 + Self.workSeconds($1, now: now) }
+    }
+
+    /// Working time of one stretch: weekdays within the work day, minus the lunch hour.
+    @MainActor static func workSeconds(_ p: ProgressPeriod, now: Date = Date()) -> Int {
         let s = Settings.shared
-        return Int(progressPeriods.reduce(0) { sum, p in
-            sum + WorkCalendar.seconds(from: p.start, to: p.end ?? now,
-                                       workHoursOnly: s.jiraWorkHoursOnly, dayStart: s.jiraDayStart, dayEnd: s.jiraDayEnd)
-        })
+        return Int(WorkCalendar.seconds(from: p.start, to: p.end ?? now, workHoursOnly: s.jiraWorkHoursOnly,
+                                        dayStart: s.jiraDayStart, dayEnd: s.jiraDayEnd,
+                                        lunchStart: s.jiraLunch ? s.jiraLunchStart : nil))
     }
 
     var isInProgress: Bool { statusCategory == "indeterminate" }
@@ -391,9 +395,10 @@ final class JiraService: ObservableObject {
     }
 }
 
-/// Working-time arithmetic: weekdays between dayStart and dayEnd hours.
+/// Working-time arithmetic: weekdays between dayStart and dayEnd hours, minus a one-hour lunch at lunchStart.
 enum WorkCalendar {
-    static func seconds(from start: Date, to end: Date, workHoursOnly: Bool, dayStart: Int, dayEnd: Int) -> TimeInterval {
+    static func seconds(from start: Date, to end: Date, workHoursOnly: Bool, dayStart: Int, dayEnd: Int,
+                        lunchStart: Int? = nil) -> TimeInterval {
         guard end > start else { return 0 }
         guard workHoursOnly, dayEnd > dayStart else { return end.timeIntervalSince(start) }
         let cal = Calendar.current
@@ -406,6 +411,12 @@ enum WorkCalendar {
                let we = cal.date(bySettingHour: dayEnd, minute: 0, second: 0, of: day) {
                 let a = max(ws, start), b = min(we, end)
                 if b > a { total += b.timeIntervalSince(a) }
+                if let lunchStart,
+                   let ls = cal.date(bySettingHour: lunchStart, minute: 0, second: 0, of: day),
+                   let le = cal.date(byAdding: .hour, value: 1, to: ls) {
+                    let la = max(ls, a), lb = min(le, b)
+                    if lb > la { total -= lb.timeIntervalSince(la) }
+                }
             }
             guard let next = cal.date(byAdding: .day, value: 1, to: day) else { break }
             day = next

@@ -126,6 +126,7 @@ struct FaceView: View {
     /// Observed so the face starts dancing as soon as the track's tempo arrives.
     @ObservedObject private var tempo = AppEnvironment.shared.tempo
     @ObservedObject private var breathing = AppEnvironment.shared.breathing
+    @ObservedObject private var energy = EnergyPolicy.shared
 
     var body: some View {
         let seg = FaceAnimations.segment(for: mood)
@@ -134,8 +135,10 @@ struct FaceView: View {
         let dancing = mood == .music && tempo.tempo != nil
         // Dancing needs ~30 fps so a 12-frame beat stays smooth up to 150 BPM; everything else keeps the clip's rate.
         let synced = dancing || (mood == .breathe && breathing.isActive)
-        TimelineView(.animation(minimumInterval: synced ? 1 / 30 : 1 / (clip?.fps ?? 8),
-                                paused: !synced && (clip?.frames.count ?? 0) <= 1)) { ctx in
+        let fps = synced ? (energy.state.reducedEffects ? 12.0 : 30.0)
+            : min(clip?.fps ?? 8, energy.state.reducedEffects ? 4 : (mood == .idle ? 6 : 12))
+        TimelineView(.animation(minimumInterval: 1 / fps,
+                                paused: energy.state.suspended || (!synced && (clip?.frames.count ?? 0) <= 1))) { ctx in
             if mood == .breathe, breathing.isActive, let clip, !clip.frames.isEmpty {
                 // Frame = how full the lungs are, so holds freeze naturally.
                 let full = breathing.state(at: ctx.date).fullness

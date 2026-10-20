@@ -42,6 +42,14 @@ All UI strings live in [`Resources/Localizable.xcstrings`](Resources/Localizable
 4. Make sure `swift build` passes without warnings and describe how you tested the change.
 5. Never commit personal data, tokens or build output.
 
+## Changelog and releases
+
+Include user-visible changes in [`CHANGELOG.md`](CHANGELOG.md) under `Unreleased`, grouped by change type. Describe the resulting behavior; do not copy the commit log or claim performance gains without measurements.
+
+Releases are made on GitHub only at the maintainer's explicit request. Until then, keep entries in `Unreleased` and leave app versions, build numbers, release tags, and GitHub releases unchanged. Local builds with the `release` compiler configuration are validation builds, not published releases.
+
+After an explicitly requested GitHub release is published successfully, move its entries into a section with the published version and publication date, and keep a fresh `Unreleased` section for subsequent work.
+
 ## Reporting bugs
 
 Use the **Bug report** template and include your macOS version, Mac model and what you expected to happen. Logs from Console.app (filter by `NotchMate`) help a lot.

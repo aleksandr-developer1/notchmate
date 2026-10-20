@@ -94,7 +94,7 @@ final class Companion: ObservableObject {
 
     private weak var env: AppEnvironment?
     private var reaction: (mood: Mood, until: Date)?
-    private var tickTimer: Timer?
+    private var tickTimer: EnergyTimer?
     private var lastPointerMove = Date()
     private var lastPointer: CGVector?
     private var shake = ShakeDetector()
@@ -121,9 +121,8 @@ final class Companion: ObservableObject {
 
     func start(env: AppEnvironment) {
         self.env = env
-        tickTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.tick() }
-        }
+        tickTimer = EnergyTimer(interval: { EnergyPolicy.shared.state.reducedEffects ? 3 : 1 },
+                                action: { [weak self] in self?.tick() })
         react(.startup, for: 8)
     }
 

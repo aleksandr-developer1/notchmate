@@ -27,6 +27,9 @@ final class NotchWindowController {
     private var openWork: DispatchWorkItem?
     private var closeWork: DispatchWorkItem?
     private var previousApp: NSRunningApplication?
+    private var coverageTimer: EnergyTimer?
+    private var lastCoverageCheck = Date.distantPast
+    private var lastPointerUpdate = Date.distantPast
     private var dragChangeCount = NSPasteboard(name: .drag).changeCount
     private var screen: NSScreen?
 
@@ -86,9 +89,10 @@ final class NotchWindowController {
 
         wireViewModel()
         wireInteractivity()
-        Timer.scheduledTimer(withTimeInterval: 0.7, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.checkFaceCovered() }
-        }
+        coverageTimer = EnergyTimer(interval: {
+            Settings.shared.dockFaceWhenCovered && Settings.shared.showFace
+                ? (EnergyPolicy.shared.state.reducedEffects ? 6 : 3) : nil
+        }, action: { [weak self] in self?.checkFaceCovered() })
         wireEvents()
         wireServices()
         panel.orderFrontRegardless()
@@ -139,6 +143,9 @@ final class NotchWindowController {
 
     /// Is a window of another app right under the face? Window bounds need no permission.
     private func checkFaceCovered() {
+        guard !EnergyPolicy.shared.state.suspended else { return }
+        let sinceLastCheck = Date().timeIntervalSince(lastCoverageCheck)
+        lastCoverageCheck = Date()
         guard let frame = screen?.frame else { return }
         let vm = viewModel
         guard Settings.shared.dockFaceWhenCovered, vm.showsFace else {
@@ -167,7 +174,8 @@ final class NotchWindowController {
             uncoveredChecks = 0
             if !vm.faceCovered { withAnimation(NotchViewModel.spring) { vm.faceCovered = true } }
         } else if vm.faceCovered {
-            uncoveredChecks += 1
+            // At the quiet cadence one check already spans the original settling delay.
+            uncoveredChecks += sinceLastCheck >= 1.4 ? 2 : 1
             if uncoveredChecks >= 2 { withAnimation(NotchViewModel.spring) { vm.faceCovered = false } }
         }
     }
@@ -211,7 +219,10 @@ final class NotchWindowController {
             .merge(with: viewModel.$tab.map { _ in () }, viewModel.$hud.map { _ in () }, viewModel.$notchSize.map { _ in () },
                    viewModel.$faceCovered.map { _ in () })
             .receive(on: RunLoop.main)
-            .sink { [weak self] in self?.updateMouseInteractivity(at: NSEvent.mouseLocation) }
+            .sink { [weak self] in
+                self?.updateMouseInteractivity(at: NSEvent.mouseLocation)
+                self?.env.tempo.refreshAudio()
+            }
             .store(in: &cancellables)
     }
 
@@ -369,12 +380,20 @@ final class NotchWindowController {
     // MARK: Event handling
 
     private func handleMove(_ event: NSEvent) {
+        guard !EnergyPolicy.shared.state.suspended else { return }
         let point = NSEvent.mouseLocation
-        if let frame = screen?.frame {
+        let now = Date()
+        let pointerInterval = EnergyPolicy.shared.state.reducedEffects ? 1.0 / 12 : 1.0 / 20
+        if viewModel.showsFace, now.timeIntervalSince(lastPointerUpdate) >= pointerInterval, let frame = screen?.frame {
+            lastPointerUpdate = now
             let faceCenter = viewModel.isDocked
                 ? CGPoint(x: frame.midX - viewModel.cutoutWidth / 2 - NotchViewModel.dockFaceWidth / 2, y: frame.maxY - viewModel.notchSize.height / 2)
                 : CGPoint(x: frame.midX, y: frame.maxY - viewModel.notchSize.height - NotchViewModel.faceHeight / 2)
             env.companion.pointerMoved(vector: CGVector(dx: point.x - faceCenter.x, dy: faceCenter.y - point.y))
+        }
+        // Window movement needs faster coverage updates only during an actual drag.
+        if event.type == .leftMouseDragged, now.timeIntervalSince(lastCoverageCheck) >= 0.7 {
+            checkFaceCovered()
         }
         if event.type == .leftMouseDragged, handleDrag(at: point) { return }
         updateMouseInteractivity(at: point)

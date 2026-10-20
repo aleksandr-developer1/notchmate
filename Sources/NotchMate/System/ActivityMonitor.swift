@@ -12,12 +12,11 @@ final class ActivityMonitor: ObservableObject {
     private(set) var intensitySince = Date()
 
     private var samples: [(Date, UInt32)] = []
-    private var timer: Timer?
+    private var timer: EnergyTimer?
 
     func start() {
-        timer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.sample() }
-        }
+        timer = EnergyTimer(interval: { EnergyPolicy.shared.state.reducedEffects ? 15 : 5 },
+                            action: { [weak self] in self?.sample() })
     }
 
     var duration: TimeInterval { Date().timeIntervalSince(intensitySince) }

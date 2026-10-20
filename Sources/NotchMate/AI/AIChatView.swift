@@ -242,7 +242,7 @@ private struct MessageBubble: View {
 private struct TypingDots: View {
     let tint: Color
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1 / 15)) { ctx in
+        EnergyAnimation(minimumInterval: 1 / 15) { ctx in
             let t = ctx.date.timeIntervalSinceReferenceDate
             HStack(spacing: 4) {
                 ForEach(0..<3, id: \.self) { i in

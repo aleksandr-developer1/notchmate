@@ -229,7 +229,7 @@ private struct CIRow: View {
         ZStack {
             Circle().fill(color(state).opacity(0.16)).frame(width: 22, height: 22)
             if state == .pending {
-                TimelineView(.animation(minimumInterval: 1 / 30)) { ctx in
+                EnergyAnimation(minimumInterval: 1 / 30) { ctx in
                     Circle().trim(from: 0, to: 0.28)
                         .stroke(Color.yellow, style: StrokeStyle(lineWidth: 2, lineCap: .round))
                         .frame(width: 14, height: 14)
@@ -432,7 +432,7 @@ private struct ShimmerText: View {
     let text: String
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1 / 30)) { ctx in
+        EnergyAnimation(minimumInterval: 1 / 30) { ctx in
             let phase = ctx.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1.6) / 1.6
             Text(text).font(Theme.font(12)).foregroundStyle(Theme.tertiary)
                 .overlay {

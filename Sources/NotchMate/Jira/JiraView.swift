@@ -85,6 +85,7 @@ private struct ActiveIssueCard: View {
                             logged: Double(logged) / Double(total), over: over)
                 HStack(spacing: 0) {
                     stat(String(localized: "Прошло"), JiraService.format(spent), .white)
+                        .help(periodsHelp(issue, now: ctx.date))
                     stat(String(localized: "Осталось"), JiraService.format(remaining), over ? .red : Theme.jira)
                     stat(String(localized: "Оценка"), JiraService.format(original), Theme.secondary)
                 }
@@ -98,6 +99,17 @@ private struct ActiveIssueCard: View {
                 sessionControls(issue, session: session)
             }
         }
+    }
+
+    /// Where "time in work" comes from: each stretch in a work status, with its counted duration.
+    private func periodsHelp(_ issue: JiraIssue, now: Date) -> String {
+        guard !issue.progressPeriods.isEmpty else { return String(localized: "Нет истории статусов — считается списанное время") }
+        let df = Date.FormatStyle.dateTime.day().month(.abbreviated).hour().minute().locale(AppLanguage.locale)
+        return issue.progressPeriods.map { p in
+            let secs = JiraIssue.workSeconds(p, now: now)
+            let end = p.end.map { $0.formatted(df) } ?? String(localized: "сейчас")
+            return "\(p.start.formatted(df)) → \(end): \(JiraService.format(secs))"
+        }.joined(separator: "\n")
     }
 
     private func stat(_ label: String, _ value: String, _ tint: Color) -> some View {

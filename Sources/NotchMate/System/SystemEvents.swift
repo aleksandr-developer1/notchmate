@@ -17,8 +17,8 @@ final class SystemEvents: ObservableObject {
 
     private let pathMonitor = NWPathMonitor()
     private var lastPathSatisfied: Bool?
-    private var pollTimer: Timer?
-    private var fastTimer: Timer?
+    private var pollTimer: EnergyTimer?
+    private var fastTimer: EnergyTimer?
     @Published private(set) var cameraActive = false
     private var cameraOn = false
     private var bannerSignature = 0
@@ -33,14 +33,14 @@ final class SystemEvents: ObservableObject {
         self.env = env
         watchNetwork()
         watchWorkspace()
-        pollTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.slowPoll() }
-        }
+        pollTimer = EnergyTimer(interval: {
+            EnergyPolicy.shared.state.reducedEffects ? 15 : 6
+        }, action: { [weak self] in self?.slowPoll() })
         // Accessibility has no reliable notification for new Notification Center banners.
         // Its view tree is comparatively expensive to walk, so don't do it at animation speed.
-        fastTimer = Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.fastPoll() }
-        }
+        fastTimer = EnergyTimer(interval: {
+            Settings.shared.reactNotifications ? (EnergyPolicy.shared.state.reducedEffects ? 20 : 8) : nil
+        }, action: { [weak self] in self?.fastPoll() })
         NotificationCenter.default.addObserver(forName: .notchMateSettingsChanged, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.refreshScreenshotWatcher() }
         }
@@ -97,7 +97,8 @@ final class SystemEvents: ObservableObject {
     // MARK: Polling
 
     private func slowPoll() {
-        accessibilityTrusted = AXIsProcessTrusted()
+        let trusted = AXIsProcessTrusted()
+        if accessibilityTrusted != trusted { accessibilityTrusted = trusted }
         if settings.reactCamera {
             let on = Self.isCameraRunning()
             if on != cameraOn {

@@ -26,6 +26,8 @@ final class TempoService: ObservableObject {
     private weak var player: NowPlayingService?
     private var cancellable: AnyCancellable?
     private var playback: AnyCancellable?
+    private var audioSettings: AnyCancellable?
+    private var discoPlayback: AnyCancellable?
     private var currentKey: String?
     private var lookup: Task<Void, Never>?
     private var taps: [Double] = []
@@ -44,8 +46,28 @@ final class TempoService: ObservableObject {
             // $track fires in willSet, so pass the new track along instead of reading player.track.
             .removeDuplicates { $0.map(Self.key) == $1.map(Self.key) }
             .sink { [weak self] track in self?.trackChanged(track) }
-        playback = player.$track.sink { [weak self] track in self?.audio.follow(track) }
+        playback = player.$track.combineLatest(EnergyPolicy.shared.$state)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.refreshAudio() }
+        audioSettings = Settings.shared.objectWillChange
+            .receive(on: RunLoop.main).sink { [weak self] _ in self?.refreshAudio() }
+        discoPlayback = AppEnvironment.shared.disco.$isOn.receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.refreshAudio() }
         audio.onGrid = { [weak self] grid in self?.apply(grid) }
+    }
+
+    /// Cached/catalogue BPM still animates the face when live analysis is unnecessary.
+    func refreshAudio() {
+        let energy = EnergyPolicy.shared.state
+        let env = AppEnvironment.shared
+        let settings = env.settings
+        let visible = settings.showFace || (settings.showMusicActivity && settings.notchGlowMode == .artwork)
+            || env.disco.isOn || env.notchIsOpen(on: .home)
+        if energy.suspended || energy.reducedEffects || !visible {
+            audio.suspend()
+        } else {
+            audio.follow(player?.track)
+        }
     }
 
     /// Live estimate from the audio. Tapped tempo wins; small wobbles don't republish.

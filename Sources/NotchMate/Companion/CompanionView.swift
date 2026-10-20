@@ -116,7 +116,8 @@ struct CompanionView: View {
                 .help(String(localized: "Дела из приложения «Напоминания» появятся на шкале дня"))
             }
             ForEach(attention.items.prefix(4)) { item in
-                Button { attention.perform(item) } label: {
+                // A retry is heavy, so it lives only in the context menu.
+                Button { if item.action != .retryCall { attention.perform(item) } } label: {
                     HStack(spacing: 5) {
                         if let img = item.appIcon {
                             Image(nsImage: img).resizable().frame(width: 12, height: 12)

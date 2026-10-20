@@ -144,7 +144,7 @@ private struct ArtworkGlow: View {
 
     var body: some View {
         let live = isPlaying && tempo.tempo != nil
-        TimelineView(.animation(minimumInterval: 1 / 30, paused: !isPlaying)) { ctx in
+        EnergyAnimation(minimumInterval: 1 / 30, paused: !isPlaying) { ctx in
             // Sharp attack on the beat, exponential decay until the next one.
             let pulse = !isPlaying ? 0 : tempo.audio.isLive ? Double(tempo.audio.glowLevels().kick)
                 : live ? tempo.beats(at: ctx.date).map { exp(-4 * ($0 - $0.rounded(.down))) } ?? 0 : 0
@@ -397,7 +397,7 @@ struct MarqueeText: View {
     var body: some View {
         GeometryReader { geo in
             let overflow = textWidth - geo.size.width
-            TimelineView(.animation(minimumInterval: 1 / 30, paused: overflow <= 0)) { ctx in
+            EnergyAnimation(minimumInterval: 1 / 30, paused: overflow <= 0) { ctx in
                 let cycle = Double(overflow) / 22 + 4 // seconds: scroll + pauses
                 let t = ctx.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: max(cycle * 2, 1))
                 let scrollTime = cycle - 4

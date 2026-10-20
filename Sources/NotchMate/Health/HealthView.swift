@@ -138,7 +138,7 @@ private struct BodyBatteryGauge: View {
         let tint = HealthAnalytics.batteryColor(v)
         HStack(spacing: 8) {
             // A person filled with energy up to the level; the surface waves gently.
-            TimelineView(.animation(minimumInterval: 1 / 24, paused: level == nil)) { ctx in
+            EnergyAnimation(minimumInterval: 1 / 24, paused: level == nil) { ctx in
                 let t = ctx.date.timeIntervalSinceReferenceDate
                 let figure = Image(systemName: "figure.stand").resizable().aspectRatio(contentMode: .fit)
                 ZStack(alignment: .bottom) {
@@ -205,7 +205,7 @@ private struct StressNow: View {
         HStack(spacing: 8) {
             if let point {
                 let level = HealthAnalytics.stressLevel(point.v)
-                TimelineView(.animation(minimumInterval: 1 / 20)) { ctx in
+                EnergyAnimation(minimumInterval: 1 / 20) { ctx in
                     // Faster, wider pulse the higher the stress.
                     let speed = 1.2 + point.v / 40
                     let k = (sin(ctx.date.timeIntervalSinceReferenceDate * speed * .pi) + 1) / 2
@@ -701,7 +701,7 @@ private struct BreathingPanel: View {
     private let tint = Color(red: 0.45, green: 0.8, blue: 1)
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1 / 30)) { ctx in
+        EnergyAnimation(minimumInterval: 1 / 30) { ctx in
             let s = breathing.state(at: ctx.date)
             HStack(spacing: 24) {
                 BreathingOrb(fullness: s.fullness, tint: tint, size: 150)
@@ -761,7 +761,7 @@ struct BreathingNotchOverlay: View {
     private let tint = Color(red: 0.45, green: 0.8, blue: 1)
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1 / 30)) { ctx in
+        EnergyAnimation(minimumInterval: 1 / 30) { ctx in
             let s = breathing.state(at: ctx.date)
             HStack(spacing: 10) {
                 BreathingOrb(fullness: s.fullness, tint: tint, size: 38).frame(width: 46, height: 46)

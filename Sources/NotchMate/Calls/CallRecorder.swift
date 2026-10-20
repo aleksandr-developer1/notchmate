@@ -15,6 +15,8 @@ final class CallRecorder: NSObject, ObservableObject {
     @Published private(set) var startedAt: Date?
     @Published private(set) var lastNote: String?
     @Published private(set) var lastError: String?
+    /// Recording whose processing failed — kept so the error can be retried.
+    private(set) var failedFolder: URL?
     @Published private(set) var micActive = false
     /// Apps currently holding the microphone (NotchMate itself excluded).
     @Published private(set) var micApps: [String] = []
@@ -29,7 +31,7 @@ final class CallRecorder: NSObject, ObservableObject {
     private var folder: URL?
     private var title = String(localized: "Созвон")
     private var micIdleSince: Date?
-    private var timer: Timer?
+    private var timer: EnergyTimer?
     /// Live audio for the meeting assistant (nothing is listening unless it's on).
     let tap = AudioTap()
     private lazy var output = StreamOutput(writers: writers, tap: tap)
@@ -39,9 +41,12 @@ final class CallRecorder: NSObject, ObservableObject {
     func start(env: AppEnvironment) {
         self.env = env
         Task.detached { Self.removeEmptyPending() }
-        timer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.poll() }
-        }
+        timer = EnergyTimer(runsWhenSuspended: true, interval: { [weak self] in
+            guard let self else { return nil }
+            if self.stage == .recording { return 3 }
+            let energy = EnergyPolicy.shared.state
+            return energy.suspended || energy.reducedEffects ? 15 : 5
+        }, action: { [weak self] in self?.poll() })
     }
 
     // MARK: Detection
@@ -49,8 +54,9 @@ final class CallRecorder: NSObject, ObservableObject {
     private func poll() {
         let holders = Self.microphoneHolders()
         let active = !holders.isEmpty
-        micActive = active
-        micApps = holders.map(\.name)
+        if micActive != active { micActive = active }
+        let names = holders.map(\.name)
+        if micApps != names { micApps = names }
         // Same filters as auto-recording: only chosen apps / call sites count, not Siri or a voice memo.
         env?.companion.inCall = stage == .recording || isCallApp(holders) || env?.systemEvents.cameraActive == true
         if active {
@@ -262,9 +268,21 @@ final class CallRecorder: NSObject, ObservableObject {
             if !settings.callsKeepAudio { try? FileManager.default.removeItem(at: mixed) }
         } catch {
             lastError = error.localizedDescription
+            failedFolder = folder
         }
         stage = .idle
         self.folder = nil
+    }
+
+    /// Runs the failed recording again; only the summary is redone when the transcript survived.
+    func retryFailed() async {
+        guard let dir = failedFolder, FileManager.default.fileExists(atPath: dir.path) else {
+            failedFolder = nil
+            lastError = nil
+            return
+        }
+        lastError = nil
+        await processExisting(folder: dir, title: title)
     }
 
     /// Finishes a recording whose audio is already on disk (NotchMate restarted mid-call).
@@ -282,22 +300,33 @@ final class CallRecorder: NSObject, ObservableObject {
             return
         }
         do {
-            let mixed = try await Task.detached { try Self.mixdown(in: dir) }.value
-            let text = try await transcribe(mixed)
-            guard text.count > 40 else {
-                discard(dir, reason: String(localized: "речь не распознана"))
-                startedAt = nil
-                return
+            let transcriptURL = dir.appendingPathComponent("transcript.txt")
+            let text: String
+            var mixed: URL?
+            // A retry after a failed summary: the transcript is already there.
+            if let saved = try? String(contentsOf: transcriptURL, encoding: .utf8), saved.count > 40 {
+                text = saved
+            } else {
+                let audio = try await Task.detached { try Self.mixdown(in: dir) }.value
+                mixed = audio
+                text = try await transcribe(audio)
+                guard text.count > 40 else {
+                    discard(dir, reason: String(localized: "речь не распознана"))
+                    startedAt = nil
+                    return
+                }
+                try? text.write(to: transcriptURL, atomically: true, encoding: .utf8)
             }
-            try? text.write(to: dir.appendingPathComponent("transcript.txt"), atomically: true, encoding: .utf8)
             stage = .summarizing
             let summary = try await summarize(text, duration: seconds)
             lastNote = writeNote(summary: summary, transcript: text, duration: seconds, folder: dir)
             onFinished?(self.title, nil)
-            if !settings.callsKeepAudio { try? FileManager.default.removeItem(at: mixed) }
+            if let mixed, !settings.callsKeepAudio { try? FileManager.default.removeItem(at: mixed) }
             lastError = nil
+            failedFolder = nil
         } catch {
             lastError = error.localizedDescription
+            failedFolder = dir
         }
         stage = .idle
         startedAt = nil
