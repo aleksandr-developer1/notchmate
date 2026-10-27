@@ -40,8 +40,12 @@ final class ShelfStore: ObservableObject {
     func add(text: String) {
         guard Settings.shared.pluginEnabled(.shelf) else { return }
         let url = storeDir.appendingPathComponent(String(localized: "Текст \(Self.stamp()).txt"))
-        try? text.write(to: url, atomically: true, encoding: .utf8)
-        add(urls: [url])
+        do {
+            try text.write(to: url, atomically: true, encoding: .utf8)
+            add(urls: [url])
+        } catch {
+            NSLog("NotchMate: failed to save shelf text: %@", error.localizedDescription)
+        }
     }
 
     func add(imageData: Data) {
@@ -49,8 +53,12 @@ final class ShelfStore: ObservableObject {
         let url = storeDir.appendingPathComponent(String(localized: "Изображение \(Self.stamp()).png"))
         if let img = NSImage(data: imageData), let tiff = img.tiffRepresentation,
            let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]) {
-            try? png.write(to: url)
-            add(urls: [url])
+            do {
+                try png.write(to: url)
+                add(urls: [url])
+            } catch {
+                NSLog("NotchMate: failed to save shelf image: %@", error.localizedDescription)
+            }
         }
     }
 

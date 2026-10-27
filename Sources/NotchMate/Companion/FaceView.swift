@@ -94,6 +94,23 @@ final class FaceAnimations {
         (mood.rawValue, nil, mood != .startup)
     }
 
+    /// Returns a frame in `range`, even when a timeline briefly reports a date before the animation started.
+    static func animationFrameIndex(elapsed: TimeInterval, fps: Double, range: Range<Int>, loops: Bool) -> Int? {
+        guard !range.isEmpty, elapsed.isFinite, fps.isFinite, fps > 0 else { return nil }
+        let scaledElapsed = max(0, elapsed) * fps
+        guard scaledElapsed < Double(Int.max) else {
+            return loops ? range.lowerBound : range.upperBound - 1
+        }
+        let step = Int(scaledElapsed)
+        return range.lowerBound + (loops ? step % range.count : min(step, range.count - 1))
+    }
+
+    /// Keeps rendering resilient if a caller supplies an invalid index or a clip fails to decode.
+    static func boundedFrameIndex(_ index: Int, frameCount: Int) -> Int? {
+        guard frameCount > 0 else { return nil }
+        return min(max(index, 0), frameCount - 1)
+    }
+
     /// Dance clips are one bar (4 beats) long; frame 0 of each beat lands on the beat.
     /// Sets by the character of the rhythm: slow/quiet → nod and sway, mid → bob, fast/loud → bob and jump.
     static let danceMoves: [[String]] = [
@@ -152,9 +169,9 @@ struct FaceView: View {
             } else if let clip, !clip.frames.isEmpty {
                 let t = ctx.date.timeIntervalSince(startDate)
                 let range = seg.range.map { $0.clamped(to: 0..<clip.frames.count) } ?? 0..<clip.frames.count
-                let n = max(range.count, 1)
-                let step = Int(t * clip.fps)
-                frame(clip, range.lowerBound + (seg.loops ? step % n : min(step, n - 1)), size: size)
+                if let index = FaceAnimations.animationFrameIndex(elapsed: t, fps: clip.fps, range: range, loops: seg.loops) {
+                    frame(clip, index, size: size)
+                }
             } else {
                 Text(String(localized: "Пикси")).font(Theme.font(10, .bold)).foregroundStyle(color)
             }
@@ -164,19 +181,22 @@ struct FaceView: View {
         .onChange(of: mood) { _, _ in startDate = Date() }
     }
 
+    @ViewBuilder
     private func frame(_ clip: FaceAnimations.Clip, _ idx: Int, size: CGSize) -> some View {
-        ZStack {
-            if let blush = clip.blush, blush.indices.contains(idx) {
-                Image(nsImage: blush[idx])
+        if let index = FaceAnimations.boundedFrameIndex(idx, frameCount: clip.frames.count) {
+            ZStack {
+                if let blush = clip.blush, blush.indices.contains(index) {
+                    Image(nsImage: blush[index])
+                        .renderingMode(.template).interpolation(.none).resizable()
+                        .foregroundStyle(FaceAnimations.blushColor)
+                        .shadow(color: FaceAnimations.blushColor.opacity(0.9), radius: 2.5 * max(scale * 2, 1))
+                }
+                Image(nsImage: clip.frames[index])
                     .renderingMode(.template).interpolation(.none).resizable()
-                    .foregroundStyle(FaceAnimations.blushColor)
-                    .shadow(color: FaceAnimations.blushColor.opacity(0.9), radius: 2.5 * max(scale * 2, 1))
+                    .foregroundStyle(color)
+                    .shadow(color: color.opacity(0.6), radius: 2.5 * max(scale * 2, 1))
             }
-            Image(nsImage: clip.frames[idx])
-                .renderingMode(.template).interpolation(.none).resizable()
-                .foregroundStyle(color)
-                .shadow(color: color.opacity(0.6), radius: 2.5 * max(scale * 2, 1))
+            .frame(width: size.width, height: size.height)
         }
-        .frame(width: size.width, height: size.height)
     }
 }

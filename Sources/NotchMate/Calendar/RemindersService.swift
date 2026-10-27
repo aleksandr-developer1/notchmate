@@ -85,8 +85,12 @@ final class RemindersService: ObservableObject {
     func complete(_ item: ReminderItem) {
         guard let r = store.calendarItem(withIdentifier: item.id) as? EKReminder else { return }
         r.isCompleted = true
-        try? store.save(r, commit: true)
-        withAnimation(.spring(response: 0.3)) { items.removeAll { $0.id == item.id } }
+        do {
+            try store.save(r, commit: true)
+            withAnimation(.spring(response: 0.3)) { items.removeAll { $0.id == item.id } }
+        } catch {
+            NSLog("NotchMate: failed to complete reminder: %@", error.localizedDescription)
+        }
     }
 
     /// Push the reminder an hour ahead (or to an hour from now, if it's already late).
@@ -97,8 +101,12 @@ final class RemindersService: ObservableObject {
         r.dueDateComponents = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: next)
         r.alarms?.forEach { r.removeAlarm($0) }
         r.addAlarm(EKAlarm(absoluteDate: next))
-        try? store.save(r, commit: true)
-        refresh()
+        do {
+            try store.save(r, commit: true)
+            refresh()
+        } catch {
+            NSLog("NotchMate: failed to snooze reminder: %@", error.localizedDescription)
+        }
     }
 
     func openApp() {

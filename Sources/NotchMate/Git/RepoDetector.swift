@@ -151,14 +151,16 @@ enum RepoDetector {
         let app = AXUIElementCreateApplication(pid)
         var window: CFTypeRef?
         guard AXUIElementCopyAttributeValue(app, kAXFocusedWindowAttribute as CFString, &window) == .success,
-              let win = window else { return nil }
+              let rawWindow = window,
+              CFGetTypeID(rawWindow) == AXUIElementGetTypeID() else { return nil }
+        let focusedWindow = unsafeBitCast(rawWindow, to: AXUIElement.self)
         var value: CFTypeRef?
         // Xcode and other document apps expose the file itself.
-        if AXUIElementCopyAttributeValue(win as! AXUIElement, kAXDocumentAttribute as CFString, &value) == .success,
+        if AXUIElementCopyAttributeValue(focusedWindow, kAXDocumentAttribute as CFString, &value) == .success,
            let doc = value as? String, let url = URL(string: doc), url.isFileURL {
             return url.path
         }
-        guard AXUIElementCopyAttributeValue(win as! AXUIElement, kAXTitleAttribute as CFString, &value) == .success else { return nil }
+        guard AXUIElementCopyAttributeValue(focusedWindow, kAXTitleAttribute as CFString, &value) == .success else { return nil }
         return value as? String
     }
 }

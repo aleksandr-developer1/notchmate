@@ -109,10 +109,18 @@ final class HealthService: ObservableObject {
         guard Settings.shared.pluginEnabled(.garmin) else { return }
         guard let script = scriptURL else { garminState = .error(String(localized: "нет скрипта синхронизации")); return }
         let fm = FileManager.default
-        try? fm.createDirectory(at: Self.supportURL, withIntermediateDirectories: true)
         let installed = Self.supportURL.appendingPathComponent("garmin_sync.py")
-        try? fm.removeItem(at: installed)
-        try? fm.copyItem(at: script, to: installed)
+        do {
+            try fm.createDirectory(at: Self.supportURL, withIntermediateDirectories: true)
+            if fm.fileExists(atPath: installed.path) {
+                try fm.removeItem(at: installed)
+            }
+            try fm.copyItem(at: script, to: installed)
+        } catch {
+            garminState = .error(String(localized: "не удалось подготовить синхронизацию Garmin"))
+            NSLog("NotchMate: failed to stage Garmin helper: %@", error.localizedDescription)
+            return
+        }
 
         let q = { (u: URL) in "'" + u.path.replacingOccurrences(of: "'", with: "'\\''") + "'" }
         // Translated text goes inside double quotes: keep the shell from expanding anything in it.

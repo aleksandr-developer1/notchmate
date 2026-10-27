@@ -4,6 +4,11 @@ User-visible changes are recorded here. Pending changes stay in `Unreleased` unt
 
 ## Unreleased
 
+### Fixed
+
+- Prevent the companion face from crashing when its animation timeline temporarily reports a time before the animation started.
+- Keep Shelf and Reminders synchronized with disk and EventKit when saving fails, prevent a malformed Accessibility value from crashing Git repository detection, and stop Garmin setup when its helper cannot be prepared.
+
 ## 0.9.1 - 2026-10-20
 
 ### Added
