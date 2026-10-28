@@ -4,6 +4,8 @@ User-visible changes are recorded here. Pending changes stay in `Unreleased` unt
 
 ## Unreleased
 
+## 0.10.0 - 2026-10-28
+
 ### Added
 
 - **Answer your AI agents from the notch.** Claude Code questions, plan approvals, and permission requests (in Terminal, an IDE, or the Claude desktop app), Codex questions and permission requests (in Terminal or the Codex app), and questions from NotchMate's own Codex chat appear as cards: step-by-step questions with selectable options and a free-text answer, a formatted plan, or the exact command to approve. Digits pick an answer and Return moves on. A countdown hands the request back to the agent's window if you don't answer, and Codex questions that ask for secrets stay in Codex.
