@@ -173,13 +173,14 @@ final class CalendarService: ObservableObject {
         options: [.caseInsensitive])
 
     private static func meetingLink(_ e: EKEvent) -> URL? {
-        if let url = e.url, linkPattern.firstMatch(in: url.absoluteString, range: NSRange(url.absoluteString.startIndex..., in: url.absoluteString)) != nil { return url }
-        for text in [e.location, e.notes].compactMap({ $0 }) {
-            let range = NSRange(text.startIndex..., in: text)
-            if let m = linkPattern.firstMatch(in: text, range: range), let r = Range(m.range, in: text) {
-                return URL(string: String(text[r]))
-            }
-        }
-        return nil
+        if let url = e.url, meetingLink(in: url.absoluteString) != nil { return url }
+        return [e.location, e.notes].compactMap { $0 }.lazy.compactMap(meetingLink(in:)).first
+    }
+
+    /// First Zoom / Meet / Teams / Telemost / … link in a piece of event text.
+    static func meetingLink(in text: String) -> URL? {
+        let range = NSRange(text.startIndex..., in: text)
+        guard let m = linkPattern.firstMatch(in: text, range: range), let r = Range(m.range, in: text) else { return nil }
+        return URL(string: String(text[r]))
     }
 }

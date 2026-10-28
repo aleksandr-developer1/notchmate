@@ -4,10 +4,28 @@ User-visible changes are recorded here. Pending changes stay in `Unreleased` unt
 
 ## Unreleased
 
+### Added
+
+- **Answer your AI agents from the notch.** Claude Code questions, plan approvals, and permission requests (in Terminal, an IDE, or the Claude desktop app), Codex questions and permission requests (in Terminal or the Codex app), and questions from NotchMate's own Codex chat appear as cards: step-by-step questions with selectable options and a free-text answer, a formatted plan, or the exact command to approve. Digits pick an answer and Return moves on. A countdown hands the request back to the agent's window if you don't answer, and Codex questions that ask for secrets stay in Codex.
+- **One-click updates.** NotchMate checks GitHub once a day and the assistant announces a new version once. About shows what's new; Install and Relaunch downloads the release archive, verifies its checksum, version, and signature, replaces the app, and opens the new version. The menu bar icon offers the same, and you can still download manually or skip a version.
+- **Welcome tour** for new users: how to open the panel, the hotkeys, and the plug-in catalog, followed by the permission walkthrough. It can be replayed from About.
+- **Join meetings in one click** from the Now strip when a meeting with a call link starts within 10 minutes; the collapsed countdown shows a camera mark for such events.
+- **Headphone battery** — left, right, and case, or a single level — appears in the notch when sound switches to Bluetooth headphones such as AirPods, with no extra permission.
+- **Weather plug-in** with temperature and conditions in the panel header for the city you choose, and a heads-up from the assistant when rain or snow is likely within two hours. Forecasts come from Open-Meteo, and only the city's coordinates are sent.
+- **Share from the shelf** through the system share menu, one file at a time or everything at once.
+- **Report a problem** from About with a ready-to-paste report of versions, plug-ins, missing permissions, and recent errors. Your home folder and account name are hidden, and nothing is sent until you paste it.
+
+### Changed
+
+- **A new companion face.** It's drawn live with soft shapes that stay crisp at any size, springs smoothly between moods, blinks and glances around on its own, and plays a short scene for every mood with large animated props — floating hearts, a falling tear, a ball the eyes follow, a fishing float, steaming coffee, and more. It dances to the beat of the music and breathes along with breathing exercises. Blush appears only in affectionate and shy moods. The pixel face is retired.
+- Agent sessions in the Now strip show what the agent is waiting for, stay marked as waiting while a question or approval is pending, and open the app the session runs in.
+- Installed Claude Code and Codex CLIs are connected automatically on first launch — hooks and the NotchMate MCP server — and existing hooks are updated in place; manual disconnects are respected. Codex and Claude Code bundled with the Codex, ChatGPT, and Claude desktop apps are found even when their command-line tools are not on PATH.
+- ← and → switch panel tabs, and VoiceOver reads the panel's buttons, tabs, agent sessions, and request cards.
+
 ### Fixed
 
-- Prevent the companion face from crashing when its animation timeline temporarily reports a time before the animation started.
-- Keep Shelf and Reminders synchronized with disk and EventKit when saving fails, prevent a malformed Accessibility value from crashing Git repository detection, and stop Garmin setup when its helper cannot be prepared.
+- Prevent the companion face from crashing when its animation timeline briefly reports a time before the animation started.
+- Keep Shelf and Reminders in sync with disk and EventKit when saving fails, prevent a malformed Accessibility value from crashing Git repository detection, and stop Garmin setup cleanly when its helper can't be prepared.
 
 ## 0.9.1 - 2026-10-20
 

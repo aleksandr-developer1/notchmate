@@ -7,6 +7,23 @@ CONFIG=${CONFIG:-release}
 APP="build/NotchMate.app"
 ADAPTER="Vendor/mediaremote-adapter"
 
+# Stable signing identity: macOS ties Accessibility / Automation / Keychain permissions to it,
+# so they survive rebuilds. Ad-hoc signatures change on every build and silently lose permissions.
+# Override with SIGN_ID=<sha1 or name>; SIGN_ID=- forces ad-hoc.
+if [[ -z "${SIGN_ID:-}" ]]; then
+  SIGN_ID=$(security find-identity -v -p codesigning 2>/dev/null | awk '/Apple Development|Developer ID Application/ {print $2; exit}')
+  SIGN_ID=${SIGN_ID:--}
+fi
+# Notarization needs a Developer ID certificate and Hardened Runtime. Other identities sign as before.
+# NOTARIZE=1 NOTARY_PROFILE=<name from `xcrun notarytool store-credentials`> ./build.sh
+SIGN_NAME=$([[ "$SIGN_ID" == "-" ]] && echo ad-hoc || security find-identity -v -p codesigning | grep "$SIGN_ID" | sed 's/.*"\(.*\)"/\1/')
+RUNTIME=()
+if [[ "${NOTARIZE:-0}" == "1" ]]; then
+  [[ "$SIGN_NAME" == Developer\ ID\ Application* ]] || { echo "✗ NOTARIZE=1 needs a Developer ID Application certificate (got: $SIGN_NAME)"; exit 1; }
+  [[ -n "${NOTARY_PROFILE:-}" ]] || { echo "✗ NOTARIZE=1 needs NOTARY_PROFILE (xcrun notarytool store-credentials)"; exit 1; }
+  RUNTIME=(--options runtime --timestamp --entitlements Resources/NotchMate.entitlements)
+fi
+
 # 0. Vendored adapter is a git submodule — fetch it on a fresh clone
 if [[ ! -f "$ADAPTER/include/MediaRemoteAdapter.h" ]]; then
   echo "▸ Fetching $ADAPTER (git submodule)"
@@ -47,22 +64,26 @@ mkdir -p "$APP/Contents/Resources/ru.lproj"
 echo "/* Source language: the keys already are the Russian text. */" > "$APP/Contents/Resources/ru.lproj/Localizable.strings"
 [[ -f Resources/AppIcon.icns ]] && cp Resources/AppIcon.icns "$APP/Contents/Resources/"
 cp "$ADAPTER/bin/mediaremote-adapter.pl" "$APP/Contents/Resources/"
-cp Resources/face-animations.json "$APP/Contents/Resources/"
 cp Resources/garmin_sync.py "$APP/Contents/Resources/"
 cp -R "$ADAPTER/build/MediaRemoteAdapter.framework" "$APP/Contents/Resources/"
 
-# Stable signing identity: macOS ties Accessibility / Automation / Keychain permissions to it,
-# so they survive rebuilds. Ad-hoc signatures change on every build and silently lose permissions.
-# Override with SIGN_ID=<sha1 or name>; SIGN_ID=- forces ad-hoc.
-if [[ -z "${SIGN_ID:-}" ]]; then
-  SIGN_ID=$(security find-identity -v -p codesigning 2>/dev/null | awk '/Apple Development|Developer ID Application/ {print $2; exit}')
-  SIGN_ID=${SIGN_ID:--}
+# The adapter framework is loaded by /usr/bin/perl, not by the app; it only needs a runtime signature for notarization.
+FW_SIGN=(-)
+[[ ${#RUNTIME[@]} -gt 0 ]] && FW_SIGN=("$SIGN_ID" --options runtime --timestamp)
+codesign --force --deep --sign "${FW_SIGN[@]}" "$APP/Contents/Resources/MediaRemoteAdapter.framework" >/dev/null
+codesign --force --sign "$SIGN_ID" "${RUNTIME[@]}" "$APP/Contents/MacOS/NotchMate" >/dev/null
+codesign --force --sign "$SIGN_ID" "${RUNTIME[@]}" "$APP" >/dev/null
+echo "▸ Signed with: $SIGN_NAME"
+
+if [[ ${#RUNTIME[@]} -gt 0 ]]; then
+  echo "▸ Notarizing"
+  ZIP="build/NotchMate-notarize.zip"
+  ditto -c -k --keepParent "$APP" "$ZIP"
+  xcrun notarytool submit "$ZIP" --keychain-profile "$NOTARY_PROFILE" --wait
+  xcrun stapler staple "$APP"
+  rm -f "$ZIP"
+  echo "▸ Notarized and stapled"
 fi
-# The adapter framework is loaded by /usr/bin/perl, not by the app — keep it ad-hoc.
-codesign --force --deep --sign - "$APP/Contents/Resources/MediaRemoteAdapter.framework" >/dev/null
-codesign --force --sign "$SIGN_ID" "$APP/Contents/MacOS/NotchMate" >/dev/null
-codesign --force --sign "$SIGN_ID" "$APP" >/dev/null
-echo "▸ Signed with: $([[ "$SIGN_ID" == "-" ]] && echo ad-hoc || security find-identity -v -p codesigning | grep "$SIGN_ID" | sed 's/.*"\(.*\)"/\1/')"
 echo "✓ Built $APP"
 
 if [[ "${1:-}" == "install" ]]; then

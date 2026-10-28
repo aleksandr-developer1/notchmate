@@ -136,6 +136,7 @@ struct GeneralSettings: View {
                 }
                 Toggle(String(localized: "Показывать название нового трека"), isOn: $settings.sneakPeek)
                 Toggle(String(localized: "Индикатор зарядки при подключении питания"), isOn: $settings.chargingHUD)
+                Toggle(String(localized: "Заряд наушников при подключении"), isOn: $settings.headphonesHUD)
             }
             Section(String(localized: "Буфер обмена")) {
                 Toggle(String(localized: "Вести историю буфера"), isOn: Binding(
@@ -148,6 +149,7 @@ struct GeneralSettings: View {
                 LanguagePicker()
                 Toggle(String(localized: "Запускать при входе в систему"), isOn: $settings.launchAtLogin)
                 Toggle(String(localized: "Иконка в строке меню"), isOn: $settings.showMenuBarIcon)
+                Toggle(String(localized: "Проверять обновления раз в день"), isOn: $settings.checkUpdates)
             }
         }
         .formStyle(.grouped)
@@ -263,16 +265,156 @@ struct ObsidianSettings: View {
 // MARK: - О программе
 
 struct AboutSettings: View {
+    @EnvironmentObject private var env: AppEnvironment
+    @ObservedObject private var settings = Settings.shared
+    @State private var report: String?
+    @State private var collecting = false
+
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "rectangle.topthird.inset.filled").font(.system(size: 54)).foregroundStyle(.tint)
-            Text("NotchMate").font(.system(size: 26, weight: .bold, design: .rounded))
-            Text(String(localized: "Умный помощник за вырезом камеры: музыка, Obsidian, полка файлов, буфер обмена и фокус-таймер."))
-                .multilineTextAlignment(.center).foregroundStyle(.secondary).frame(maxWidth: 380)
-            Text("Now Playing: ungive/mediaremote-adapter (BSD-3)").font(.caption).foregroundStyle(.tertiary)
-            Button(String(localized: "Выйти из NotchMate")) { NSApp.terminate(nil) }
+        Form {
+            Section {
+                HStack(spacing: 14) {
+                    Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 56, height: 56)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("NotchMate").font(.system(size: 20, weight: .bold, design: .rounded))
+                        Text(String(localized: "Версия \(env.updates.currentVersion)")).foregroundStyle(.secondary)
+                        Text(String(localized: "Умный помощник за вырезом камеры: музыка, Obsidian, полка файлов, буфер обмена и фокус-таймер."))
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            UpdateSection(updates: env.updates)
+            Section(String(localized: "Помощь")) {
+                Button(String(localized: "Показать знакомство снова")) { WelcomeWindow.show {} }
+                Button(collecting ? String(localized: "Собираю отчёт…") : String(localized: "Сообщить о проблеме…")) {
+                    collecting = true
+                    Task {
+                        report = await Diagnostics.report()
+                        collecting = false
+                    }
+                }
+                .disabled(collecting)
+            }
+            Section {
+                Text("Now Playing: ungive/mediaremote-adapter (BSD-3)").font(.caption).foregroundStyle(.tertiary)
+                Button(String(localized: "Выйти из NotchMate")) { NSApp.terminate(nil) }
+            }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .formStyle(.grouped)
+        .sheet(item: Binding(get: { report.map(ReportText.init) }, set: { report = $0?.text })) { item in
+            ReportProblemView(text: item.text)
+        }
+    }
+}
+
+private struct ReportText: Identifiable {
+    let text: String
+    var id: String { text }
+}
+
+private struct UpdateSection: View {
+    @ObservedObject var updates: UpdateChecker
+    @ObservedObject private var settings = Settings.shared
+    @State private var showNotes = false
+
+    var body: some View {
+        Section(String(localized: "Обновления")) {
+            if let release = updates.available {
+                HStack {
+                    Label(String(localized: "Доступна версия \(release.version)"), systemImage: "arrow.down.circle.fill")
+                        .foregroundStyle(.green)
+                    Spacer()
+                    switch updates.install {
+                    case .downloading(let progress):
+                        ProgressView(value: progress).frame(width: 120)
+                        Text("\(Int(progress * 100))%").monospacedDigit().foregroundStyle(.secondary)
+                    case .installing:
+                        ProgressView().controlSize(.small)
+                        Text(String(localized: "Устанавливаю…")).foregroundStyle(.secondary)
+                    default:
+                        if updates.canInstall {
+                            Button(String(localized: "Скачать вручную")) { updates.download() }
+                            Button(String(localized: "Установить и перезапустить")) { Task { await updates.installUpdate() } }
+                                .buttonStyle(.borderedProminent)
+                        } else {
+                            Button(String(localized: "Скачать")) { updates.download() }.buttonStyle(.borderedProminent)
+                        }
+                    }
+                }
+                if case .failed(let message) = updates.install {
+                    Label(message, systemImage: "exclamationmark.triangle.fill").font(.caption).foregroundStyle(.orange)
+                }
+                if !release.notes.isEmpty {
+                    DisclosureGroup(String(localized: "Что нового"), isExpanded: $showNotes) {
+                        ScrollView {
+                            Text((try? AttributedString(markdown: release.notes, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(release.notes))
+                                .font(.callout).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .frame(maxHeight: 180)
+                    }
+                }
+                Text(String(localized: "После обновления macOS может снова попросить разрешения: релизы подписаны без сертификата Apple."))
+                    .font(.caption).foregroundStyle(.secondary)
+                if settings.skippedVersion != release.version {
+                    Button(String(localized: "Пропустить эту версию")) { updates.skip() }
+                }
+            } else {
+                LabeledContent(String(localized: "Установлена последняя версия")) {
+                    if let checked = updates.lastChecked {
+                        Text(checked, format: .relative(presentation: .named)).foregroundStyle(.secondary)
+                    }
+                }
+            }
+            if let error = updates.lastError { Text(error).font(.caption).foregroundStyle(.orange) }
+            HStack {
+                Toggle(String(localized: "Проверять обновления раз в день"), isOn: $settings.checkUpdates)
+                Spacer()
+                Button(updates.checking ? String(localized: "Проверяю…") : String(localized: "Проверить сейчас")) {
+                    Task { await updates.check(manual: true) }
+                }
+                .disabled(updates.checking)
+            }
+        }
+    }
+}
+
+/// The diagnostics report, shown before anything leaves the Mac.
+private struct ReportProblemView: View {
+    let text: String
+    @Environment(\.dismiss) private var dismiss
+    @State private var copied = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(String(localized: "Сообщить о проблеме")).font(.title3.bold())
+            Text(String(localized: "Опишите, что случилось, и вставьте этот отчёт в issue на GitHub. Домашняя папка и имя учётной записи скрыты; сам отчёт никуда не отправляется."))
+                .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            ScrollView {
+                Text(text).font(.system(size: 11, design: .monospaced)).textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(10)
+            }
+            .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.primary.opacity(0.1)))
+            HStack {
+                Button(copied ? String(localized: "Скопировано") : String(localized: "Скопировать")) { copy() }
+                Spacer()
+                Button(String(localized: "Закрыть")) { dismiss() }
+                Button(String(localized: "Скопировать и открыть GitHub")) {
+                    copy()
+                    NSWorkspace.shared.open(Diagnostics.issuesURL)
+                }
+                .buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(width: 560, height: 460)
+    }
+
+    private func copy() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        copied = true
     }
 }
 

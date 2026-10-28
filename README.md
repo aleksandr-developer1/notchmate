@@ -140,7 +140,7 @@ claude mcp add --scope user notchmate -- /Applications/NotchMate.app/Contents/Ma
 
 ```
 Sources/NotchMate/  source code, one folder per feature (Media, Jira, Calls, AI…)
-Resources/          Info.plist, icon, companion animations, Garmin sync script
+Resources/          Info.plist, icon, translations, Garmin sync script
 Vendor/             mediaremote-adapter (git submodule)
 docs/images/        README images
 ```

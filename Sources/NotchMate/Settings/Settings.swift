@@ -47,6 +47,11 @@ final class Settings: ObservableObject {
     @Published var showMusicActivity: Bool { didSet { d.set(showMusicActivity, forKey: "showMusicActivity") } }
     @Published var sneakPeek: Bool { didSet { d.set(sneakPeek, forKey: "sneakPeek") } }
     @Published var chargingHUD: Bool { didSet { d.set(chargingHUD, forKey: "chargingHUD") } }
+    @Published var headphonesHUD: Bool { didSet { d.set(headphonesHUD, forKey: "headphonesHUD") } }
+    @Published var checkUpdates: Bool { didSet { d.set(checkUpdates, forKey: "checkUpdates") } }
+    @Published var skippedVersion: String { didSet { d.set(skippedVersion, forKey: "skippedVersion") } }
+    @Published var weatherCity: String { didSet { d.set(weatherCity, forKey: "weatherCity") } }
+    @Published var weatherRainWarnings: Bool { didSet { d.set(weatherRainWarnings, forKey: "weatherRainWarnings") } }
     @Published var clipboardEnabled: Bool { didSet { d.set(clipboardEnabled, forKey: "clipboardEnabled") } }
     @Published var showMenuBarIcon: Bool { didSet { d.set(showMenuBarIcon, forKey: "showMenuBarIcon"); changed() } }
     @Published var hotKeyToggleEnabled: Bool { didSet { d.set(hotKeyToggleEnabled, forKey: "hotKeyToggle"); changed() } }
@@ -173,6 +178,11 @@ final class Settings: ObservableObject {
             "showMusicActivity": true,
             "sneakPeek": true,
             "chargingHUD": true,
+            "headphonesHUD": true,
+            "checkUpdates": true,
+            "skippedVersion": "",
+            "weatherCity": "",
+            "weatherRainWarnings": true,
             "clipboardEnabled": true,
             "showMenuBarIcon": true,
             "hotKeyToggle": true,
@@ -275,6 +285,11 @@ final class Settings: ObservableObject {
         showMusicActivity = d.bool(forKey: "showMusicActivity")
         sneakPeek = d.bool(forKey: "sneakPeek")
         chargingHUD = d.bool(forKey: "chargingHUD")
+        headphonesHUD = d.bool(forKey: "headphonesHUD")
+        checkUpdates = d.bool(forKey: "checkUpdates")
+        skippedVersion = d.string(forKey: "skippedVersion") ?? ""
+        weatherCity = d.string(forKey: "weatherCity") ?? ""
+        weatherRainWarnings = d.bool(forKey: "weatherRainWarnings")
         clipboardEnabled = d.bool(forKey: "clipboardEnabled")
         showMenuBarIcon = d.bool(forKey: "showMenuBarIcon")
         hotKeyToggleEnabled = d.bool(forKey: "hotKeyToggle")

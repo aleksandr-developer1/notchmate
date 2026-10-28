@@ -36,7 +36,16 @@ enum HelperModes {
         payload["agent"] = agent
         // The app that launched the agent (Terminal, iTerm, VS Code, Claude desktop…) — macOS passes it down to child processes.
         if let host = ProcessInfo.processInfo.environment["__CFBundleIdentifier"], !host.isEmpty { payload["host_bundle_id"] = host }
-        _ = BridgeClient.post("/event", payload, timeout: 1.5)
+        if CommandLine.arguments.contains("--wait") {
+            // Never intercept approvals meant for an automatic or unidentified Codex reviewer.
+            if agent == "codex", payload["hook_event_name"] as? String == "PermissionRequest", !CodexReview.isUser(payload) { return }
+            payload["request_id"] = UUID().uuidString
+            if let result = BridgeClient.post("/request", payload, timeout: 95),
+               !result.isEmpty, let data = try? JSONSerialization.data(withJSONObject: result),
+               let output = String(data: data, encoding: .utf8) { print(output) }
+        } else {
+            _ = BridgeClient.post("/event", payload, timeout: 1.5)
+        }
     }
 }
 

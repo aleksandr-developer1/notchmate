@@ -57,6 +57,7 @@ struct IconButton: View {
         .buttonStyle(PressableStyle())
         .onHover { h in withAnimation(.easeOut(duration: 0.15)) { hovering = h } }
         .help(help ?? "")
+        .accessibilityLabel(help ?? systemName)
     }
 }
 

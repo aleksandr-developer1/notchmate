@@ -12,9 +12,16 @@ final class LocalBridge {
 
     var onEvent: (([String: Any]) -> Void)?
     var onTool: ((String, [String: Any]) async -> (text: String, isError: Bool))?
+    var onRequest: (([String: Any]) async -> [String: Any])?
+    var onRequestCancelled: ((String) -> Void)?
 
     private var listener: NWListener?
     private let token = UUID().uuidString + UUID().uuidString
+    private let bridgeInfoURL: URL
+
+    init(infoURL: URL = LocalBridge.infoURL) { bridgeInfoURL = infoURL }
+
+    func stop() { listener?.cancel(); listener = nil }
 
     func start() {
         let params = NWParameters.tcp
@@ -49,7 +56,7 @@ final class LocalBridge {
     }
 
     private func writeInfo(port: UInt16) {
-        let url = Self.infoURL
+        let url = bridgeInfoURL
         try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         let json: [String: Any] = ["port": Int(port), "token": token, "pid": Int(ProcessInfo.processInfo.processIdentifier)]
         if let data = try? JSONSerialization.data(withJSONObject: json) {
@@ -90,6 +97,15 @@ final class LocalBridge {
         case ("POST", "/event"):
             onEvent?(body)
             respond(conn, status: 200, json: ["ok": true])
+        case ("POST", "/request"):
+            if let id = body["request_id"] as? String {
+                conn.receive(minimumIncompleteLength: 1, maximumLength: 1) { [weak self] _, _, done, error in
+                    guard done || error != nil else { return }
+                    DispatchQueue.main.async { MainActor.assumeIsolated { self?.onRequestCancelled?(id) } }
+                }
+            }
+            let result = await onRequest?(body) ?? [:]
+            respond(conn, status: 200, json: result)
         case ("POST", "/tool"):
             let name = body["name"] as? String ?? ""
             let args = body["arguments"] as? [String: Any] ?? [:]
@@ -128,7 +144,7 @@ private struct HTTPRequest {
         }
         let length = Int(headers["content-length"] ?? "0") ?? 0
         let bodyStart = sep.upperBound
-        guard data.count - bodyStart >= length else { return nil }
+        guard length >= 0, length <= 4 << 20, data.count - bodyStart >= length else { return nil }
         return HTTPRequest(method: String(first[0]), path: String(first[1]), headers: headers,
                            body: data.subdata(in: bodyStart..<(bodyStart + length)))
     }
@@ -136,8 +152,8 @@ private struct HTTPRequest {
 
 /// Client side used by the helper modes (no UI, runs before NSApplication).
 enum BridgeClient {
-    static func post(_ path: String, _ body: [String: Any], timeout: TimeInterval) -> [String: Any]? {
-        guard let data = try? Data(contentsOf: LocalBridge.infoURL),
+    static func post(_ path: String, _ body: [String: Any], timeout: TimeInterval, infoURL: URL = LocalBridge.infoURL) -> [String: Any]? {
+        guard let data = try? Data(contentsOf: infoURL),
               let info = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let port = info["port"] as? Int, let token = info["token"] as? String,
               let url = URL(string: "http://127.0.0.1:\(port)\(path)") else { return nil }

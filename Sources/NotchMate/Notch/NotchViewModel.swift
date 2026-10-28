@@ -125,7 +125,7 @@ enum NotchGroup: String, CaseIterable, Identifiable {
     }
 }
 
-enum OpenReason { case hover, click, hotkey, drag }
+enum OpenReason { case hover, click, hotkey, drag, agent }
 
 enum NotchHUD: Equatable {
     case track(title: String, artist: String)
@@ -133,6 +133,7 @@ enum NotchHUD: Equatable {
     case timerDone
     case message(icon: String, text: String)
     case speech(String)
+    case headphones(HeadphonesBattery)
 }
 
 @MainActor
@@ -181,7 +182,7 @@ final class NotchViewModel: ObservableObject {
     /// Music doesn't count on the home tab — the player is already there.
     var showsNowStrip: Bool {
         if env.calls.stage != .idle { return tab != .assistant }
-        return stripShowsMusic || !env.agents.groups.isEmpty || env.focus.isActive || env.jira.isTracking
+        return stripShowsMusic || !env.agents.groups.isEmpty || env.focus.isActive || env.jira.isTracking || stripMeeting != nil
     }
 
     var stripShowsMusic: Bool { musicActive && tab != .home }
@@ -191,10 +192,18 @@ final class NotchViewModel: ObservableObject {
     static let pageSwitcherHeight: CGFloat = 30
 
     /// Whether the current group has more than one page and shows the switcher.
-    var showsPageSwitcher: Bool { tab.group.pages.count > 1 }
+    var showsPageSwitcher: Bool { tab.group.pages.count > 1 && !showsAgentRequest }
+
+    /// A pending agent question or approval replaces the current page until it is answered.
+    var showsAgentRequest: Bool { !env.agents.requests.isEmpty }
+    static let agentRequestHeight: CGFloat = 300
+
+    private var contentHeight: CGFloat {
+        showsAgentRequest ? max(tab.contentHeight, Self.agentRequestHeight) : tab.contentHeight
+    }
 
     var openSize: CGSize {
-        CGSize(width: expandedWidth, height: notchSize.height + tab.contentHeight + 14 + (showsPageSwitcher ? Self.pageSwitcherHeight : 0) + (showsNowStrip ? Self.nowStripHeight : 0))
+        CGSize(width: expandedWidth, height: notchSize.height + contentHeight + 14 + (showsPageSwitcher ? Self.pageSwitcherHeight : 0) + (showsNowStrip ? Self.nowStripHeight : 0))
     }
 
     /// Whether the collapsed notch shows a live activity (wings).
@@ -209,12 +218,25 @@ final class NotchViewModel: ObservableObject {
         Settings.shared.pluginEnabled(.music) && Settings.shared.showMusicActivity && (env.nowPlaying.track?.isPlaying ?? false)
     }
 
+    /// The next event starting within 10 minutes, or one that started up to 10 minutes ago.
+    var upcomingMeeting: CalendarEvent? {
+        guard Settings.shared.calendarEnabled, Settings.shared.pluginEnabled(.calendar), let e = env.calendar.next,
+              e.start.timeIntervalSinceNow <= 10 * 60, e.start.timeIntervalSinceNow > -10 * 60 else { return nil }
+        return e
+    }
+
+    /// A call link worth a "Join" button in the Now strip (the assistant tab has it on the day timeline).
+    var stripMeeting: CalendarEvent? {
+        guard tab != .assistant, env.calls.stage == .idle, let e = upcomingMeeting, e.meetingURL != nil else { return nil }
+        return e
+    }
+
     /// Right side: the most important work item.
     var workActivity: LiveActivity? {
         if env.calls.stage != .idle { return .call }
         if env.focus.isActive || env.focus.phase == .finished { return .focus }
         if env.jira.isTracking { return .jira }
-        if let e = env.calendar.next, Settings.shared.calendarEnabled, e.start.timeIntervalSinceNow <= 10 * 60, !e.isNow || e.start.timeIntervalSinceNow > -120 { return .meeting }
+        if let e = upcomingMeeting, !e.isNow || e.start.timeIntervalSinceNow > -120 { return .meeting }
         if !env.agents.groups.isEmpty { return .agent }
         return nil
     }
@@ -246,7 +268,7 @@ final class NotchViewModel: ObservableObject {
     var isDocked: Bool { showsFace && faceCovered && Settings.shared.dockFaceWhenCovered }
 
     /// Face pod on the left: a bit wider than the face.
-    static var dockFaceWidth: CGFloat { FaceAnimations.crop.width * 0.5 + 14 }
+    static var dockFaceWidth: CGFloat { FaceGeometry.size.width * 0.5 + 14 }
 
     /// Activity strip on the right (both wings together).
     var dockActivityWidth: CGFloat {
@@ -285,6 +307,7 @@ final class NotchViewModel: ObservableObject {
             case .timerDone: if grow { w = max(w, cutoutWidth + 160) }; h += 36
             case .message: if grow { w = max(w, cutoutWidth + 200) }; h += 36
             case .speech: if grow { w = max(w, cutoutWidth + 150) }; h += 30
+            case .headphones: if grow { w = max(w, cutoutWidth + 200) }; h += 46
             }
         }
         return CGSize(width: w, height: h)

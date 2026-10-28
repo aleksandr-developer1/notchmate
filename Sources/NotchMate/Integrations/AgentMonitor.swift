@@ -26,6 +26,7 @@ struct AgentSession: Identifiable, Equatable {
     var updatedAt: Date
     /// Bundle ID of the app the agent runs in (terminal, IDE, desktop app), when known.
     var hostBundleID: String? = nil
+    var waitingMessage: String? = nil
 }
 
 /// Tracks Claude Code / Codex sessions through their hooks (forwarded by `NotchMate --event`).
@@ -34,6 +35,13 @@ final class AgentMonitor: ObservableObject {
     @Published private(set) var sessions: [String: AgentSession] = [:]
     @Published private(set) var claudeHooksInstalled = false
     @Published private(set) var codexHooksInstalled = false
+    @Published private(set) var requests: [AgentRequest] = []
+    private var requestWaiters: [String: CheckedContinuation<[String: Any], Never>] = [:]
+    var onRequest: (() -> Void)?
+    /// Called when the last pending request has been answered or released.
+    var onRequestsCleared: (() -> Void)?
+    /// How long a hook waits for an answer in the notch before the agent asks in its own UI.
+    static let requestTimeout: TimeInterval = 90
 
     var onStarted: ((AgentSession) -> Void)?
     var onWaiting: ((AgentSession) -> Void)?
@@ -71,7 +79,47 @@ final class AgentMonitor: ObservableObject {
 
     func pluginAvailabilityChanged() {
         if Settings.shared.pluginEnabled(.agents) { refreshInstallState() }
-        else { sessions.removeAll() }
+        else {
+            sessions.removeAll()
+            for id in Array(requestWaiters.keys) { finishRequest(id, response: [:]) }
+        }
+    }
+
+    func waitForRequest(_ payload: [String: Any]) async -> [String: Any] {
+        guard Settings.shared.pluginEnabled(.agents), Settings.shared.agentStatusEnabled else { return [:] }
+        guard let request = AgentRequest(payload: payload), requestWaiters[request.id] == nil else {
+            // Not answerable here, but the session still waits for the user.
+            if payload["hook_event_name"] as? String == "PermissionRequest" { handle(payload) }
+            return [:]
+        }
+        var waiting = payload
+        waiting["hook_event_name"] = "Notification"
+        waiting["message"] = request.waitingText
+        handle(waiting)
+        return await withCheckedContinuation { continuation in
+            requestWaiters[request.id] = continuation
+            requests.append(request)
+            onRequest?()
+            Task { [weak self] in
+                try? await Task.sleep(for: .seconds(Self.requestTimeout))
+                self?.finishRequest(request.id, response: [:])
+            }
+        }
+    }
+
+    func finishRequest(_ id: String, response: [String: Any]) {
+        guard let waiter = requestWaiters.removeValue(forKey: id) else { return }
+        let request = requests.first { $0.id == id }
+        requests.removeAll { $0.id == id }
+        waiter.resume(returning: response)
+        // Answered here: the agent carries on. Released: it asks in its own window, so the session keeps waiting.
+        if !response.isEmpty, let sid = request?.sessionID, var session = sessions[sid], session.state == .waiting,
+           !requests.contains(where: { $0.sessionID == sid }) {
+            session.state = .working
+            session.waitingMessage = nil
+            sessions[sid] = session
+        }
+        if requests.isEmpty { onRequestsCleared?() }
     }
 
     // MARK: Events
@@ -82,6 +130,7 @@ final class AgentMonitor: ObservableObject {
         let agent = AgentKind(rawValue: payload["agent"] as? String ?? "") ?? .claude
         let event = payload["hook_event_name"] as? String ?? ""
         let sid = (payload["session_id"] as? String) ?? "\(agent.rawValue)-default"
+        clearFinishedRequests(agent: agent, sessionID: sid, event: event, payload: payload)
         let cwd = payload["cwd"] as? String ?? ""
         // Ignore NotchMate's own chat runs.
         if !cwd.isEmpty, URL(fileURLWithPath: cwd).standardizedFileURL.path == CLITools.workspace.standardizedFileURL.path { return }
@@ -93,10 +142,14 @@ final class AgentMonitor: ObservableObject {
         if let host = payload["host_bundle_id"] as? String, !host.isEmpty { session.hostBundleID = host }
 
         switch event {
+        case "PreToolUse" where requests.contains(where: { $0.sessionID == sid }):
+            // The tool hook runs alongside the one holding the question; keep showing that it waits.
+            return
         case "UserPromptSubmit", "PreToolUse", "PostToolUse", "SubagentStart":
             let wasWorking = session.state == .working
             if !wasWorking { session.startedAt = now }
             session.state = .working
+            session.waitingMessage = nil
             sessions[sid] = session
             if !wasWorking { onStarted?(session) }
         case "Notification" where payload["notification_type"] as? String == "idle_prompt"
@@ -105,11 +158,13 @@ final class AgentMonitor: ObservableObject {
             return
         case "Notification", "PermissionRequest":
             session.state = .waiting
+            session.waitingMessage = Self.waitingMessage(payload)
             sessions[sid] = session
             onWaiting?(session)
         case "Stop":
             let wasActive = session.state != .done
             session.state = .done
+            session.waitingMessage = nil
             sessions[sid] = session
             if wasActive { onFinished?(session) }
             DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
@@ -120,6 +175,33 @@ final class AgentMonitor: ObservableObject {
         default:
             break
         }
+    }
+
+    func clearFinishedRequests(agent: AgentKind, sessionID: String, event: String, payload: [String: Any]) {
+        let ending = ["Stop", "SessionEnd"].contains(event)
+        let completed = ["PostToolUse", "PostToolUseFailure"].contains(event)
+        guard ending || completed else { return }
+        let tool = payload["tool_name"] as? String
+        let input = payload["tool_input"] as? [String: Any]
+        let ids = requests.filter { request in
+            guard request.agent == agent, request.sessionID == sessionID else { return false }
+            if ending { return true }
+            guard let tool, let input, request.tool == tool else { return false }
+            return NSDictionary(dictionary: request.input).isEqual(to: input)
+        }.map(\.id)
+        for id in ids { finishRequest(id, response: [:]) }
+    }
+
+    static func waitingMessage(_ payload: [String: Any]) -> String? {
+        if let message = payload["message"] as? String {
+            let text = message.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !text.isEmpty { return text }
+        }
+        if payload["hook_event_name"] as? String == "PermissionRequest",
+           let name = payload["tool_name"] as? String, !name.isEmpty {
+            return String(localized: "Запрос разрешения: \(name)")
+        }
+        return nil
     }
 
     private func dropStale() {
@@ -133,6 +215,54 @@ final class AgentMonitor: ObservableObject {
 
     // MARK: Hooks install
 
+    /// Configure each installed CLI once. Later manual disconnects remain respected.
+    func configureAvailableAgents(codex: CodexAppServer) async {
+        guard Settings.shared.pluginEnabled(.agents) else { return }
+        let defaults = UserDefaults.standard
+        await upgradeInstalledHooks(codex: codex)
+        for (name, target) in [("claude", MCPTarget.claude), ("codex", MCPTarget.codex)] {
+            let key = "agentAutoSetup.v1.\(name)"
+            guard !defaults.bool(forKey: key), CLITools.find(name) != nil else { continue }
+            do {
+                if name == "claude" { try setClaudeHooks(true) }
+                else {
+                    try setCodexHooks(true)
+                    guard try await codex.trustNotchMateHooks() > 0 else {
+                        NSLog("NotchMate: Codex hooks not found for trust; will retry on next launch")
+                        continue
+                    }
+                }
+                if !mcpInstalled(target) {
+                    let result = await setMCP(target, install: true)
+                    guard result.ok else { NSLog("NotchMate: \(name) MCP setup failed: \(result.text)"); continue }
+                }
+                defaults.set(true, forKey: key)
+            } catch {
+                NSLog("NotchMate: \(name) integration setup failed: \(error)")
+            }
+        }
+    }
+
+    /// Bump when the hook set changes so already connected agents get the new events.
+    private static let hooksVersion = 2
+
+    /// Rewrites hooks the user already connected; disconnected agents stay untouched.
+    private func upgradeInstalledHooks(codex: CodexAppServer) async {
+        let key = "agentHooksVersion"
+        guard UserDefaults.standard.integer(forKey: key) < Self.hooksVersion else { return }
+        refreshInstallState()
+        do {
+            if claudeHooksInstalled { try setClaudeHooks(true) }
+            if codexHooksInstalled {
+                try setCodexHooks(true)
+                _ = try await codex.trustNotchMateHooks()
+            }
+            UserDefaults.standard.set(Self.hooksVersion, forKey: key)
+        } catch {
+            NSLog("NotchMate: hook upgrade failed: \(error)")
+        }
+    }
+
     static var helperCommand: String {
         "\"\(Bundle.main.executablePath ?? "/Applications/NotchMate.app/Contents/MacOS/NotchMate")\""
     }
@@ -140,8 +270,8 @@ final class AgentMonitor: ObservableObject {
     private static var claudeSettingsURL: URL { URL(fileURLWithPath: NSHomeDirectory() + "/.claude/settings.json") }
     private static var codexHooksURL: URL { URL(fileURLWithPath: NSHomeDirectory() + "/.codex/hooks.json") }
 
-    private static let claudeEvents = ["UserPromptSubmit", "PreToolUse", "Stop", "Notification", "SessionEnd"]
-    private static let codexEvents = ["UserPromptSubmit", "PreToolUse", "Stop"]
+    private static let claudeEvents = ["UserPromptSubmit", "PreToolUse", "PostToolUse", "PostToolUseFailure", "Stop", "Notification", "SessionEnd"]
+    private static let codexEvents = ["UserPromptSubmit", "PreToolUse", "PostToolUse", "Stop", "SessionEnd"]
 
     func refreshInstallState() {
         claudeHooksInstalled = Self.hooksPresent(at: Self.claudeSettingsURL, marker: "--event claude")
@@ -194,6 +324,14 @@ final class AgentMonitor: ObservableObject {
                 groups.append(["hooks": [["type": "command", "command": "\(helperCommand) --event \(agent)", "timeout": 5]]])
                 hooks[event] = groups
             }
+            var permission = hooks["PermissionRequest"] as? [[String: Any]] ?? []
+            permission.append(["hooks": [["type": "command", "command": "\(helperCommand) --event \(agent) --wait", "timeout": 100]]])
+            hooks["PermissionRequest"] = permission
+            // Questions and plans: held before the agent shows its own picker.
+            var pre = hooks["PreToolUse"] as? [[String: Any]] ?? []
+            let matcher = agent == "claude" ? "AskUserQuestion|ExitPlanMode" : "^request_user_input(_async)?$"
+            pre.append(["matcher": matcher, "hooks": [["type": "command", "command": "\(helperCommand) --event \(agent) --wait", "timeout": 100]]])
+            hooks["PreToolUse"] = pre
         }
         if hooks.isEmpty { root.removeValue(forKey: "hooks") } else { root["hooks"] = hooks }
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)

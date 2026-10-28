@@ -17,6 +17,7 @@ struct ShelfView: View {
                         Text(String(localized: "· перетащите наружу, чтобы использовать")).font(Theme.font(11)).foregroundStyle(Theme.tertiary)
                         Spacer()
                         IconButton(systemName: "airplayaudio", size: 11, frame: 26, help: String(localized: "AirDrop всё")) { shelf.airDrop(shelf.items) }
+                        ShareButton(urls: shelf.items.map(\.url))
                         IconButton(systemName: "doc.on.doc", size: 11, frame: 26, help: String(localized: "Копировать всё")) { shelf.copy(shelf.items) }
                         IconButton(systemName: "trash", size: 11, frame: 26, tint: .red, help: String(localized: "Очистить полку")) {
                             withAnimation(.spring(response: 0.35)) { shelf.clear() }
@@ -99,9 +100,31 @@ private struct ShelfTile: View {
             Button(String(localized: "Показать в Finder")) { shelf.reveal(item) }
             Button(String(localized: "Копировать")) { shelf.copy([item]) }
             Button(String(localized: "Отправить через AirDrop")) { shelf.airDrop([item]) }
+            ShareLink(item: item.url) { Text(String(localized: "Поделиться…")) }
             Divider()
             Button(String(localized: "Убрать с полки")) { shelf.remove(item) }
         }
         .help(item.url.path)
+    }
+}
+
+/// System share sheet (Messages, Mail, Notes…) styled like the other shelf buttons.
+private struct ShareButton: View {
+    let urls: [URL]
+    @State private var hovering = false
+
+    var body: some View {
+        ShareLink(items: urls) {
+            Image(systemName: "square.and.arrow.up")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.white.opacity(hovering ? 1 : 0.8))
+                .frame(width: 26, height: 26)
+                .background(Circle().fill(hovering ? Theme.surface : .clear))
+                .contentShape(Circle())
+        }
+        .buttonStyle(PressableStyle())
+        .onHover { h in withAnimation(.easeOut(duration: 0.15)) { hovering = h } }
+        .help(String(localized: "Поделиться всем"))
+        .accessibilityLabel(String(localized: "Поделиться всем"))
     }
 }

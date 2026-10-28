@@ -145,7 +145,7 @@ struct CollapsedView: View {
             .frame(height: vm.notchSize.height)
 
             if vm.showsFace {
-                let faceWidth = FaceAnimations.crop.width * 0.5
+                let faceWidth = FaceGeometry.size.width * 0.5
                 let side = max(0, (vm.closedSize.width - 14 - faceWidth) / 2)
                 HStack(spacing: 0) {
                     if vm.activityBesideFace {
@@ -178,7 +178,7 @@ struct CollapsedView: View {
 
     /// Window under the face: face left of the camera, all activity right of it, one menu-bar-high row.
     private var dockedRow: some View {
-        let faceScale = min(0.5, vm.notchSize.height / FaceAnimations.crop.height * 0.95)
+        let faceScale = min(0.5, vm.notchSize.height / FaceGeometry.size.height * 0.95)
         return HStack(spacing: 0) {
             FaceView(mood: companion.mood, look: companion.look, scale: faceScale, color: settings.faceColor.color)
                 .frame(width: NotchViewModel.dockFaceWidth, height: vm.notchSize.height)
@@ -276,7 +276,12 @@ struct CollapsedView: View {
                 if let e = calendar.next {
                     HStack(spacing: 4) {
                         VStack(alignment: compact ? .leading : .trailing, spacing: 0) {
-                            Text(e.title).font(Theme.font(8, .bold)).foregroundStyle(.white.opacity(0.85)).lineLimit(1)
+                            HStack(spacing: 3) {
+                                if e.meetingURL != nil {
+                                    Image(systemName: "video.fill").font(.system(size: 7, weight: .bold)).foregroundStyle(e.color)
+                                }
+                                Text(e.title).font(Theme.font(8, .bold)).foregroundStyle(.white.opacity(0.85)).lineLimit(1)
+                            }
                             TimelineView(.periodic(from: .now, by: 15)) { _ in
                                 Text(e.isNow ? String(localized: "сейчас") : String(localized: "через \(max(e.minutesUntil, 0)) мин"))
                                     .font(Theme.font(9, .bold)).monospacedDigit().foregroundStyle(e.color)
@@ -343,11 +348,13 @@ struct CollapsedView: View {
                 .padding(.horizontal, 12).frame(height: 26)
         case .charging:
             EmptyView()
+        case .headphones(let battery):
+            HeadphonesHUD(battery: battery).padding(.horizontal, 14).frame(height: 44)
         }
     }
 }
 
-/// One agent line in the notch: icon with an activity ring + its own timer.
+/// AirPods-style card: the headset, then a ring per bud and the case.
 private struct AgentRow: View {
     let group: AgentMonitor.Group
     let alignLeading: Bool
@@ -444,121 +451,10 @@ struct ArtworkView: View {
 
 // MARK: - Expanded
 
-/// Everything running at once: track, each agent with its own timer, the active timer.
-private struct NowStrip: View {
-    @EnvironmentObject var vm: NotchViewModel
-    @EnvironmentObject var player: NowPlayingService
-    @EnvironmentObject var agents: AgentMonitor
-    @EnvironmentObject var focus: FocusTimer
-    @EnvironmentObject var jira: JiraService
-    @EnvironmentObject var calls: CallRecorder
-    @EnvironmentObject var copilot: MeetingCopilot
-
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 6) {
-                if calls.stage != .idle {
-                    chip {
-                        Image(systemName: calls.stage == .recording ? "record.circle.fill" : "waveform")
-                            .font(.system(size: 11, weight: .bold)).foregroundStyle(calls.stage == .recording ? Color.red : Theme.jira)
-                        Text(calls.stage == .recording ? String(localized: "Запись созвона") : (calls.stage == .transcribing ? String(localized: "Расшифровка") : String(localized: "Протокол")))
-                            .font(Theme.font(11, .semibold)).foregroundStyle(.white)
-                        if calls.stage == .recording {
-                            TimelineView(.periodic(from: .now, by: 1)) { _ in
-                                Text(FocusTimer.format(calls.elapsed)).font(Theme.font(10, .bold)).monospacedDigit().foregroundStyle(.red)
-                            }
-                            Button { Task { await calls.finishRecording() } } label: {
-                                Text(String(localized: "Стоп")).font(Theme.font(10, .bold)).foregroundStyle(.black)
-                                    .padding(.horizontal, 7).frame(height: 18).background(Capsule().fill(Color.red))
-                            }
-                            .buttonStyle(PressableStyle())
-                            Button { copilot.toggleOrHint() } label: {
-                                HStack(spacing: 3) {
-                                    Image(systemName: "sparkles").font(.system(size: 9, weight: .bold))
-                                    Text(copilot.isActive ? String(localized: "Подсказать") : String(localized: "Помощник")).font(Theme.font(10, .bold))
-                                }
-                                .foregroundStyle(.black)
-                                .padding(.horizontal, 7).frame(height: 18)
-                                .background(Capsule().fill(Color(red: 0.62, green: 0.55, blue: 1.0)))
-                            }
-                            .buttonStyle(PressableStyle())
-                            .help(String(localized: "Подсказки на встрече — что спросить, что ответить, что в коде (⌃⌥H)"))
-                        }
-                    }
-                }
-                if vm.stripShowsMusic, let t = player.track {
-                    chip {
-                        ArtworkView(image: player.artwork, size: 18, radius: 4)
-                        Text(t.title).font(Theme.font(11, .semibold)).foregroundStyle(.white).lineLimit(1).frame(maxWidth: 110, alignment: .leading)
-                        Button { player.send(.toggle) } label: {
-                            Image(systemName: t.isPlaying ? "pause.fill" : "play.fill").font(.system(size: 9, weight: .bold)).foregroundStyle(.white)
-                        }.buttonStyle(PressableStyle())
-                        Button { player.send(.next) } label: {
-                            Image(systemName: "forward.fill").font(.system(size: 9, weight: .bold)).foregroundStyle(.white.opacity(0.8))
-                        }.buttonStyle(PressableStyle())
-                    }
-                }
-                ForEach(agents.groups) { g in
-                    ForEach(g.sessions) { s in
-                        chip {
-                            if let icon = s.agent.icon {
-                                Image(nsImage: icon).resizable().frame(width: 14, height: 14)
-                            } else {
-                                Image(systemName: s.agent.fallbackSymbol).font(.system(size: 10, weight: .bold)).foregroundStyle(s.agent.tint)
-                            }
-                            Text(s.project).font(Theme.font(11, .semibold)).foregroundStyle(.white).lineLimit(1)
-                            TimelineView(.periodic(from: .now, by: 1)) { ctx in
-                                Text(s.state == .waiting ? String(localized: "ждёт ответа") : FocusTimer.format(ctx.date.timeIntervalSince(s.startedAt)))
-                                    .font(Theme.font(10, .bold)).monospacedDigit()
-                                    .foregroundStyle(s.state == .waiting ? Color.orange : s.agent.tint)
-                            }
-                        }
-                        .onTapGesture { activate(s.agent) }
-                        .help(String(localized: "Открыть \(s.agent.title)"))
-                    }
-                }
-                if focus.isActive {
-                    chip {
-                        Ring(progress: focus.progress, tint: focus.kind.isBreak ? .green : .orange, lineWidth: 2).frame(width: 12, height: 12)
-                        Text(focus.kind.title).font(Theme.font(11, .semibold)).foregroundStyle(.white)
-                        Text(FocusTimer.format(focus.remaining)).font(Theme.font(10, .bold)).monospacedDigit().foregroundStyle(focus.kind.isBreak ? .green : .orange)
-                    }
-                } else if jira.isTracking, let key = jira.sessionKey {
-                    chip {
-                        Image(systemName: "briefcase.fill").font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.jira)
-                        Text(key).font(Theme.font(11, .semibold)).foregroundStyle(.white)
-                        TimelineView(.periodic(from: .now, by: 1)) { ctx in
-                            Text(FocusTimer.format(jira.sessionElapsed(at: ctx.date))).font(Theme.font(10, .bold)).monospacedDigit().foregroundStyle(Theme.jira)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private func chip<C: View>(@ViewBuilder _ content: () -> C) -> some View {
-        HStack(spacing: 6) { content() }
-            .padding(.horizontal, 8)
-            .frame(height: 26)
-            .card(radius: 13)
-    }
-
-    private func activate(_ agent: AgentKind) {
-        for id in agent.appBundleIDs {
-            if let app = NSRunningApplication.runningApplications(withBundleIdentifier: id).first {
-                app.activate()
-                return
-            }
-        }
-        for id in ["com.googlecode.iterm2", "com.apple.Terminal", "com.todesktop.230313mzl4w4u92", "com.microsoft.VSCode"] {
-            if let app = NSRunningApplication.runningApplications(withBundleIdentifier: id).first { app.activate(); return }
-        }
-    }
-}
-
 struct ExpandedView: View {
     let ns: Namespace.ID
     @EnvironmentObject var vm: NotchViewModel
+    @EnvironmentObject var agents: AgentMonitor
 
     var body: some View {
         VStack(spacing: 0) {
@@ -579,6 +475,7 @@ struct ExpandedView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .padding(.top, 8)
                 .padding(.bottom, 14)
+                .animation(.spring(response: 0.38, dampingFraction: 0.86), value: agents.requests.first?.id)
         }
     }
 
@@ -592,7 +489,9 @@ struct ExpandedView: View {
 
     @ViewBuilder private var content: some View {
         ZStack(alignment: .top) {
-            if vm.tab.isAvailable {
+            if let request = agents.requests.first {
+                AgentRequestView(request: request).id(request.id)
+            } else if vm.tab.isAvailable {
                 switch vm.tab {
                 case .assistant: CompanionView().transition(.tabSwitch)
                 case .ai: AIChatView().transition(.tabSwitch)
@@ -625,118 +524,5 @@ extension AnyTransition {
     static var tabSwitch: AnyTransition {
         .asymmetric(insertion: .opacity.combined(with: .offset(y: 6)).animation(.easeOut(duration: 0.22).delay(0.04)),
                     removal: .opacity.animation(.easeIn(duration: 0.08)))
-    }
-}
-
-struct TabBar: View {
-    @EnvironmentObject var vm: NotchViewModel
-    @ObservedObject private var settings = Settings.shared
-    @Namespace private var tabNS
-
-    var body: some View {
-        HStack(spacing: 2) {
-            let groups = NotchGroup.visible
-            ForEach(Array(groups.enumerated()), id: \.element) { i, group in
-                TabButton(group: group, index: i + 1, selected: vm.tab.group == group, ns: tabNS) { vm.select(group) }
-            }
-        }
-        .padding(2)
-        .background(Capsule().fill(Color.white.opacity(0.05)))
-    }
-}
-
-private struct TabButton: View {
-    let group: NotchGroup
-    let index: Int
-    let selected: Bool
-    let ns: Namespace.ID
-    let action: () -> Void
-    @State private var hovering = false
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: group.icon)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(selected ? .black : .white.opacity(hovering ? 0.95 : 0.6))
-                .frame(width: 26, height: 22)
-                .background {
-                    if selected {
-                        Capsule().fill(Color.white).matchedGeometryEffect(id: "tabpill", in: ns)
-                    } else if hovering {
-                        Capsule().fill(Theme.surface)
-                    }
-                }
-                .contentShape(Capsule())
-        }
-        .buttonStyle(PressableStyle())
-        .onHover { h in withAnimation(.easeOut(duration: 0.12)) { hovering = h } }
-        .help("\(group.title)  ⌘\(index)")
-    }
-}
-
-/// Switches pages inside a group (Помощник / Чат ИИ, Jira / Git / Фокус, Полка / Буфер).
-struct PageSwitcher: View {
-    @EnvironmentObject var vm: NotchViewModel
-    @ObservedObject private var settings = Settings.shared
-    @Namespace private var pageNS
-
-    var body: some View {
-        HStack {
-            HStack(spacing: 2) {
-                ForEach(vm.tab.group.pages) { page in
-                    let selected = vm.tab == page
-                    Button { vm.select(page) } label: {
-                        Label(page.title, systemImage: page.icon).labelStyle(.titleAndIcon)
-                            .font(Theme.font(11, .semibold))
-                            .foregroundStyle(selected ? .black : .white.opacity(0.65))
-                            .padding(.horizontal, 10).frame(height: 22)
-                            .background {
-                                if selected { Capsule().fill(Color.white).matchedGeometryEffect(id: "pagepill", in: pageNS) }
-                            }
-                            .contentShape(Capsule())
-                    }
-                    .buttonStyle(PressableStyle())
-                }
-            }
-            .padding(2)
-            .background(Capsule().fill(Color.white.opacity(0.05)))
-            Spacer()
-        }
-    }
-}
-
-struct HeaderStatus: View {
-    @EnvironmentObject var battery: BatteryMonitor
-    @EnvironmentObject var vm: NotchViewModel
-
-    var body: some View {
-        HStack(spacing: 8) {
-            TimelineView(.everyMinute) { ctx in
-                Text(ctx.date, format: .dateTime.hour().minute())
-                    .font(Theme.font(12, .semibold)).foregroundStyle(Theme.secondary).monospacedDigit()
-            }
-            if battery.hasBattery {
-                HStack(spacing: 3) {
-                    Text("\(battery.level)%").font(Theme.font(11, .semibold)).monospacedDigit()
-                    Image(systemName: batterySymbol).font(.system(size: 13))
-                        .symbolRenderingMode(.hierarchical)
-                }
-                .foregroundStyle(battery.isCharging ? .green : (battery.level <= 20 ? .red : Theme.secondary))
-            }
-            IconButton(systemName: "gearshape.fill", size: 11, frame: 24, help: String(localized: "Настройки  ⌘,")) {
-                NotificationCenter.default.post(name: .notchMateOpenSettings, object: nil)
-            }
-        }
-    }
-
-    private var batterySymbol: String {
-        if battery.isCharging { return "battery.100percent.bolt" }
-        switch battery.level {
-        case ..<13: return "battery.0percent"
-        case ..<38: return "battery.25percent"
-        case ..<63: return "battery.50percent"
-        case ..<88: return "battery.75percent"
-        default: return "battery.100percent"
-        }
     }
 }

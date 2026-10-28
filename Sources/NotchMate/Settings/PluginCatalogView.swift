@@ -159,6 +159,7 @@ struct PluginCatalogView: View {
         case .reminders: ready = env.reminders.hasAccess
         case .garmin: ready = health.garminState.isReady
         case .appleHealth: ready = health.appleState.isReady
+        case .weather: ready = !settings.weatherCity.trimmingCharacters(in: .whitespaces).isEmpty
         case .agents: ready = env.agents.claudeHooksInstalled || env.agents.codexHooksInstalled
         default: ready = true
         }
@@ -216,6 +217,7 @@ private struct PluginConfigurationSheet: View {
         case .agents: AgentSettings()
         case .garmin: HealthSettings(source: .garmin)
         case .appleHealth: HealthSettings(source: .appleHealth)
+        case .weather: WeatherSettings(weather: env.weather)
         case .companion: AssistantSettings()
         case .focus: WorkSettings()
         case .calls, .meetingAssistant: Form { CallSettings() }.formStyle(.grouped)

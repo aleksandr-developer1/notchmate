@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 @main
@@ -21,6 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
     private let hotKeys = HotKeyCenter()
+    private var updateObserver: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let env = AppEnvironment.shared
@@ -32,10 +34,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         setupStatusItem()
         setupHotKeys()
+        updateObserver = env.updates.$available.removeDuplicates().dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in
+            self?.setupStatusItem()
+        }
         // First run: walk through exactly what the enabled features need. After the rename from
         // Shtorka macOS treats this as a new app, so the permissions have to be granted again.
-        if LegacyMigration.isPending { PermissionsWindow.show(onlyMissing: true) } else { PermissionsWindow.showIfFirstLaunch() }
+        if LegacyMigration.isPending {
+            PermissionsWindow.show(onlyMissing: true)
+        } else if WelcomeWindow.isFirstRun {
+            WelcomeWindow.show { [weak self] in
+                self?.notchController.viewModel.open(tab: .assistant, reason: .hotkey)
+                PermissionsWindow.showIfFirstLaunch()
+            }
+        } else {
+            PermissionsWindow.showIfFirstLaunch()
+        }
         LegacyMigration.migrateAgentIntegrations(env.agents, codex: env.ai.codex)
+        Task { await env.agents.configureAvailableAgents(codex: env.ai.codex) }
         DistributedNotificationCenter.default().addObserver(
             forName: .init("com.notchmate.showPermissions"), object: nil, queue: .main
         ) { _ in
@@ -77,6 +92,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if !Settings.shared.didOnboard {
             Settings.shared.didOnboard = true
+            // The welcome tour opens the panel itself when it finishes.
+            guard !WelcomeWindow.isVisible else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
                 self?.notchController.viewModel.open(tab: .assistant, reason: .hotkey)
             }
@@ -110,6 +127,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             menu.addItem(withTitle: String(localized: "Помощник на встрече"), action: #selector(meetingAssistant), keyEquivalent: "")
         }
         menu.addItem(.separator())
+        if let release = AppEnvironment.shared.updates.available {
+            let installs = AppEnvironment.shared.updates.canInstall
+            let item = NSMenuItem(title: installs ? String(localized: "Установить версию \(release.version) и перезапустить")
+                                                  : String(localized: "Доступна версия \(release.version)…"),
+                                  action: #selector(downloadUpdate), keyEquivalent: "")
+            item.image = NSImage(systemSymbolName: "arrow.down.circle.fill", accessibilityDescription: nil)
+            menu.addItem(item)
+        }
         menu.addItem(withTitle: String(localized: "Настройки…"), action: #selector(openSettingsAction), keyEquivalent: ",")
         let perms = NSMenuItem(title: String(localized: "Разрешения…"), action: #selector(openPermissions), keyEquivalent: "")
         if !PermissionCenter.shared.missing.isEmpty {
@@ -163,6 +188,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openSettingsAction() { openSettings() }
+
+    @objc private func downloadUpdate() {
+        let updates = AppEnvironment.shared.updates
+        if updates.canInstall { Task { await updates.installUpdate() } } else { updates.download() }
+    }
 
     @objc private func openPermissions() { PermissionsWindow.show(onlyMissing: false) }
 

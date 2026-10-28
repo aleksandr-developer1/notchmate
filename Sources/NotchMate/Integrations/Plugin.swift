@@ -16,7 +16,7 @@ enum PluginCategory: String, CaseIterable, Identifiable {
 /// Built-in modules share one persistent switch across the catalog, navigation and services.
 enum PluginID: String, CaseIterable, Identifiable {
     case companion, ai, jira, git, notes, obsidian, music, shelf, clipboard
-    case focus, calendar, reminders, calls, meetingAssistant, agents, garmin, appleHealth
+    case focus, calendar, reminders, calls, meetingAssistant, agents, garmin, appleHealth, weather
     var id: String { rawValue }
 
     var title: String {
@@ -38,6 +38,7 @@ enum PluginID: String, CaseIterable, Identifiable {
         case .agents: return String(localized: "ИИ-агенты и MCP")
         case .garmin: return "Garmin Connect"
         case .appleHealth: return "Apple Health"
+        case .weather: return String(localized: "Погода")
         }
     }
 
@@ -60,6 +61,7 @@ enum PluginID: String, CaseIterable, Identifiable {
         case .agents: return String(localized: "Статусы Claude Code и Codex, уведомления и инструменты MCP.")
         case .garmin: return String(localized: "Данные Garmin: стресс, сон, пульс и Body Battery.")
         case .appleHealth: return String(localized: "Данные Apple «Здоровье» с iPhone через экспорт в iCloud.")
+        case .weather: return String(localized: "Температура в шапке панели и предупреждение о дожде.")
         }
     }
 
@@ -82,6 +84,7 @@ enum PluginID: String, CaseIterable, Identifiable {
         case .agents: return "terminal.fill"
         case .garmin: return "applewatch.side.right"
         case .appleHealth: return "heart.text.square"
+        case .weather: return "cloud.sun.fill"
         }
     }
 
@@ -90,7 +93,7 @@ enum PluginID: String, CaseIterable, Identifiable {
         case .ai, .jira, .git, .notes, .focus: return .productivity
         case .music, .shelf, .clipboard: return .media
         case .obsidian, .calendar, .reminders, .calls, .meetingAssistant, .agents: return .connections
-        case .companion, .garmin, .appleHealth: return .wellbeing
+        case .companion, .garmin, .appleHealth, .weather: return .wellbeing
         }
     }
 

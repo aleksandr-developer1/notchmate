@@ -56,32 +56,7 @@ final class NotchWindowController {
         panel.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 2)
         panel.animationBehavior = .none
 
-        let root = NotchRootView()
-            .environmentObject(viewModel)
-            .environmentObject(env)
-            .environmentObject(env.settings)
-            .environmentObject(env.nowPlaying)
-            .environmentObject(env.tempo)
-            .environmentObject(env.disco)
-            .environmentObject(env.health)
-            .environmentObject(env.breathing)
-            .environmentObject(env.obsidian)
-            .environmentObject(env.shelf)
-            .environmentObject(env.clipboard)
-            .environmentObject(env.focus)
-            .environmentObject(env.battery)
-            .environmentObject(env.volume)
-            .environmentObject(env.companion)
-            .environmentObject(env.jira)
-            .environmentObject(env.ai)
-            .environmentObject(env.calendar)
-            .environmentObject(env.reminders)
-            .environmentObject(env.agents)
-            .environmentObject(env.distractions)
-            .environmentObject(env.attention)
-            .environmentObject(env.calls)
-            .environmentObject(env.copilot)
-            .environmentObject(env.git)
+        let root = NotchRootView().notchEnvironment(env, viewModel: viewModel)
         let hosting = NotchHostingView(rootView: root)
         hosting.frame = NSRect(origin: .zero, size: panelSize)
         hosting.autoresizingMask = [.width, .height]
@@ -153,7 +128,7 @@ final class NotchWindowController {
             return
         }
         // Area where the face hangs in normal mode, a little wider.
-        let faceWidth = FaceAnimations.crop.width * 0.5 + 16
+        let faceWidth = FaceGeometry.size.width * 0.5 + 16
         let area = NSRect(x: frame.midX - faceWidth / 2, y: frame.maxY - vm.notchSize.height - NotchViewModel.faceHeight,
                           width: faceWidth, height: NotchViewModel.faceHeight)
         let primaryHeight = NSScreen.screens.first?.frame.height ?? frame.height
@@ -240,6 +215,19 @@ final class NotchWindowController {
             guard Settings.shared.chargingHUD, !self.env.isDoNotDisturb else { return }
             self.viewModel.showHUD(.charging(level: self.env.battery.level), duration: 2.6)
         }
+        env.weather.onPrecipitationSoon = { [weak self] hour in
+            guard let self, !self.env.isDoNotDisturb else { return }
+            let minutes = max(10, Int((hour.time.timeIntervalSinceNow / 60 / 10).rounded()) * 10)
+            let text = WeatherCode.isSnow(hour.code)
+                ? String(localized: "Через \(minutes) мин снег — оденьтесь потеплее")
+                : String(localized: "Через \(minutes) мин дождь — возьмите зонт")
+            self.env.companion.notify(.surprised, badge: .init(symbol: "umbrella.fill", image: nil, tint: Color(red: 0.3, green: 0.63, blue: 1)), seconds: 4)
+            self.viewModel.showHUD(.speech(text), duration: 6)
+        }
+        env.headphones.onConnected = { [weak self] battery in
+            guard let self, !self.env.isDoNotDisturb else { return }
+            self.viewModel.showHUD(.headphones(battery), duration: 4)
+        }
         env.focus.onFinish = { [weak self] finished, next in
             guard let self else { return }
             if finished != .work {
@@ -279,6 +267,14 @@ final class NotchWindowController {
             self.env.companion.notify(.disappointed, badge: .init(symbol: "eye.trianglebadge.exclamationmark", image: nil, tint: .orange), seconds: 4)
             self.viewModel.showHUD(.speech(String(localized: "\(source) подождёт — вернёмся к \(target)?")), duration: 4)
         }
+        env.agents.onRequest = { [weak self] in
+            self?.viewModel.open(reason: .agent)
+        }
+        env.agents.onRequestsCleared = { [weak self] in
+            // Opened only for the request and never touched: fold back once it is resolved.
+            guard let self, self.viewModel.isOpen, self.viewModel.openReason == .agent, !self.viewModel.pointerVisited else { return }
+            self.viewModel.close()
+        }
         env.agents.onWaiting = { [weak self] s in
             guard let self else { return }
             self.env.companion.notify(.alert, badge: .init(symbol: s.agent.icon == nil ? s.agent.fallbackSymbol : nil, image: s.agent.icon, tint: s.agent.tint), seconds: 3)
@@ -295,6 +291,11 @@ final class NotchWindowController {
                 self.viewModel.showHUD(.speech(String(localized: "\(s.agent.title) закончил · \(s.project) · \(FocusTimer.format(TimeInterval(seconds)))")), duration: 5)
                 if Settings.shared.agentSound { NSSound(named: "Glass")?.play() }
             }
+        }
+        env.updates.onFound = { [weak self] release in
+            guard let self, !self.env.isDoNotDisturb else { return }
+            self.env.companion.notify(.surprised, badge: .init(symbol: "arrow.down.circle.fill", image: nil, tint: .green), seconds: 4)
+            self.viewModel.showHUD(.speech(String(localized: "Вышла NotchMate \(release.version) — обновление в «О программе»")), duration: 7)
         }
         env.calendar.onSoon = { [weak self] e in
             guard let self else { return }
@@ -506,10 +507,69 @@ final class NotchWindowController {
             onOpenSettings?()
             return nil
         }
+        let plain = event.modifierFlags.intersection([.command, .control, .option, .shift]).isEmpty
+        guard plain, !viewModel.isTyping else { return event }
+        // A pending agent question takes digits (pick an option) and Return (next / answer).
+        if !env.agents.requests.isEmpty {
+            if let ch = event.charactersIgnoringModifiers, let n = Int(ch), (1...9).contains(n) {
+                NotificationCenter.default.post(name: .notchMateAgentKey, object: AgentRequestKey.option(n))
+                return nil
+            }
+            if event.keyCode == 36 || event.keyCode == 76 {
+                NotificationCenter.default.post(name: .notchMateAgentKey, object: AgentRequestKey.submit)
+                return nil
+            }
+            return event
+        }
+        // ← → walk through the tab bar.
+        if event.keyCode == 123 || event.keyCode == 124 {
+            let groups = NotchGroup.visible
+            guard let i = groups.firstIndex(of: viewModel.tab.group), !groups.isEmpty else { return event }
+            let next = (i + (event.keyCode == 124 ? 1 : -1) + groups.count) % groups.count
+            viewModel.select(groups[next])
+            return nil
+        }
         return event
     }
 }
 
+extension View {
+    /// Every service the notch pages read, injected once for the panel (and for page previews in tests).
+    @MainActor
+    func notchEnvironment(_ env: AppEnvironment, viewModel: NotchViewModel) -> some View {
+        environmentObject(viewModel)
+            .environmentObject(env)
+            .environmentObject(env.settings)
+            .environmentObject(env.nowPlaying)
+            .environmentObject(env.tempo)
+            .environmentObject(env.disco)
+            .environmentObject(env.health)
+            .environmentObject(env.breathing)
+            .environmentObject(env.obsidian)
+            .environmentObject(env.appleNotes)
+            .environmentObject(env.shelf)
+            .environmentObject(env.clipboard)
+            .environmentObject(env.focus)
+            .environmentObject(env.battery)
+            .environmentObject(env.volume)
+            .environmentObject(env.companion)
+            .environmentObject(env.jira)
+            .environmentObject(env.ai)
+            .environmentObject(env.calendar)
+            .environmentObject(env.reminders)
+            .environmentObject(env.agents)
+            .environmentObject(env.distractions)
+            .environmentObject(env.attention)
+            .environmentObject(env.calls)
+            .environmentObject(env.copilot)
+            .environmentObject(env.git)
+            .environmentObject(env.weather)
+    }
+}
+
+enum AgentRequestKey { case option(Int), submit }
+
 extension Notification.Name {
+    static let notchMateAgentKey = Notification.Name("notchmate.agentKey")
     static let notchMateCaptureSaved = Notification.Name("notchmate.captureSaved")
 }

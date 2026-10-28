@@ -31,6 +31,7 @@ final class CodexAppServer: ObservableObject {
     private var onDelta: ((String) -> Void)?
     private var turnContinuation: CheckedContinuation<Void, Error>?
     private var pendingLoginID: String?
+    private var userInputRequests: [String: String] = [:]
 
     // MARK: Lifecycle
 
@@ -62,6 +63,8 @@ final class CodexAppServer: ObservableObject {
                     self.isRunning = false
                     self.initialized = false
                     self.threadID = nil
+                    for id in self.userInputRequests.values { AppEnvironment.shared.agents.finishRequest(id, response: [:]) }
+                    self.userInputRequests.removeAll()
                     for (_, c) in self.pending { c.resume(throwing: AIError.message(String(localized: "Codex app-server завершился"))) }
                     self.pending.removeAll()
                     self.turnContinuation?.resume(throwing: AIError.message(String(localized: "Codex app-server завершился")))
@@ -73,7 +76,8 @@ final class CodexAppServer: ObservableObject {
         process = p
         stdin = inPipe.fileHandleForWriting
         isRunning = true
-        _ = try await request("initialize", ["clientInfo": ["name": "notchmate", "title": "NotchMate", "version": "1.0"]])
+        _ = try await request("initialize", ["clientInfo": ["name": "notchmate", "title": "NotchMate", "version": "1.0"],
+                                              "capabilities": ["experimentalApi": true]])
         notify("initialized", [:])
         initialized = true
         await refreshAccount()
@@ -242,6 +246,19 @@ final class CodexAppServer: ObservableObject {
         guard let method else { return }
         let params = obj["params"] as? [String: Any] ?? [:]
         if let id = obj["id"] {
+            if method == "item/tool/requestUserInput", let questions = params["questions"] as? [[String: Any]] {
+                let key = String(describing: id)
+                let requestID = UUID().uuidString
+                let payload: [String: Any] = ["request_id": requestID, "agent": "codex", "hook_event_name": "CodexUserInput", "tool_name": "AskUserQuestion", "tool_input": ["questions": questions]]
+                userInputRequests[key] = requestID
+                Task { @MainActor [weak self] in
+                    let result = await AppEnvironment.shared.agents.waitForRequest(payload)
+                    guard let self, self.userInputRequests.removeValue(forKey: key) == requestID else { return }
+                    if result.isEmpty { self.write(["id": id, "error": ["code": -32000, "message": "User input unavailable or cancelled"]]) }
+                    else { self.write(["id": id, "result": result]) }
+                }
+                return
+            }
             // Server → client request. Only NotchMate's own MCP tools are approved; everything else is declined.
             let raw = (try? JSONSerialization.data(withJSONObject: params)).map { String(decoding: $0, as: UTF8.self) } ?? ""
             let ours = Settings.shared.aiToolsEnabled && raw.contains("notchmate")
@@ -253,9 +270,15 @@ final class CodexAppServer: ObservableObject {
             return
         }
         switch method {
+        case "serverRequest/resolved":
+            if let id = params["requestId"], let requestID = userInputRequests.removeValue(forKey: String(describing: id)) {
+                AppEnvironment.shared.agents.finishRequest(requestID, response: [:])
+            }
         case "item/agentMessage/delta":
             if let d = params["delta"] as? String { onDelta?(d) }
         case "turn/completed":
+            for requestID in userInputRequests.values { AppEnvironment.shared.agents.finishRequest(requestID, response: [:]) }
+            userInputRequests.removeAll()
             let turn = params["turn"] as? [String: Any]
             activeTurnID = nil
             if let err = turn?["error"] as? [String: Any], let msg = err["message"] as? String {

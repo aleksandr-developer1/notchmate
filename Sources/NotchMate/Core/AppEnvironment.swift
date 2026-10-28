@@ -34,6 +34,9 @@ final class AppEnvironment: ObservableObject {
     let calls = CallRecorder()
     let copilot = MeetingCopilot()
     let git = GitService()
+    let updates = UpdateChecker()
+    let headphones = HeadphonesMonitor()
+    let weather = WeatherService()
     private var pluginObserver: AnyCancellable?
     private var pluginStates: [PluginID: Bool] = [:]
 
@@ -61,11 +64,14 @@ final class AppEnvironment: ObservableObject {
         clipboard.start()
         battery.start()
         volume.start()
+        headphones.start()
         companion.start(env: self)
         jira.start()
         systemEvents.start(env: self)
         if settings.pluginEnabled(.ai) { ai.start() }
         calendar.start()
+        updates.start()
+        weather.start()
         reminders.start()
         agents.start()
         activity.start()
@@ -82,6 +88,8 @@ final class AppEnvironment: ObservableObject {
             }
             return await NotchMateToolRunner.run(name, args, env: self)
         }
+        bridge.onRequest = { [unowned self] payload in await self.agents.waitForRequest(payload) }
+        bridge.onRequestCancelled = { [unowned self] id in self.agents.finishRequest(id, response: [:]) }
         bridge.start()
         attention.start(env: self)
         calls.start(env: self)
@@ -165,6 +173,7 @@ final class AppEnvironment: ObservableObject {
             case .obsidian: if enabled { obsidian.refresh(force: true) }
             case .garmin, .appleHealth: health.refresh(force: enabled)
             case .agents: agents.pluginAvailabilityChanged()
+            case .weather: Task { await weather.refresh() }
             default: break
             }
         }

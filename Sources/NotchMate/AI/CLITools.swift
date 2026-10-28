@@ -20,6 +20,27 @@ enum CLITools {
             let path = dir + "/" + name
             if FileManager.default.isExecutableFile(atPath: path) { return URL(fileURLWithPath: path) }
         }
+        // Desktop installations can bundle their own CLI even when no command is on PATH.
+        // Codex ships both as its own app and inside ChatGPT.
+        if name == "codex" {
+            for id in ["com.openai.codex", "com.openai.chat"] {
+                guard let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) else { continue }
+                let bundled = app.appendingPathComponent("Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex")
+                if FileManager.default.isExecutableFile(atPath: bundled.path) { return bundled }
+            }
+        }
+        if name == "claude" {
+            let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent("Claude/claude-code", isDirectory: true)
+            let versions = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? []
+            for version in versions.sorted(by: { $0.lastPathComponent.compare($1.lastPathComponent, options: .numeric) == .orderedDescending }) {
+                let builds = (try? FileManager.default.contentsOfDirectory(at: version, includingPropertiesForKeys: nil)) ?? []
+                for build in builds.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
+                    let binary = build.appendingPathComponent("claude.app/Contents/MacOS/claude")
+                    if FileManager.default.isExecutableFile(atPath: binary.path) { return binary }
+                }
+            }
+        }
         return nil
     }
 
