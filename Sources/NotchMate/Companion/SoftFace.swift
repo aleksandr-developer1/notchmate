@@ -51,7 +51,7 @@ struct FacePose: Equatable {
         case .bored: p.lid = 0.5; p.mouth = -0.1; p.mouthWidth = 0.6; p.droop = 1
         case .fishing: p.mouth = 0.4; p.gaze = CGPoint(x: 3, y: 1.5)
         case .basketball: p.mouth = 0.5; p.mouthOpen = 0.4
-        case .watch: p.eyeHeight = 1.05; p.mouth = 0.3; p.gaze = CGPoint(x: 3, y: -1.5)
+        case .watch: p.eyeHeight = 1.08; p.mouth = 0.4
         case .breathe: p.closed = 1; p.mouth = 0.4
         case .stressed: p.eyeHeight = 1.1; p.lid = 0.2; p.lidSlant = -0.5; p.mouth = -0.4
         case .zen: p.closed = 1; p.mouth = 0.5
@@ -390,12 +390,9 @@ enum FaceScene {
             l.dy += (1 - b) * 1.2
 
         case .watch:
-            // Glued to the screen; laughs every few seconds.
-            let c = phase(t, 4.2)
-            let laugh = c > 0.75 ? sin((c - 0.75) / 0.25 * .pi) : 0
-            l.happyEyes = laugh > 0.2 ? 1 : nil
-            if laugh > 0 { l.mouthOpen = laugh; l.dy -= abs(sin(t * 18)) * 2 * laugh }
-            l.sprites.append(FaceSprite(kind: .symbol("tv.fill"), at: CGPoint(x: 86, y: 14), size: 22, opacity: 0.85 + 0.15 * sin(t * 13)))
+            // Following the cursor: the eyes and head track it in the renderer, nothing else moves.
+            l.sy = 1 + sin(t * 1.7) * 0.012
+            l.animated = false
 
         case .breathe:
             l.animated = true
@@ -591,7 +588,8 @@ enum SoftFaceRenderer {
         let world = context
 
         // Body movement pivots on the chin, so squash and stretch look grounded.
-        var dy = p.droop + live.dy, dx = live.dx, tilt = live.tilt
+        // The head leans a little after the eyes when they follow the cursor.
+        var dy = p.droop + live.dy + look.y * 1.2, dx = live.dx + look.x * 2, tilt = live.tilt + look.x * 0.05
         var sx = live.sx, sy = live.sy
         if let breath { sx *= 0.92 + 0.14 * breath; sy *= 0.92 + 0.14 * breath }
         if let dance {
